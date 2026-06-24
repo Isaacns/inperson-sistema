@@ -6,106 +6,178 @@
 <title>Sistema INPERSON</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%23010510'/%3E%3Ccircle cx='17' cy='14' r='3' fill='none' stroke='%2374B0D8' stroke-width='2'/%3E%3Cpath d='M17 20v16M26 36V15h7a8 8 0 0 1 0 16h-7' fill='none' stroke='%2374B0D8' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
 <style>
+/* ============================================================
+   INPERSON — Identidade Viva · v0.3
+   Premium minimalista + LIQUID GLASS + movimento (algo vivo).
+   Paleta oficial: fundo #010510, acento azul-aço #74B0D8, texto #FAFAFA.
+   ============================================================ */
 :root{
-  --ip-bg:        #010510;
-  --ip-bg-2:      #050A16;
-  --ip-surface:   #080F1E;
-  --ip-surface-2: #0C1426;
-  --ip-border:    #15223A;
-  --ip-border-2:  #21344E;
-  --ip-accent:    #74B0D8;
-  --ip-accent-2:  #5B9BC4;
-  --ip-accent-dim:rgba(116,176,216,.12);
-  --ip-text:      #FAFAFA;
-  --ip-muted:     #8FA3BE;
-  --ip-faint:     #52647F;
-  --ip-ok:    #5FBF8F;
-  --ip-warn:  #D9A441;
-  --ip-danger:#D9655B;
-  --ip-radius:   14px;
-  --ip-radius-sm:9px;
-  --ip-font: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  --ip-bg:#010510; --ip-bg-2:#050A16; --ip-surface:#080F1E; --ip-surface-2:#0C1426;
+  --ip-border:#15223A; --ip-border-2:#21344E;
+  --ip-accent:#74B0D8; --ip-accent-2:#5B9BC4; --ip-accent-dim:rgba(116,176,216,.12);
+  --ip-text:#FAFAFA; --ip-muted:#8FA3BE; --ip-faint:#52647F;
+  --ip-ok:#5FBF8F; --ip-warn:#D9A441; --ip-danger:#D9655B;
+  --ip-radius:16px; --ip-radius-sm:10px;
+  --ip-font:"Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  /* liquid glass */
+  --glass-bg:linear-gradient(135deg, rgba(124,176,216,.10), rgba(255,255,255,.02));
+  --glass-brd:rgba(150,190,225,.16);
+  --glass-blur:blur(22px) saturate(150%);
+  --glass-shadow:0 10px 36px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 30px rgba(116,176,216,.04);
 }
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{
-  margin:0; font-family:var(--ip-font); font-weight:400;
-  background:
-    radial-gradient(1100px 520px at 88% -12%, rgba(116,176,216,.10), transparent 62%),
-    radial-gradient(820px 460px at -8% 112%, rgba(116,176,216,.06), transparent 60%),
-    var(--ip-bg);
-  color:var(--ip-text); -webkit-font-smoothing:antialiased; letter-spacing:.2px;
+  margin:0; font-family:var(--ip-font); font-weight:400; color:var(--ip-text);
+  background:var(--ip-bg); -webkit-font-smoothing:antialiased; letter-spacing:.2px;
+  overflow-x:hidden;
 }
-a{color:var(--ip-accent); text-decoration:none}
+a{color:var(--ip-accent);text-decoration:none}
 button{font-family:inherit}
 h1,h2,h3{font-weight:300}
-.ip-card{background:var(--ip-surface); border:1px solid var(--ip-border); border-radius:var(--ip-radius)}
-.ip-muted{color:var(--ip-muted)} .ip-faint{color:var(--ip-faint)}
-.ip-accent{color:var(--ip-accent)}
-.ip-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:500;letter-spacing:.4px;border:1px solid var(--ip-border-2);color:var(--ip-muted)}
-.ip-btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:10px 16px;border-radius:var(--ip-radius-sm);border:1px solid var(--ip-accent);background:var(--ip-accent);color:#03101c;font-weight:600;letter-spacing:.4px;cursor:pointer;transition:.15s}
-.ip-btn:hover{background:var(--ip-accent-2);border-color:var(--ip-accent-2)}
+
+/* ---------- FUNDO VIVO (aurora + marca d'água) ---------- */
+.ip-bgfx{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.ip-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;mix-blend-mode:screen;will-change:transform}
+.ip-blob.b1{width:46vw;height:46vw;left:-8vw;top:-10vw;background:radial-gradient(circle,#1f5e8a,transparent 70%);animation:ip-aurora 22s ease-in-out infinite}
+.ip-blob.b2{width:40vw;height:40vw;right:-6vw;top:8vh;background:radial-gradient(circle,#0e3a5c,transparent 70%);animation:ip-aurora 28s ease-in-out infinite reverse}
+.ip-blob.b3{width:50vw;height:50vw;left:18vw;bottom:-22vw;background:radial-gradient(circle,#14506e,transparent 70%);animation:ip-aurora 34s ease-in-out infinite}
+.ip-watermark{position:absolute;right:-4vw;top:50%;transform:translateY(-50%);width:62vh;height:62vh;opacity:.06;animation:ip-breathe 9s ease-in-out infinite;will-change:transform,opacity}
+.ip-watermark svg{width:100%;height:100%}
+.ip-grain{position:absolute;inset:0;opacity:.5;background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:3px 3px}
+
+@keyframes ip-aurora{0%{transform:translate(0,0) scale(1)}33%{transform:translate(5%,-4%) scale(1.12)}66%{transform:translate(-4%,5%) scale(.94)}100%{transform:translate(0,0) scale(1)}}
+@keyframes ip-breathe{0%,100%{transform:translateY(-50%) scale(1);opacity:.05}50%{transform:translateY(-50%) scale(1.05);opacity:.09}}
+@keyframes ip-glow{0%,100%{filter:drop-shadow(0 0 5px rgba(116,176,216,.45))}50%{filter:drop-shadow(0 0 20px rgba(116,176,216,.95))}}
+@keyframes ip-breathe-soft{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes ip-draw{to{stroke-dashoffset:0}}
+@keyframes ip-fadeup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ip-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes ip-shimmer{to{background-position:200% center}}
+@keyframes ip-rise{from{transform:translateY(110vh) scale(.6);opacity:0}10%{opacity:.7}100%{transform:translateY(-12vh) scale(1);opacity:0}}
+@keyframes ip-spin{to{transform:rotate(360deg)}}
+@keyframes ip-pulse-ring{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.8);opacity:0}}
+
+/* ---------- GLASS ---------- */
+.ip-glass{background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-brd);box-shadow:var(--glass-shadow)}
+.ip-card{background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-brd);border-radius:var(--ip-radius);box-shadow:var(--glass-shadow)}
+
+/* util */
+.ip-muted{color:var(--ip-muted)} .ip-faint{color:var(--ip-faint)} .ip-accent{color:var(--ip-accent)}
+.ip-rel{position:relative;z-index:1}
+.ip-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:500;letter-spacing:.4px;border:1px solid var(--glass-brd);color:var(--ip-muted);background:rgba(255,255,255,.03)}
+.ip-btn{position:relative;display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:10px 16px;border-radius:var(--ip-radius-sm);border:1px solid var(--ip-accent);background:linear-gradient(135deg,var(--ip-accent),var(--ip-accent-2));color:#03101c;font-weight:600;letter-spacing:.4px;cursor:pointer;transition:.18s;overflow:hidden}
+.ip-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(116,176,216,.35)}
 .ip-btn:active{transform:translateY(1px)}
 .ip-btn:disabled{opacity:.5;cursor:not-allowed}
-.ip-btn.ghost{background:transparent;border-color:var(--ip-border-2);color:var(--ip-text)}
-.ip-btn.ghost:hover{background:var(--ip-surface-2);border-color:var(--ip-accent)}
-.ip-input{width:100%;padding:11px 13px;border-radius:var(--ip-radius-sm);background:var(--ip-bg-2);border:1px solid var(--ip-border-2);color:var(--ip-text);font-size:14px}
+.ip-btn.ghost{background:rgba(255,255,255,.04);border-color:var(--glass-brd);color:var(--ip-text);backdrop-filter:blur(8px)}
+.ip-btn.ghost:hover{background:rgba(116,176,216,.12);border-color:var(--ip-accent)}
+.ip-input{width:100%;padding:12px 14px;border-radius:var(--ip-radius-sm);background:rgba(255,255,255,.04);border:1px solid var(--glass-brd);color:var(--ip-text);font-size:14px;backdrop-filter:blur(8px);transition:.18s}
+.ip-input::placeholder{color:var(--ip-faint)}
 .ip-input:focus{outline:none;border-color:var(--ip-accent);box-shadow:0 0 0 3px var(--ip-accent-dim)}
 .ip-label{font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--ip-muted);margin-bottom:6px;display:block}
+
 .st-no_ar,.st-ativo{color:var(--ip-ok)} .dot-no_ar,.dot-ativo{background:var(--ip-ok)}
 .st-desenvolvimento{color:var(--ip-accent)} .dot-desenvolvimento{background:var(--ip-accent)}
 .st-planejado,.st-prospect{color:var(--ip-muted)} .dot-planejado,.dot-prospect{background:var(--ip-faint)}
 .st-manutencao,.st-pausado{color:var(--ip-warn)} .dot-manutencao,.dot-pausado{background:var(--ip-warn)}
-.ip-shell{display:grid;grid-template-columns:264px 1fr;min-height:100%}
-.ip-side{background:linear-gradient(180deg,var(--ip-bg-2),var(--ip-bg));border-right:1px solid var(--ip-border);padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
-.ip-side .brand{padding:4px 8px 18px}
-.ip-nav{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:var(--ip-radius-sm);color:var(--ip-muted);font-size:14px;cursor:pointer;border:1px solid transparent;transition:.12s}
-.ip-nav:hover{background:var(--ip-surface);color:var(--ip-text)}
-.ip-nav.active{background:var(--ip-accent-dim);color:var(--ip-text);border-color:var(--ip-border-2)}
+
+/* ---------- LAYOUT ---------- */
+.ip-shell{position:relative;z-index:1;display:grid;grid-template-columns:266px 1fr;min-height:100%}
+.ip-side{background:linear-gradient(180deg,rgba(8,15,30,.72),rgba(3,8,18,.66));backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border-right:1px solid var(--glass-brd);padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.ip-side .brand{padding:6px 8px 16px}
+.ip-nav{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:var(--ip-radius-sm);color:var(--ip-muted);font-size:14px;cursor:pointer;border:1px solid transparent;transition:.16s}
+.ip-nav:hover{background:rgba(255,255,255,.05);color:var(--ip-text);transform:translateX(2px)}
+.ip-nav.active{background:linear-gradient(135deg,rgba(116,176,216,.18),rgba(116,176,216,.05));color:var(--ip-text);border-color:var(--glass-brd)}
 .ip-nav.active .ic{color:var(--ip-accent)}
-.ip-nav.soon{opacity:.45;cursor:not-allowed}
+.ip-nav.soon{opacity:.42;cursor:not-allowed}
 .ip-nav .ic{width:20px;text-align:center;font-size:15px}
-.ip-main{padding:30px 34px;max-width:1200px;width:100%}
-.ip-topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;gap:16px;flex-wrap:wrap}
-.ip-h1{font-size:26px;font-weight:300;margin:0;letter-spacing:.5px}
-.ip-sub{color:var(--ip-muted);font-size:13px;margin-top:5px;font-weight:400}
+.ip-main{position:relative;z-index:1;padding:28px 34px;max-width:1220px;width:100%}
+.ip-view{animation:ip-fadeup .5s ease both}
+.ip-topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.ip-h1{font-size:27px;font-weight:300;margin:0;letter-spacing:.5px}
+.ip-sub{color:var(--ip-muted);font-size:13px;margin-top:5px}
 .ip-eyebrow{font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--ip-accent);font-weight:500}
-.ip-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+
+.ip-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
 .ip-kpi{padding:20px}
-.ip-kpi .v{font-size:32px;font-weight:200;line-height:1;letter-spacing:.5px}
+.ip-kpi .v{font-size:33px;font-weight:200;line-height:1;letter-spacing:.5px;background:linear-gradient(135deg,#FAFAFA,#9cc6e4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .ip-kpi .l{color:var(--ip-muted);font-size:12px;margin-top:9px;letter-spacing:.3px}
+
 .ip-grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:15px}
-.ip-syscard{padding:20px;cursor:pointer;transition:.16s;display:flex;flex-direction:column;gap:11px;min-height:158px}
-.ip-syscard:hover{transform:translateY(-3px);border-color:var(--ip-accent)}
-.ip-syscard .ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--ip-border-2)}
+.ip-syscard{padding:20px;cursor:pointer;transition:.2s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;gap:11px;min-height:160px}
+.ip-syscard:hover{transform:translateY(-5px) scale(1.012);border-color:var(--ip-accent);box-shadow:0 16px 40px rgba(0,0,0,.5),0 0 0 1px var(--ip-accent-dim),inset 0 1px 0 rgba(255,255,255,.16)}
+.ip-syscard .ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-brd);background:rgba(255,255,255,.04)}
 .ip-syscard .nome{font-weight:400;font-size:16px;letter-spacing:.3px}
 .ip-syscard .desc{color:var(--ip-muted);font-size:12.5px;line-height:1.5;flex:1}
+.ip-stagger>*{animation:ip-fadeup .5s ease both}
+.ip-stagger>*:nth-child(1){animation-delay:.03s}.ip-stagger>*:nth-child(2){animation-delay:.08s}.ip-stagger>*:nth-child(3){animation-delay:.13s}.ip-stagger>*:nth-child(4){animation-delay:.18s}.ip-stagger>*:nth-child(5){animation-delay:.23s}.ip-stagger>*:nth-child(6){animation-delay:.28s}.ip-stagger>*:nth-child(7){animation-delay:.33s}.ip-stagger>*:nth-child(8){animation-delay:.38s}
+
 .ip-list{display:flex;flex-direction:column;gap:10px}
-.ip-row{display:flex;gap:15px;align-items:flex-start;padding:15px 17px}
+.ip-row{display:flex;gap:15px;align-items:flex-start;padding:15px 17px;transition:.18s}
+.ip-row:hover{transform:translateX(3px);border-color:var(--ip-accent)}
 .ip-row .when{min-width:84px;text-align:center}
-.ip-row .when .d{font-weight:300;font-size:20px;letter-spacing:.5px}
+.ip-row .when .d{font-weight:300;font-size:21px;letter-spacing:.5px}
 .ip-row .when .m{font-size:10px;color:var(--ip-muted);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
-.ip-tag{font-size:10.5px;font-weight:500;letter-spacing:.4px;padding:2px 9px;border-radius:6px;background:var(--ip-surface-2);border:1px solid var(--ip-border-2);color:var(--ip-muted)}
+.ip-tag{font-size:10.5px;font-weight:500;letter-spacing:.4px;padding:2px 9px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--glass-brd);color:var(--ip-muted)}
 .ip-venc-prox{border-left:2px solid var(--ip-warn)}
 .ip-venc-crit{border-left:2px solid var(--ip-danger)}
+
 .ip-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
-.ip-seg{display:flex;background:var(--ip-bg-2);border:1px solid var(--ip-border-2);border-radius:var(--ip-radius-sm);overflow:hidden}
-.ip-seg button{padding:8px 13px;background:transparent;border:0;color:var(--ip-muted);cursor:pointer;font-size:12.5px;letter-spacing:.3px}
+.ip-seg{display:flex;background:rgba(255,255,255,.03);border:1px solid var(--glass-brd);border-radius:var(--ip-radius-sm);overflow:hidden;backdrop-filter:blur(8px)}
+.ip-seg button{padding:8px 13px;background:transparent;border:0;color:var(--ip-muted);cursor:pointer;font-size:12.5px;letter-spacing:.3px;transition:.15s}
 .ip-seg button.on{background:var(--ip-accent-dim);color:var(--ip-text)}
-.ip-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.ip-auth .box{width:100%;max-width:400px;padding:34px}
+
+/* ---------- LOGIN VIVO ---------- */
+.ip-auth{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+.ip-auth .box{position:relative;z-index:2;width:100%;max-width:412px;padding:38px 34px;border-radius:22px;animation:ip-fadeup .7s ease both}
+.ip-auth-hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px}
+.ip-logo-vivo{animation:ip-glow 4.5s ease-in-out infinite}
+.ip-logo-vivo .ring{animation:ip-breathe-soft 4.5s ease-in-out infinite;transform-origin:center}
+.ip-logo-vivo .stroke{stroke-dasharray:240;stroke-dashoffset:240;animation:ip-draw 2.4s ease forwards}
+.ip-logo-vivo .dot{animation:ip-breathe-soft 3s ease-in-out infinite}
+.ip-wordmark{margin-top:16px;font-size:23px;font-weight:300;letter-spacing:9px;color:#FAFAFA}
+.ip-wordmark b{font-weight:300;color:var(--ip-accent)}
+.ip-tagline{margin-top:7px;font-size:9.5px;letter-spacing:5px;color:var(--ip-accent);text-transform:uppercase}
+.ip-particles{position:absolute;inset:0;z-index:1;pointer-events:none}
+.ip-particles i{position:absolute;bottom:-10vh;width:4px;height:4px;border-radius:50%;background:var(--ip-accent);opacity:.5;animation:ip-rise linear infinite}
 .ip-msg{padding:10px 12px;border-radius:var(--ip-radius-sm);font-size:13px;margin-top:12px}
 .ip-msg.err{background:rgba(217,101,91,.12);border:1px solid rgba(217,101,91,.4);color:#E9A39C}
 .ip-msg.ok{background:rgba(95,191,143,.12);border:1px solid rgba(95,191,143,.4);color:#A5DCBF}
-.ip-modal-bg{position:fixed;inset:0;background:rgba(1,5,16,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
-.ip-modal{width:100%;max-width:470px;padding:26px}
+
+/* ---------- MODAIS GLASS ---------- */
+.ip-modal-bg{position:fixed;inset:0;background:rgba(1,5,16,.62);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;animation:ip-fadeup .25s ease both}
+.ip-modal{position:relative;width:100%;max-width:480px;padding:28px;border-radius:20px;animation:ip-fadeup .35s cubic-bezier(.2,.8,.2,1) both}
+
+/* ---------- UPGRADE ---------- */
+.ip-upbtn{position:relative;display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;border:1px solid rgba(180,210,235,.4);color:#eaf4fb;font-weight:600;letter-spacing:.6px;font-size:13px;cursor:pointer;overflow:hidden;background:linear-gradient(110deg,#0d2c45,#175a86,#33b6d8,#175a86,#0d2c45);background-size:220% auto;animation:ip-shimmer 5s linear infinite;box-shadow:0 6px 22px rgba(51,182,216,.3)}
+.ip-upbtn:hover{transform:translateY(-1px) scale(1.03);box-shadow:0 10px 30px rgba(51,182,216,.5)}
+.ip-upbtn .spark{animation:ip-breathe-soft 2.2s ease-in-out infinite}
+.ip-upbtn::after{content:"";position:absolute;inset:0;border-radius:999px;box-shadow:0 0 0 0 rgba(51,182,216,.5);animation:ip-pulse-ring 2.6s ease-out infinite}
+.ip-upmodal{max-width:760px;padding:0;overflow:hidden;border-radius:24px}
+.ip-uphead{position:relative;padding:30px 30px 22px;text-align:center;overflow:hidden;background:linear-gradient(135deg,rgba(23,90,134,.5),rgba(51,182,216,.18))}
+.ip-uphead .orb{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(51,182,216,.55),transparent 65%);filter:blur(20px);top:-120px;left:50%;transform:translateX(-50%);animation:ip-breathe 6s ease-in-out infinite}
+.ip-upplans{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:24px 30px 12px}
+.ip-plan{padding:22px;border-radius:18px;border:1px solid var(--glass-brd);background:rgba(255,255,255,.03);transition:.2s;position:relative}
+.ip-plan:hover{transform:translateY(-4px);border-color:var(--ip-accent);box-shadow:0 14px 34px rgba(0,0,0,.45)}
+.ip-plan.pro{border-color:rgba(51,182,216,.5);background:linear-gradient(160deg,rgba(51,182,216,.14),rgba(255,255,255,.02))}
+.ip-plan .price{font-size:30px;font-weight:200;margin:8px 0}
+.ip-plan ul{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;gap:9px}
+.ip-plan li{font-size:13px;color:var(--ip-muted);display:flex;gap:9px;align-items:flex-start;line-height:1.4}
+.ip-plan li::before{content:"✦";color:var(--ip-accent);font-size:11px;margin-top:2px}
+.ip-upfoot{padding:8px 30px 28px;text-align:center}
+.ip-x{position:absolute;top:16px;right:18px;z-index:3;width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-brd);background:rgba(255,255,255,.05);color:var(--ip-text);cursor:pointer;font-size:16px;line-height:1}
+
 .ip-fatal{max-width:620px;margin:60px auto;padding:24px;font-family:var(--ip-font)}
 .ip-fatal pre{white-space:pre-wrap;background:var(--ip-bg-2);border:1px solid var(--ip-border-2);padding:14px;border-radius:10px;color:#E9A39C;font-size:12px;overflow:auto}
+
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;animation-iteration-count:1!important}}
 @media (max-width:880px){
   .ip-shell{grid-template-columns:1fr}
   .ip-side{position:fixed;left:-300px;transition:.2s;z-index:40}
   .ip-side.open{left:0}
   .ip-kpis{grid-template-columns:repeat(2,1fr)}
+  .ip-upplans{grid-template-columns:1fr}
   .ip-mtoggle{display:inline-flex!important}
 }
 .ip-mtoggle{display:none}
@@ -113,14 +185,14 @@ h1,h2,h3{font-weight:300}
 </style>
 <script>
 // Configuracao de conexao — Sistema INPERSON
-// Backend compartilhado: Supabase "vizio-core" (Auth/DB/Storage/IA/publicar).
-// Chave publishable e publica por design (uso no navegador). RLS protege os dados.
+// Backend: Supabase "vizio-core" (Auth/DB/Storage/IA/publicar). RLS protege os dados.
 window.INPERSON_CONFIG = {
   SUPABASE_URL: "https://emyjzjadmxgbtmxnzazu.supabase.co",
   SUPABASE_KEY: "sb_publishable_PY2YDxUzGgaXRVtvCcasBA_Ml7YUBTC",
   APP_NOME: "Sistema INPERSON",
-  APP_VERSAO: "v0.2",
-  APP_URL: "https://isaacns.github.io/inperson-sistema/"
+  APP_VERSAO: "v0.3",
+  APP_URL: "https://isaacns.github.io/inperson-sistema/",
+  LOGIN_SUGERIDO: "isaacnogueira.ti@gmail.com"
 };
 
 </script>
@@ -134,8 +206,8 @@ window.INPERSON_CONFIG = {
 </div>
 <script>
 /* ============================================================
-   Sistema INPERSON — app (sem JSX; React.createElement)
-   Robusto: sem dependência de Babel em runtime + erro visível.
+   Sistema INPERSON — app v0.3 (sem JSX; React.createElement)
+   Vivo: liquid glass, aurora, logo respirando, upgrade premium.
    ============================================================ */
 (function () {
   "use strict";
@@ -144,13 +216,11 @@ window.INPERSON_CONFIG = {
   var CFG = window.INPERSON_CONFIG || {};
   var sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
 
-  /* tags helpers */
   function E(t){ return function(p){ var c=[].slice.call(arguments,1); return h.apply(null,[t,p].concat(c)); }; }
-  var div=E("div"), span=E("span"), p=E("p"), button=E("button"), img=E("img"),
-      a=E("a"), input=E("input"), form=E("form"), label=E("label"),
-      h1=E("h1"), h2=E("h2"), select=E("select"), option=E("option"), textarea=E("textarea"), strong=E("strong");
+  var div=E("div"), span=E("span"), p=E("p"), button=E("button"), a=E("a"),
+      input=E("input"), form=E("form"), label=E("label"), h1=E("h1"), h2=E("h2"),
+      select=E("select"), option=E("option"), textarea=E("textarea"), strong=E("strong");
 
-  /* datas */
   var MES=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
   function parseD(s){ return s ? new Date(s+"T00:00:00") : null; }
   function diasAte(s){ var d=parseD(s); if(!d) return null; return Math.ceil((d-new Date())/86400000); }
@@ -159,16 +229,35 @@ window.INPERSON_CONFIG = {
   var CAT_COR={token:"#D9A441",contrato:"#9B8CFF",dominio:"#74B0D8",licenca:"#74B0D8",prazo:"#D9655B",nota:"#8FA3BE",credencial:"#D9A441"};
   var STATUS_LABEL={no_ar:"No ar",desenvolvimento:"Em desenvolvimento",planejado:"Planejado",manutencao:"Manutenção",ativo:"Ativo",prospect:"Prospect",pausado:"Pausado"};
 
+  /* ---------- LOGO VIVA (monograma iP) ---------- */
+  function Monogram(props){
+    var s=props.stroke||"#74B0D8", w=props.width||4, anim=props.anim, cls=props.className||"";
+    return h("svg",{viewBox:"0 0 120 120",width:props.size,height:props.size,fill:"none",className:cls,"aria-hidden":"true"},
+      h("circle",{cx:42,cy:30,r:6,stroke:s,strokeWidth:w,className:anim?"dot":null}),
+      h("path",{d:"M42 44 V90",stroke:s,strokeWidth:w,strokeLinecap:"round",className:anim?"stroke":null}),
+      h("path",{d:"M64 90 V40 h14 a16 16 0 0 1 0 32 h-14",stroke:s,strokeWidth:w,strokeLinecap:"round",strokeLinejoin:"round",className:anim?"stroke":null})
+    );
+  }
+  function Wordmark(props){
+    return div({className:props.className},
+      span(null,"INP"), span({style:{color:"var(--ip-accent)"}},"E"), span(null,"RSON"));
+  }
+  function BgFx(){
+    return div({className:"ip-bgfx"},
+      span({className:"ip-blob b1"}), span({className:"ip-blob b2"}), span({className:"ip-blob b3"}),
+      div({className:"ip-watermark"}, h(Monogram,{size:"100%",width:2.2})),
+      div({className:"ip-grain"}));
+  }
   function pill(status){
     return span({className:"ip-pill st-"+status},
       span({className:"dot-"+status,style:{width:7,height:7,borderRadius:99,display:"inline-block"}}),
       STATUS_LABEL[status]||status);
   }
 
-  /* ===================== AUTH ===================== */
+  /* ===================== AUTH (VIVO) ===================== */
   function Auth(){
     var s=useState("login"),modo=s[0],setModo=s[1];
-    var e1=useState(""),email=e1[0],setEmail=e1[1];
+    var e1=useState(CFG.LOGIN_SUGERIDO||""),email=e1[0],setEmail=e1[1];
     var e2=useState(""),senha=e2[0],setSenha=e2[1];
     var e3=useState(""),nome=e3[0],setNome=e3[1];
     var e4=useState(null),msg=e4[0],setMsg=e4[1];
@@ -191,11 +280,19 @@ window.INPERSON_CONFIG = {
       }).catch(function(err){ setMsg({t:"err",m:traduz(err.message||String(err))}); })
         .then(function(){ setBusy(false); });
     }
+    var parts=[]; for(var i=0;i<16;i++){ parts.push(span({key:i,style:{
+      left:(Math.random()*100)+"%", width:(2+Math.random()*3)+"px", height:(2+Math.random()*3)+"px",
+      animationDuration:(6+Math.random()*7)+"s", animationDelay:(Math.random()*8)+"s", opacity:.3+Math.random()*.4}})); }
     return div({className:"ip-auth"},
-      div({className:"ip-card box"},
-        img({src:"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjYwIiBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgMjYwIDY0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04g4oCUIFBlcnNvbmFsIFRlY25vbG9naWNvIj4KICA8ZyBzdHJva2U9IiM3NEIwRDgiIHN0cm9rZS13aWR0aD0iMi40IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogICAgPGNpcmNsZSBjeD0iMTQiIGN5PSIxMyIgcj0iMy40Ii8+CiAgICA8cGF0aCBkPSJNMTQgMjMgVjUxIi8+CiAgICA8cGF0aCBkPSJNMzAgNTEgVjE1IGg5IGExMCAxMCAwIDAgMSAwIDIwIGgtOSIvPgogIDwvZz4KICA8dGV4dCB4PSI2NCIgeT0iMzMiIGZvbnQtZmFtaWx5PSInU2Vnb2UgVUknLCBJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iMzAwIiBsZXR0ZXItc3BhY2luZz0iNiIgZmlsbD0iI0ZBRkFGQSI+SU5QPHRzcGFuIGZpbGw9IiM3NEIwRDgiPkU8L3RzcGFuPlJTT048L3RleHQ+CiAgPHRleHQgeD0iNjUiIHk9IjUwIiBmb250LWZhbWlseT0iJ1NlZ29lIFVJJywgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4LjUiIGZvbnQtd2VpZ2h0PSI0MDAiIGxldHRlci1zcGFjaW5nPSI0LjUiIGZpbGw9IiM3NEIwRDgiPlBFUlNPTkFMIFRFQ05PTE9HSUNPPC90ZXh0Pgo8L3N2Zz4K",alt:"INPERSON",style:{height:52,marginBottom:6}}),
-        p({className:"ip-sub",style:{marginTop:0}},"O sistema operacional do seu negócio · Salvador/BA"),
-        form({onSubmit:submit,style:{marginTop:20}},
+      h(BgFx),
+      div({className:"ip-particles"}, parts),
+      div({className:"ip-card box ip-rel"},
+        div({className:"ip-auth-hero"},
+          h(Monogram,{size:96,width:4,anim:true,className:"ip-logo-vivo"}),
+          h(Wordmark,{className:"ip-wordmark"}),
+          div({className:"ip-tagline"},"Personal Tecnológico")
+        ),
+        form({onSubmit:submit},
           modo==="signup" && div(null,
             label({className:"ip-label"},"Nome"),
             input({className:"ip-input",value:nome,onChange:function(e){setNome(e.target.value);},placeholder:"Seu nome",style:{marginBottom:12}})),
@@ -204,7 +301,7 @@ window.INPERSON_CONFIG = {
           label({className:"ip-label"},"Senha"),
           input({className:"ip-input",type:"password",required:true,value:senha,onChange:function(e){setSenha(e.target.value);},placeholder:"••••••••"}),
           msg && div({className:"ip-msg "+msg.t},msg.m),
-          button({className:"ip-btn",style:{width:"100%",marginTop:18},disabled:busy}, busy?"Aguarde…":(modo==="login"?"Entrar":"Criar conta"))
+          button({className:"ip-btn",style:{width:"100%",marginTop:18},disabled:busy}, busy?"Entrando…":(modo==="login"?"Entrar no Sistema":"Criar conta"))
         ),
         p({className:"ip-sub",style:{textAlign:"center",marginTop:16}},
           modo==="login"
@@ -222,13 +319,13 @@ window.INPERSON_CONFIG = {
     var venc60=registros.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d<=60;});
     var proximos=registros.filter(function(r){return r.vence_em;}).slice().sort(function(a,b){return parseD(a.vence_em)-parseD(b.vence_em);}).slice(0,5);
     var primeiro=(perfil&&perfil.nome?perfil.nome.split(" ")[0]:"Isaac");
-    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor}:null},v), div({className:"l"},l)); };
-    return div(null,
+    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
+    return div({className:"ip-view"},
       div({className:"ip-topbar"}, div(null,
         div({className:"ip-eyebrow"},"INPERSON · COCKPIT"),
         h1({className:"ip-h1",style:{marginTop:6}},"Olá, "+primeiro),
         div({className:"ip-sub"},"Visão geral — "+new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})))),
-      div({className:"ip-kpis"},
+      div({className:"ip-kpis ip-stagger"},
         kpi(noAr,"Sistemas no ar",null),
         kpi(clientes.length,"Clientes",null),
         kpi(ativos,"Registros ativos",null),
@@ -238,12 +335,12 @@ window.INPERSON_CONFIG = {
           div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
             strong({style:{fontWeight:300,letterSpacing:".5px"}},"⏰  Vence em breve"),
             a({href:"#",onClick:function(e){e.preventDefault();go("agenda");}},"Ver agenda →")),
-          div({className:"ip-list"},
+          div({className:"ip-list ip-stagger"},
             proximos.length===0 && p({className:"ip-muted"},"Nenhum vencimento cadastrado."),
             proximos.map(function(r){
               var d=diasAte(r.vence_em);
               var cls=d!==null&&d<=30?"ip-venc-crit":(d!==null&&d<=60?"ip-venc-prox":"");
-              return div({key:r.id,className:"ip-card ip-row "+cls,style:{background:"var(--ip-surface-2)"}},
+              return div({key:r.id,className:"ip-card ip-row "+cls},
                 div({className:"when"}, div({className:"d"},fmtDia(r.vence_em)), div({className:"m"},fmtMesAno(r.vence_em))),
                 div({style:{flex:1}},
                   div({style:{fontWeight:400}},r.titulo),
@@ -256,7 +353,7 @@ window.INPERSON_CONFIG = {
             button({className:"ip-btn ghost",onClick:function(){go("projetos");}},"🧩  Projetos & Softwares"),
             button({className:"ip-btn ghost",onClick:function(){go("agenda");}},"📅  Agenda de Registros"),
             button({className:"ip-btn ghost",onClick:function(){go("clientes");}},"👥  Clientes")),
-          div({className:"ip-card",style:{background:"var(--ip-bg-2)",padding:14,marginTop:14}},
+          div({className:"ip-card",style:{background:"rgba(116,176,216,.06)",padding:14,marginTop:14}},
             p({className:"ip-faint",style:{fontSize:12,margin:0,lineHeight:1.5}},"INPERSON é a matriz. VIZIO Studio e os sistemas de clientes vivem dentro dela — um login, um lugar."))))
     );
   }
@@ -272,10 +369,8 @@ window.INPERSON_CONFIG = {
       .filter(function(r){return fcat==="todos"||r.categoria===fcat;})
       .filter(function(r){return fstatus==="todos"?true:(fstatus==="ativos"?(r.status!=="concluido"&&r.status!=="arquivado"):r.status===fstatus);})
       .slice().sort(function(a,b){var da=a.vence_em?parseD(a.vence_em):null,db=b.vence_em?parseD(b.vence_em):null; if(da&&db)return da-db; if(da)return -1; if(db)return 1; return 0;});
-    function concluir(r){
-      sb.from("registros").update({status:r.status==="concluido"?"aberto":"concluido"}).eq("id",r.id).then(reload);
-    }
-    return div(null,
+    function concluir(r){ sb.from("registros").update({status:r.status==="concluido"?"aberto":"concluido"}).eq("id",r.id).then(reload); }
+    return div({className:"ip-view"},
       div({className:"ip-topbar"},
         div(null, div({className:"ip-eyebrow"},"COFRE OPERACIONAL"),
           h1({className:"ip-h1",style:{marginTop:6}},"Agenda de Registros"),
@@ -286,7 +381,7 @@ window.INPERSON_CONFIG = {
           return button({key:st,className:fstatus===st?"on":"",onClick:function(){setFstatus(st);}},st);})),
         div({className:"ip-seg"}, cats.map(function(c){
           return button({key:c,className:fcat===c?"on":"",onClick:function(){setFcat(c);}},c);}))),
-      div({className:"ip-list"},
+      div({className:"ip-list ip-stagger"},
         lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro com esses filtros.")),
         lista.map(function(r){
           var d=diasAte(r.vence_em);
@@ -299,12 +394,11 @@ window.INPERSON_CONFIG = {
                 span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria),
                 r.prioridade==="critica" && span({className:"ip-tag",style:{color:"var(--ip-danger)"}},"crítica")),
               r.descricao && div({className:"ip-muted",style:{fontSize:12.5,marginTop:4,lineHeight:1.5}},r.descricao),
-              div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":"faltam "+d+"d")+(r.alerta_em?" · alerta "+fmtDia(r.alerta_em)+"/"+fmtMesAno(r.alerta_em):"")):""))),
+              div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":"faltam "+d+"d")):""))),
             button({className:"ip-btn ghost",style:{padding:"7px 12px"},onClick:function(){concluir(r);}},r.status==="concluido"?"Reabrir":"Concluir"));
         })),
       novo && NovoRegistro({onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
   }
-
   function NovoRegistro(props){
     var s=useState({titulo:"",categoria:"prazo",projeto:"",descricao:"",vence_em:"",prioridade:"media"}),f=s[0],setF=s[1];
     var b=useState(false),busy=b[0],setBusy=b[1];
@@ -340,24 +434,24 @@ window.INPERSON_CONFIG = {
           button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar registro"))));
   }
 
-  /* ===================== PROJETOS & SOFTWARES ===================== */
+  /* ===================== PROJETOS ===================== */
   function Projetos(props){
     var sistemas=props.sistemas, isAdmin=props.isAdmin;
     function abrir(s){
       if(s.url){ window.open(s.url,"_blank","noopener"); }
-      else { alert('"'+s.nome+'" ainda não tem URL configurada.'+(isAdmin?"\n\nComo admin, você poderá editar o card e adicionar a URL no ar (v0.3).":"")); }
+      else { alert('"'+s.nome+'" ainda não tem URL configurada.'+(isAdmin?"\n\nComo admin, você poderá editar o card e adicionar a URL no ar (v0.4).":"")); }
     }
     var ord=sistemas.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
-    return div(null,
+    return div({className:"ip-view"},
       div({className:"ip-topbar"}, div(null,
         div({className:"ip-eyebrow"},"ECOSSISTEMA"),
         h1({className:"ip-h1",style:{marginTop:6}},"Projetos & Softwares"),
         div({className:"ip-sub"},"Clique num card para abrir o sistema / VIZIO Studio."))),
-      div({className:"ip-grid-cards"},
+      div({className:"ip-grid-cards ip-stagger"},
         ord.map(function(s){
           return div({key:s.id,className:"ip-card ip-syscard",onClick:function(){abrir(s);}},
             div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              div({className:"ico",style:{background:(s.cor||"#74B0D8")+"1f",color:s.cor||"#74B0D8"}},s.icone||"🧩"),
+              div({className:"ico",style:{color:s.cor||"#74B0D8"}},s.icone||"🧩"),
               s.destaque && span({className:"ip-pill",style:{color:s.cor,borderColor:(s.cor||"#74B0D8")+"55"}},"destaque")),
             div({className:"nome"},s.nome),
             div({className:"desc"},s.descricao),
@@ -371,20 +465,52 @@ window.INPERSON_CONFIG = {
   function Clientes(props){
     var clientes=props.clientes;
     var ord=clientes.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
-    return div(null,
+    return div({className:"ip-view"},
       div({className:"ip-topbar"}, div(null,
         div({className:"ip-eyebrow"},"CARTEIRA"),
         h1({className:"ip-h1",style:{marginTop:6}},"Clientes"),
         div({className:"ip-sub"},clientes.length+" clientes · base inicial do CRM (v0.2 adiciona contatos, contratos e histórico)."))),
-      div({className:"ip-grid-cards"},
+      div({className:"ip-grid-cards ip-stagger"},
         ord.map(function(c){
-          return div({key:c.id,className:"ip-card ip-syscard",style:{cursor:"default",minHeight:140}},
+          return div({key:c.id,className:"ip-card ip-syscard",style:{cursor:"default",minHeight:142}},
             div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              div({className:"ico",style:{background:"var(--ip-accent-dim)",color:"var(--ip-accent)",fontSize:16,fontWeight:300}},(c.nome||"?").slice(0,2).toUpperCase()),
+              div({className:"ico",style:{color:"var(--ip-accent)",fontSize:15,fontWeight:300}},(c.nome||"?").slice(0,2).toUpperCase()),
               pill(c.status||"ativo")),
             div({className:"nome"},c.nome),
             div({className:"desc"}, c.segmento && div({style:{color:"var(--ip-accent)",fontSize:11.5,marginBottom:4,letterSpacing:".4px"}},c.segmento), c.obs||""));
         })));
+  }
+
+  /* ===================== UPGRADE (premium) ===================== */
+  function UpgradeModal(props){
+    function lista(items){ return h("ul",null, items.map(function(t,i){return h("li",{key:i},t);})); }
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      div({className:"ip-card ip-upmodal",onClick:function(e){e.stopPropagation();}},
+        button({className:"ip-x",onClick:props.onClose},"✕"),
+        div({className:"ip-uphead"},
+          span({className:"orb"}),
+          div({className:"ip-rel"},
+            div({className:"ip-eyebrow",style:{justifyContent:"center"}},"INPERSON · EVOLUÇÃO"),
+            h2({style:{fontWeight:200,fontSize:28,margin:"8px 0 4px",letterSpacing:".5px"}},"Eleve o seu Sistema"),
+            p({className:"ip-muted",style:{margin:0,fontSize:13.5}},"Mais automação, inteligência e tempo livre. Escolha como a INPERSON trabalha por você."))),
+        div({className:"ip-upplans"},
+          div({className:"ip-plan"},
+            div({className:"ip-eyebrow"},"PRO"),
+            div(null,strong({style:{fontWeight:300,fontSize:18}},"INPERSON PRO")),
+            div({className:"price"},"R$ —",span({className:"ip-faint",style:{fontSize:13}}," /mês")),
+            lista(["Financeiro completo (MRR, fluxo de caixa)","Documentos & contratos no Storage","Relatórios em PDF por área","Multiusuário e permissões"])),
+          div({className:"ip-plan pro"},
+            span({className:"ip-pill",style:{position:"absolute",top:16,right:16,color:"var(--ip-accent)"}},"recomendado"),
+            div({className:"ip-eyebrow"},"IA"),
+            div(null,strong({style:{fontWeight:300,fontSize:18}},"INPERSON IA")),
+            div({className:"price"},"R$ —",span({className:"ip-faint",style:{fontSize:13}}," /mês")),
+            lista(["Assistente Claude sobre os seus dados","Briefing diário automático às 6h","Alertas inteligentes de vencimento","Ações por linguagem natural"]))),
+        div({className:"ip-upfoot"},
+          button({className:"ip-btn",style:{padding:"12px 26px"},onClick:function(){
+            alert("Perfeito! Vou te avisar assim que o PRO/IA estiver disponível. (Em breve isso vira uma assinatura real via Stripe — a base já existe no vizio-core.)");
+            props.onClose();
+          }},"✨  Quero ser avisado no lançamento"),
+          p({className:"ip-faint",style:{fontSize:11.5,marginTop:12}},"Pré-cadastro sem compromisso. A cobrança (Stripe) já está preparada na infraestrutura."))));
   }
 
   /* ===================== SHELL ===================== */
@@ -408,13 +534,13 @@ window.INPERSON_CONFIG = {
     var s4=useState([]),sistemas=s4[0],setSistemas=s4[1];
     var s5=useState([]),clientes=s5[0],setClientes=s5[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
+    var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
 
     useEffect(function(){
       sb.auth.getSession().then(function(r){ setSessao(r.data.session); });
       var sub=sb.auth.onAuthStateChange(function(_e,sess){ setSessao(sess); });
       return function(){ sub.data.subscription.unsubscribe(); };
     },[]);
-
     var carregar=useCallback(function(){
       sb.auth.getUser().then(function(res){
         var user=res.data.user; if(!user) return;
@@ -424,17 +550,14 @@ window.INPERSON_CONFIG = {
           sb.from("sistemas").select("*").order("ordem",{ascending:true}),
           sb.from("clientes").select("*").order("ordem",{ascending:true})
         ]).then(function(out){
-          setPerfil(out[0].data);
-          setRegistros(out[1].data||[]);
-          setSistemas(out[2].data||[]);
-          setClientes(out[3].data||[]);
+          setPerfil(out[0].data); setRegistros(out[1].data||[]);
+          setSistemas(out[2].data||[]); setClientes(out[3].data||[]);
         });
       });
     },[]);
-
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
 
-    if(sessao===undefined) return div({className:"ip-auth"}, div({className:"ip-muted"},"Carregando…"));
+    if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
 
     var isAdmin = perfil && perfil.papel==="admin";
@@ -444,38 +567,44 @@ window.INPERSON_CONFIG = {
     else if(view==="projetos") body=Projetos({sistemas:sistemas,isAdmin:isAdmin});
     else if(view==="clientes") body=Clientes({clientes:clientes});
 
-    return div({className:"ip-shell"},
-      h("aside",{className:"ip-side"+(menu?" open":"")},
-        div({className:"brand"}, img({src:"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjYwIiBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgMjYwIDY0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04g4oCUIFBlcnNvbmFsIFRlY25vbG9naWNvIj4KICA8ZyBzdHJva2U9IiM3NEIwRDgiIHN0cm9rZS13aWR0aD0iMi40IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogICAgPGNpcmNsZSBjeD0iMTQiIGN5PSIxMyIgcj0iMy40Ii8+CiAgICA8cGF0aCBkPSJNMTQgMjMgVjUxIi8+CiAgICA8cGF0aCBkPSJNMzAgNTEgVjE1IGg5IGExMCAxMCAwIDAgMSAwIDIwIGgtOSIvPgogIDwvZz4KICA8dGV4dCB4PSI2NCIgeT0iMzMiIGZvbnQtZmFtaWx5PSInU2Vnb2UgVUknLCBJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iMzAwIiBsZXR0ZXItc3BhY2luZz0iNiIgZmlsbD0iI0ZBRkFGQSI+SU5QPHRzcGFuIGZpbGw9IiM3NEIwRDgiPkU8L3RzcGFuPlJTT048L3RleHQ+CiAgPHRleHQgeD0iNjUiIHk9IjUwIiBmb250LWZhbWlseT0iJ1NlZ29lIFVJJywgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4LjUiIGZvbnQtd2VpZ2h0PSI0MDAiIGxldHRlci1zcGFjaW5nPSI0LjUiIGZpbGw9IiM3NEIwRDgiPlBFUlNPTkFMIFRFQ05PTE9HSUNPPC90ZXh0Pgo8L3N2Zz4K",alt:"INPERSON",style:{height:42}})),
-        MODULOS.map(function(m){
-          return div({key:m.id,className:"ip-nav"+(view===m.id?" active":"")+(m.soon?" soon":""),
-            onClick:function(){ if(!m.soon){ setView(m.id); setMenu(false);} }},
-            span({className:"ic"},m.ic), span(null,m.nome),
-            m.soon && span({className:"ip-faint",style:{marginLeft:"auto",fontSize:9.5,letterSpacing:".5px"}},"EM BREVE"));
-        }),
-        div({style:{marginTop:"auto",paddingTop:14,borderTop:"1px solid var(--ip-border)"}},
-          div({style:{padding:"4px 8px"}},
-            div({style:{fontSize:13}},perfil?perfil.nome:"—"),
-            div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
-          button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
-          div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))
+    return div(null,
+      h(BgFx),
+      div({className:"ip-shell"},
+        h("aside",{className:"ip-side"+(menu?" open":"")},
+          div({className:"brand",style:{display:"flex",alignItems:"center",gap:11}},
+            h(Monogram,{size:38,width:5,anim:true,className:"ip-logo-vivo"}),
+            div(null, h(Wordmark,{className:"ip-wordmark",}) , div({className:"ip-tagline"},"Personal Tecnológico"))),
+          MODULOS.map(function(m){
+            return div({key:m.id,className:"ip-nav"+(view===m.id?" active":"")+(m.soon?" soon":""),
+              onClick:function(){ if(!m.soon){ setView(m.id); setMenu(false);} }},
+              span({className:"ic"},m.ic), span(null,m.nome),
+              m.soon && span({className:"ip-faint",style:{marginLeft:"auto",fontSize:9.5,letterSpacing:".5px"}},"EM BREVE"));
+          }),
+          div({style:{margin:"14px 4px 4px"}},
+            button({className:"ip-upbtn",style:{width:"100%"},onClick:function(){setUpgrade(true);}},
+              span({className:"spark"},"✦"), "UPGRADE")),
+          div({style:{marginTop:"auto",paddingTop:14,borderTop:"1px solid var(--glass-brd)"}},
+            div({style:{padding:"4px 8px"}},
+              div({style:{fontSize:13}},perfil?perfil.nome:"—"),
+              div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
+            button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
+            div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))
+        ),
+        h("main",{className:"ip-main"},
+          button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
+          body)
       ),
-      h("main",{className:"ip-main"},
-        button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
-        body)
+      upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}})
     );
   }
 
-  /* mount + erro visível */
   function fatal(msg){
     var r=document.getElementById("root");
-    if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar o Sistema INPERSON</h2>'+
-      '<p class="ip-muted">Detalhes técnicos abaixo. Verifique a conexão e recarregue.</p><pre>'+
-      String(msg).replace(/</g,"&lt;")+'</pre></div>';
+    if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar o Sistema INPERSON</h2><p class="ip-muted">Detalhes abaixo. Verifique a conexao e recarregue.</p><pre>'+String(msg).replace(/</g,"&lt;")+'</pre></div>';
   }
   window.addEventListener("error",function(e){ if(!document.querySelector(".ip-shell, .ip-auth")) fatal(e.message||e.error||"erro"); });
   try{
-    if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas (React/Supabase) não carregaram. Sem internet ou CDN bloqueado.");
+    if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas (React/Supabase) nao carregaram. Sem internet ou CDN bloqueado.");
     ReactDOM.createRoot(document.getElementById("root")).render(h(App));
   }catch(err){ fatal(err.stack||err.message||err); }
 })();
