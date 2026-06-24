@@ -1173,6 +1173,324 @@ window.IP_LOGOS={
             div({style:{flex:1,borderTop:"1px solid var(--ip-faint)",paddingTop:6,textAlign:"center"}},p2.cliente)))));
   }
 
+  /* ===================== QUALIDADE ISO (Avanço) ===================== */
+  var ISO_EMPRESA={nome:"INPERSON Soluções em Tecnologia",cnpj:"30.715.367/0001-52",tel:"(71) 99168-4231",elaborador:"Isaac Nogueira / INPERSON"};
+  var ISO_FREQ_LABEL={mensal:"Mensal",semestral:"Semestral",anual:"Anual",ocorrencia:"Por ocorrência",vigente:"Vigente",unico:"Único",referencia:"Referência"};
+  var ISO_TIPO_LABEL={politica:"Política",inventario:"Inventário",form:"Formulário",pop:"POP",it:"Instrução",declaracao:"Declaração",topologia:"Topologia",manual:"Manual",matriz:"Matriz",rede:"Rede"};
+  var ISO_STAT_COR={vigente:"#5FBF8F",pendente:"#D9A441",rascunho:"#8FA3BE",obsoleto:"#D9655B",concluido:"#5FBF8F",aprovado:"#74B0D8"};
+  var ISO_CAT_ATIVO={switch:"Switch",ap:"Access Point",gateway:"Gateway",dvr:"DVR/CFTV",camera:"Câmera",amplificador:"Amplificador",nobreak:"No-break",rack:"Rack",patchpanel:"Patch Panel",cabeamento:"Cabeamento",outro:"Outro"};
+  var ISO_MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  function isoCompAtual(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+  function isoCompLabel(c){ if(!c) return "—"; var p=String(c).split("-"); if(p.length===2) return (ISO_MESES[Number(p[1])-1]||"?")+"/"+p[0]; if(p.length>=3) return p[2]+"/"+p[1]+"/"+p[0]; return c; }
+  var FORM_MODELOS={
+    "FOR-MAN-001":{layout:"checklist",periodo:"mes",opcoes:["OK","NC","NA"],
+      cabecalho:[{k:"tecnico",label:"Técnico responsável",t:"text"}],
+      itens:["Switch PoE UniFi (24 portas)","Access Points UniFi U6+ (2)","Access Point Outdoor U6 Mesh","Gateway UCG-Max / VLANs","DVR Intelbras + 13 câmeras CFTV","Som ambiente / amplificador","Backup (execução + teste)","No-break / UPS","Temperatura e ventilação do rack","Cabeamento e organização do rack","Atualizações de firmware UniFi"],
+      rodape:[{k:"obs",label:"Observações gerais",t:"textarea"}]},
+    "FOR-SEG-001":{layout:"checklist",periodo:"mes",opcoes:["Conforme","Não conforme","N/A"],
+      itens:["Rack trancado","Acesso restrito e autorizado","Ambiente livre de risco (água/calor)","Etiquetas íntegras","Sem equipamentos não autorizados","Câmeras CFTV operando"],
+      rodape:[{k:"obs",label:"Observações",t:"textarea"}]},
+    "FOR-KPI-001":{layout:"campos",periodo:"mes",
+      campos:[{k:"disp_rede",label:"Disponibilidade da rede (%)",t:"number"},{k:"chamados",label:"Nº de chamados no mês",t:"number"},{k:"tmr",label:"Tempo médio de resposta (h)",t:"number"},{k:"bkp_exec",label:"Backups executados",t:"number"},{k:"bkp_test",label:"Backups testados",t:"number"},{k:"incidentes",label:"Incidentes registrados",t:"number"},{k:"nc_abertas",label:"NCs abertas",t:"number"},{k:"nc_fechadas",label:"NCs fechadas",t:"number"},{k:"uptime_cftv",label:"Uptime CFTV (%)",t:"number"}],
+      rodape:[{k:"obs",label:"Análise crítica dos indicadores (9.1)",t:"textarea"}]},
+    "FOR-ACE-001":{layout:"tabela",periodo:"mes",
+      colunas:[{k:"data_hora",label:"Data/Hora",t:"datetime-local"},{k:"pessoa",label:"Pessoa"},{k:"empresa",label:"Empresa"},{k:"motivo",label:"Motivo"},{k:"autorizado",label:"Autorizado por"}]},
+    "FOR-INC-001":{layout:"campos",periodo:"data",
+      campos:[{k:"descricao",label:"Descrição da não conformidade",t:"textarea"},{k:"data_ocorrencia",label:"Data da ocorrência",t:"date"},{k:"origem",label:"Origem / como foi detectada",t:"text"},{k:"classificacao",label:"Classificação",t:"select",opcoes:["Leve","Moderada","Grave"]},{k:"analise_causa",label:"Análise de causa (5 porquês / Ishikawa)",t:"textarea"},{k:"acao_corretiva",label:"Ação corretiva",t:"textarea"},{k:"responsavel_acao",label:"Responsável pela ação",t:"text"},{k:"prazo",label:"Prazo",t:"date"},{k:"status_nc",label:"Status",t:"select",opcoes:["Aberta","Em tratamento","Fechada"]},{k:"verificacao",label:"Verificação de eficácia",t:"textarea"}]},
+    "FOR-MUD-001":{layout:"campos",periodo:"data",
+      campos:[{k:"o_que_mudou",label:"O que mudou",t:"textarea"},{k:"motivo",label:"Motivo",t:"textarea"},{k:"data_mudanca",label:"Data da mudança",t:"date"},{k:"impacto",label:"Impacto / risco",t:"textarea"},{k:"aprovacao",label:"Aprovado por",t:"text"},{k:"atualizou_ip",label:"Atualizou DOC-IP-001?",t:"select",opcoes:["Sim","Não","N/A"]},{k:"atualizou_topo",label:"Atualizou Topologia (DOC-TOP-001)?",t:"select",opcoes:["Sim","Não","N/A"]},{k:"obs",label:"Observações",t:"textarea"}]},
+    "FOR-AUD-001":{layout:"auditoria",periodo:"data",opcoes:["Conforme","Parcial","Não conforme"],
+      perguntas:[{c:"4.4",q:"Existe declaração/registro de que a infraestrutura está em conformidade com os requisitos do SGQ?"},{c:"7.1.3",q:"A infraestrutura é mantida de forma planejada, com periodicidade e responsável definidos?"},{c:"7.1.3",q:"Há registros de manutenção (FOR-MAN-001) dos últimos meses?"},{c:"7.2",q:"O prestador de TI demonstra competência (perfil técnico, experiência)?"},{c:"7.5",q:"A topologia de rede está atualizada e versionada?"},{c:"7.5",q:"O inventário de ativos está atualizado e controlado?"},{c:"7.5",q:"Os documentos têm controle de versão (revisão, data, autor)?"},{c:"7.5",q:"Existe POP de backup documentado?"},{c:"8.4",q:"Há contrato formal com o prestador de TI, escopo e SLA definidos?"},{c:"8.4",q:"Os atendimentos são registrados (RAT/histórico) e arquivados por data?"},{c:"9.1",q:"Há indicadores de disponibilidade e desempenho da infraestrutura (FOR-KPI-001)?"},{c:"backup",q:"Existem registros de execução E teste de restauração de backup?"},{c:"6.3",q:"Mudanças seguem o controle de mudanças (FOR-MUD-001)?"},{c:"10.2",q:"Não conformidades são registradas e tratadas (FOR-INC-001)?"},{c:"7.1.3",q:"O acesso físico ao rack é restrito e registrado (FOR-ACE-001)?"},{c:"7.1.3",q:"A segurança física é verificada periodicamente (FOR-SEG-001)?"}],
+      rodape:[{k:"conclusao",label:"Conclusão da auditoria",t:"textarea"}]},
+    "DEC-CONF-001":{layout:"campos",periodo:"data",
+      campos:[{k:"periodo",label:"Período de referência",t:"text"},{k:"texto",label:"Texto da declaração",t:"textarea"},{k:"local_data",label:"Local e data",t:"text"}],
+      padrao:{texto:"A INPERSON Soluções em Tecnologia declara que a infraestrutura tecnológica (rede, CFTV e sonorização) da Avanço Odontologia Moderna foi mantida de forma planejada e controlada no período de referência, com produção de evidências documentais, em conformidade com os requisitos aplicáveis da ISO 9001:2015 (cláusulas 7.1.3, 7.5, 8.4 e 9.1)."}}
+  };
+  function isoProxNumero(regs,codigo){ var m=0; regs.forEach(function(r){ if(r.documento_codigo===codigo&&Number(r.numero)>m) m=Number(r.numero); }); return m+1; }
+
+  function isoCampo(def,val,onCh){
+    if(def.t==="textarea") return textarea({className:"ip-input",rows:3,value:val||"",onChange:function(e){onCh(e.target.value);}});
+    if(def.t==="select") return select({className:"ip-input",value:val||"",onChange:function(e){onCh(e.target.value);}}, [option({key:"_",value:""},"—")].concat((def.opcoes||[]).map(function(o){return option({key:o,value:o},o);})));
+    return input({className:"ip-input",type:def.t||"text",value:val||"",onChange:function(e){onCh(e.target.value);}});
+  }
+
+  function IsoForm(props){
+    var doc=props.doc, modelo=FORM_MODELOS[doc.codigo]||{layout:"campos",campos:[],periodo:"data"};
+    var reg0=props.registro||null, editing=!!(reg0&&reg0.id);
+    var compInicial = reg0?reg0.competencia : (modelo.periodo==="mes"?isoCompAtual():new Date().toISOString().slice(0,10));
+    var c1=useState(compInicial),comp=c1[0],setComp=c1[1];
+    var d1=useState(reg0?(reg0.dados||{}):(modelo.padrao?Object.assign({},modelo.padrao):{})),dados=d1[0],setDados=d1[1];
+    var r1=useState(reg0?(reg0.responsavel||""):(props.perfil?props.perfil.nome:"")),resp=r1[0],setResp=r1[1];
+    var a1=useState(reg0?(reg0.aprovado_por||""):""),aprov=a1[0],setAprov=a1[1];
+    var b1=useState(false),busy=b1[0],setBusy=b1[1]; var e1=useState(null),err=e1[0],setErr=e1[1];
+    function setK(k,v){ var n={}; n[k]=v; setDados(Object.assign({},dados,n)); }
+    function setItem(i,campo,v){ var arr=(dados.itens||[]).slice(); arr[i]=Object.assign({},arr[i],(function(){var o={};o[campo]=v;return o;})()); setDados(Object.assign({},dados,{itens:arr})); }
+    function setLinha(i,campo,v){ var arr=(dados.linhas||[]).slice(); arr[i]=Object.assign({},arr[i]||{},(function(){var o={};o[campo]=v;return o;})()); setDados(Object.assign({},dados,{linhas:arr})); }
+    function addLinha(){ setDados(Object.assign({},dados,{linhas:(dados.linhas||[]).concat([{}])})); }
+    function delLinha(i){ var arr=(dados.linhas||[]).slice(); arr.splice(i,1); setDados(Object.assign({},dados,{linhas:arr})); }
+    function salvar(concluir){ setBusy(true); setErr(null);
+      sb.auth.getUser().then(function(res){ var uid=res.data.user.id;
+        var payload={cliente_id:props.cliId,documento_id:doc.id,documento_codigo:doc.codigo,competencia:comp,dados:dados,responsavel:resp,aprovado_por:aprov,status:concluir?"concluido":"rascunho"};
+        payload.concluido_em = concluir ? new Date().toISOString() : null;
+        if(editing){ return sb.from("iso_registros").update(payload).eq("id",reg0.id); }
+        payload.owner=uid; payload.numero=isoProxNumero(props.registros,doc.codigo); return sb.from("iso_registros").insert(payload);
+      }).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    var campoBox=function(lbl,node){ return div({style:{marginTop:12}},label({className:"ip-label"},lbl),node); };
+    function corpoChecklist(){ var itens=modelo.itens||[];
+      return h("table",{style:{width:"100%",borderCollapse:"collapse",marginTop:12}},
+        h("thead",null,h("tr",null,h("th",{style:{textAlign:"left",padding:"6px 8px",fontSize:12,color:"var(--ip-muted)"}},"Item verificado"),h("th",{style:{padding:"6px 8px",fontSize:12,color:"var(--ip-muted)"}},"Resultado"),h("th",{style:{textAlign:"left",padding:"6px 8px",fontSize:12,color:"var(--ip-muted)"}},"Observação"))),
+        h("tbody",null, itens.map(function(it,i){ var dv=(dados.itens&&dados.itens[i])||{};
+          return h("tr",{key:i,style:{borderTop:"1px solid var(--glass-brd)"}},
+            h("td",{style:{padding:"6px 8px",fontSize:13}},it),
+            h("td",{style:{padding:"6px 8px",textAlign:"center"}}, select({className:"ip-input",style:{padding:"6px 8px",minWidth:90},value:dv.resultado||"",onChange:function(e){setItem(i,"resultado",e.target.value);}}, [option({key:"_",value:""},"—")].concat((modelo.opcoes||[]).map(function(o){return option({key:o,value:o},o);})))),
+            h("td",{style:{padding:"6px 8px"}}, input({className:"ip-input",style:{padding:"6px 8px"},value:dv.obs||"",onChange:function(e){setItem(i,"obs",e.target.value);},placeholder:"—"}))); }))); }
+    function corpoTabela(){ var cols=modelo.colunas||[]; var linhas=dados.linhas||[];
+      return div({style:{marginTop:12,overflowX:"auto"}},
+        h("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:640}},
+          h("thead",null,h("tr",null, cols.map(function(c){return h("th",{key:c.k,style:{textAlign:"left",padding:"6px 8px",fontSize:12,color:"var(--ip-muted)"}},c.label);}), h("th",null,""))),
+          h("tbody",null, linhas.length===0?h("tr",null,h("td",{colSpan:cols.length+1,style:{padding:10,color:"var(--ip-faint)",fontSize:12.5}},"Sem linhas. Clique em + Linha.")):linhas.map(function(ln,i){
+            return h("tr",{key:i,style:{borderTop:"1px solid var(--glass-brd)"}}, cols.map(function(c){ return h("td",{key:c.k,style:{padding:"4px 6px"}}, input({className:"ip-input",type:c.t||"text",style:{padding:"6px 8px"},value:ln[c.k]||"",onChange:function(e){setLinha(i,c.k,e.target.value);}})); }),
+              h("td",{style:{padding:"4px 6px"}}, button({type:"button",className:"ip-btn ghost",style:{padding:"6px 9px",color:"var(--ip-danger)"},onClick:function(){delLinha(i);}},"✕"))); }))),
+        button({type:"button",className:"ip-btn ghost",style:{marginTop:10},onClick:addLinha},"+ Linha")); }
+    function corpoAuditoria(){ var ps=modelo.perguntas||[];
+      return div({style:{marginTop:12,display:"flex",flexDirection:"column",gap:10}}, ps.map(function(pg,i){ var dv=(dados.itens&&dados.itens[i])||{};
+        return div({key:i,className:"ip-card",style:{padding:12,background:"rgba(255,255,255,.02)"}},
+          div({style:{display:"flex",gap:8,alignItems:"flex-start"}}, span({className:"ip-tag",style:{color:"var(--ip-accent)",whiteSpace:"nowrap"}},pg.c), strong({style:{fontWeight:400,fontSize:13}},pg.q)),
+          div({style:{display:"grid",gridTemplateColumns:"160px 1fr",gap:8,marginTop:8}},
+            select({className:"ip-input",style:{padding:"6px 8px"},value:dv.resultado||"",onChange:function(e){setItem(i,"resultado",e.target.value);}}, [option({key:"_",value:""},"—")].concat((modelo.opcoes||[]).map(function(o){return option({key:o,value:o},o);}))),
+            input({className:"ip-input",style:{padding:"6px 8px"},value:dv.evidencia||"",onChange:function(e){setItem(i,"evidencia",e.target.value);},placeholder:"Evidência / observação"}))); })); }
+    function corpoCampos(){ return div(null,(modelo.campos||[]).map(function(c){ return campoBox(c.label, isoCampo(c,dados[c.k],function(v){setK(c.k,v);})); })); }
+    var corpo = modelo.layout==="checklist"?corpoChecklist():modelo.layout==="tabela"?corpoTabela():modelo.layout==="auditoria"?corpoAuditoria():corpoCampos();
+    return div({className:"ip-view"},
+      div({style:{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap",alignItems:"center"}},
+        button({className:"ip-btn ghost",onClick:props.onVoltar},"← Voltar"),
+        span({className:"ip-tag",style:{color:"var(--ip-accent)"}},doc.codigo),
+        editing?span({className:"ip-pill",style:{color:ISO_STAT_COR[reg0.status]}},"Nº "+(reg0.numero||"–")+" · "+reg0.status):null),
+      div({className:"ip-card",style:{padding:24,maxWidth:880}},
+        h2({style:{fontWeight:300,margin:"0 0 4px"}},doc.titulo),
+        p({className:"ip-sub",style:{marginTop:0}},"Preenchimento de evidência — "+(ISO_FREQ_LABEL[doc.frequencia]||doc.frequencia)+". Salve rascunho ou conclua para gerar o registro numerado."),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}},
+          div(null,label({className:"ip-label"}, modelo.periodo==="mes"?"Competência (mês)":"Data de referência"),
+            modelo.periodo==="mes"?input({className:"ip-input",type:"month",value:comp,onChange:function(e){setComp(e.target.value);}}):input({className:"ip-input",type:"date",value:comp,onChange:function(e){setComp(e.target.value);}})),
+          div(null,label({className:"ip-label"},"Responsável (elaborado por)"), input({className:"ip-input",value:resp,onChange:function(e){setResp(e.target.value);}}))),
+        (modelo.cabecalho||[]).map(function(c){ return campoBox(c.label, isoCampo(c,dados[c.k],function(v){setK(c.k,v);})); }),
+        corpo,
+        (modelo.rodape||[]).map(function(c){ return campoBox(c.label, isoCampo(c,dados[c.k],function(v){setK(c.k,v);})); }),
+        campoBox("Aprovado por (opcional)", input({className:"ip-input",value:aprov,onChange:function(e){setAprov(e.target.value);},placeholder:"Preencher na aprovação da Avanço"})),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:18,justifyContent:"flex-end",flexWrap:"wrap"}},
+          editing?button({className:"ip-btn ghost",disabled:busy,onClick:function(){ if(window.confirm("Excluir este registro?")) { setBusy(true); sb.from("iso_registros").delete().eq("id",reg0.id).then(function(){props.onSaved();}); } },style:{color:"var(--ip-danger)",marginRight:"auto"}},"Excluir"):null,
+          button({className:"ip-btn ghost",disabled:busy,onClick:function(){salvar(false);}},busy?"…":"Salvar rascunho"),
+          button({className:"ip-btn",disabled:busy,onClick:function(){salvar(true);}},busy?"…":"Concluir registro"))));
+  }
+
+  function IsoDocPDF(props){
+    var doc=props.doc, reg=props.registro, modelo=FORM_MODELOS[doc.codigo]||{};
+    var dados=reg?(reg.dados||{}):{};
+    var emissao=reg?(reg.concluido_em||reg.criado_em):new Date().toISOString();
+    function fmt(s){ try{return new Date(s).toLocaleDateString("pt-BR");}catch(e){return "—";} }
+    var tdH={textAlign:"left",padding:"6px 8px",borderBottom:"2px solid #456",fontSize:11,color:"#456"};
+    var tdC={padding:"6px 8px",borderBottom:"1px solid #dde",verticalAlign:"top"};
+    var meta=[["Código",doc.codigo],["Revisão",doc.revisao||"01"],[modelo.periodo==="mes"?"Competência":"Data ref.",reg?isoCompLabel(reg.competencia):"—"],["Nº registro",reg&&reg.numero?String(reg.numero):"—"]];
+    function corpo(){
+      if(modelo.layout==="checklist"||modelo.layout==="auditoria"){ var fonte=modelo.layout==="auditoria"?modelo.perguntas:modelo.itens;
+        return h("table",{style:{width:"100%",borderCollapse:"collapse",marginTop:10,fontSize:12.5}},
+          h("thead",null,h("tr",null,h("th",{style:tdH},modelo.layout==="auditoria"?"Cláusula / Pergunta":"Item"),h("th",{style:tdH},"Resultado"),h("th",{style:tdH},modelo.layout==="auditoria"?"Evidência":"Observação"))),
+          h("tbody",null,(fonte||[]).map(function(it,i){ var dv=(dados.itens&&dados.itens[i])||{};
+            return h("tr",{key:i}, h("td",{style:tdC},modelo.layout==="auditoria"?(it.c+" — "+it.q):it), h("td",{style:Object.assign({textAlign:"center"},tdC)},dv.resultado||"—"), h("td",{style:tdC},dv.obs||dv.evidencia||"—")); }))); }
+      if(modelo.layout==="tabela"){ var cols=modelo.colunas||[]; var linhas=dados.linhas||[];
+        return h("table",{style:{width:"100%",borderCollapse:"collapse",marginTop:10,fontSize:12}},
+          h("thead",null,h("tr",null,cols.map(function(c){return h("th",{key:c.k,style:tdH},c.label);}))),
+          h("tbody",null,linhas.length===0?h("tr",null,h("td",{colSpan:cols.length,style:tdC},"Sem registros.")):linhas.map(function(ln,i){return h("tr",{key:i},cols.map(function(c){return h("td",{key:c.k,style:tdC},ln[c.k]||"—");}));}))); }
+      var campos=(modelo.campos||[]).concat(modelo.rodape||[]);
+      return div({style:{marginTop:10}}, campos.map(function(c){ var v=dados[c.k]; if(v===undefined||v==="")v="—";
+        return div({key:c.k,style:{padding:"7px 0",borderBottom:"1px solid #eef"}}, div({style:{fontSize:10.5,letterSpacing:".4px",color:"#789",textTransform:"uppercase"}},c.label), div({style:{fontSize:13,marginTop:2,whiteSpace:"pre-wrap"}},String(v))); })); }
+    return div({className:"ip-view"},
+      div({className:"ip-noprint",style:{display:"flex",gap:10,marginBottom:16}},
+        button({className:"ip-btn ghost",onClick:props.onVoltar},"← Voltar"),
+        button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF / Imprimir")),
+      div({className:"ip-doc-print",style:{background:"#fff",color:"#1a2233",padding:38,maxWidth:820,margin:"0 auto",borderRadius:10}},
+        div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid #1f3a5f",paddingBottom:14,marginBottom:14}},
+          div(null, div({style:{fontWeight:700,fontSize:18,color:"#1f3a5f"}},"iP "+ISO_EMPRESA.nome), div({style:{fontSize:10.5,letterSpacing:".6px",color:"#789",marginTop:3}},"DOCUMENTO CONTROLADO · ISO 9001:2015")),
+          div({style:{textAlign:"right",fontSize:11.5,color:"#456"}}, div({style:{fontWeight:600,fontSize:14,color:"#1a2233"}},doc.titulo), div({style:{marginTop:3}},"Emitido em "+fmt(emissao)))),
+        h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:6}}, h("tbody",null,
+          h("tr",null, meta.map(function(m){return h("td",{key:m[0],style:{padding:"4px 8px",width:"25%"}}, span({style:{fontSize:10,color:"#789",textTransform:"uppercase",letterSpacing:".4px",display:"block"}},m[0]), span({style:{fontWeight:600}},m[1]||"—"));})))),
+        div({style:{display:"flex",justifyContent:"space-between",fontSize:12,padding:"6px 8px",background:"#f3f6fb",borderRadius:6}},
+          span(null, span({style:{color:"#789"}},"Cliente: "), strong(null,props.clienteNome||"—")),
+          span(null, span({style:{color:"#789"}},"Cláusulas: "), strong(null,(doc.clausulas||[]).join(", ")||"—"))),
+        corpo(),
+        div({style:{marginTop:26,display:"flex",justifyContent:"space-between",gap:24}},
+          div({style:{flex:1,textAlign:"center"}}, div({style:{borderTop:"1px solid #889",paddingTop:6,fontSize:11.5}},"Elaborado por"), div({style:{fontSize:12,marginTop:2}},reg&&reg.responsavel?reg.responsavel:ISO_EMPRESA.elaborador)),
+          div({style:{flex:1,textAlign:"center"}}, div({style:{borderTop:"1px solid #889",paddingTop:6,fontSize:11.5}},"Aprovado por"), div({style:{fontSize:12,marginTop:2}},reg&&reg.aprovado_por?reg.aprovado_por:" "))),
+        div({style:{marginTop:22,paddingTop:10,borderTop:"1px solid #dde",fontSize:10.5,color:"#789",textAlign:"center"}},ISO_EMPRESA.nome+" | CNPJ "+ISO_EMPRESA.cnpj+" | "+ISO_EMPRESA.tel)));
+  }
+
+  function IsoDocEstatico(props){
+    var doc=props.doc;
+    var e1=useState(false),editar=e1[0],setEditar=e1[1];
+    var c1=useState(doc.conteudo||""),conteudo=c1[0],setConteudo=c1[1];
+    var r1=useState(doc.revisao||"01"),rev=r1[0],setRev=r1[1];
+    var n1=useState(""),nota=n1[0],setNota=n1[1];
+    var b1=useState(false),busy=b1[0],setBusy=b1[1]; var m1=useState(null),msg=m1[0],setMsg=m1[1];
+    function salvar(){ setBusy(true); setMsg(null);
+      sb.auth.getUser().then(function(res){ var uid=res.data.user.id;
+        return sb.from("iso_versoes").insert({owner:uid,documento_id:doc.id,revisao:doc.revisao||"01",conteudo:doc.conteudo||"",alterado_por:(props.perfil?props.perfil.nome:"admin"),nota:nota||"Atualização"})
+          .then(function(){ return sb.from("iso_documentos").update({conteudo:conteudo,revisao:rev,vigente_desde:new Date().toISOString().slice(0,10)}).eq("id",doc.id); });
+      }).then(function(r){ if(r&&r.error) throw r.error; setBusy(false); setEditar(false); setMsg({t:"ok",m:"Documento atualizado (revisão "+rev+")."}); props.reload(); })
+        .catch(function(x){ setBusy(false); setMsg({t:"err",m:x.message||String(x)}); }); }
+    return div({className:"ip-view"},
+      div({style:{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap",alignItems:"center"}},
+        button({className:"ip-btn ghost",onClick:props.onVoltar},"← Voltar"),
+        span({className:"ip-tag",style:{color:"var(--ip-accent)"}},doc.codigo),
+        span({className:"ip-pill",style:{color:ISO_STAT_COR[doc.status]}},"rev "+(doc.revisao||"01")+" · "+doc.status),
+        !editar && button({className:"ip-btn",style:{marginLeft:"auto"},onClick:function(){setEditar(true);}},"✏️ Editar"),
+        !editar && button({className:"ip-btn ghost",onClick:function(){window.print();}},"🖨️ PDF")),
+      msg && div({className:"ip-msg "+msg.t,style:{marginBottom:12}},msg.m),
+      editar?div({className:"ip-card",style:{padding:22,maxWidth:880}},
+        h2({style:{fontWeight:300,marginTop:0}},doc.titulo),
+        div({style:{display:"grid",gridTemplateColumns:"120px 1fr",gap:12,marginBottom:12}},
+          div(null,label({className:"ip-label"},"Revisão"), input({className:"ip-input",value:rev,onChange:function(e){setRev(e.target.value);}})),
+          div(null,label({className:"ip-label"},"Nota da alteração"), input({className:"ip-input",value:nota,onChange:function(e){setNota(e.target.value);},placeholder:"Ex.: revisão anual, ajuste de VLAN…"}))),
+        textarea({className:"ip-input",rows:16,value:conteudo,onChange:function(e){setConteudo(e.target.value);},style:{resize:"vertical",fontFamily:"inherit",lineHeight:1.6}}),
+        div({style:{display:"flex",gap:10,marginTop:14,justifyContent:"flex-end"}},
+          button({className:"ip-btn ghost",onClick:function(){setEditar(false);setConteudo(doc.conteudo||"");setRev(doc.revisao||"01");}},"Cancelar"),
+          button({className:"ip-btn",disabled:busy,onClick:salvar},busy?"Salvando…":"Salvar nova revisão")))
+      : div({className:"ip-doc-print",style:{background:"#fff",color:"#1a2233",padding:38,maxWidth:820,margin:"0 auto",borderRadius:10}},
+        div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid #1f3a5f",paddingBottom:14,marginBottom:16}},
+          div(null, div({style:{fontWeight:700,fontSize:18,color:"#1f3a5f"}},"iP "+ISO_EMPRESA.nome), div({style:{fontSize:10.5,letterSpacing:".6px",color:"#789",marginTop:3}},"DOCUMENTO CONTROLADO · "+(ISO_TIPO_LABEL[doc.tipo]||doc.tipo))),
+          div({style:{textAlign:"right",fontSize:11.5,color:"#456"}}, div({style:{fontWeight:600,fontSize:13}},doc.codigo+" · rev "+(doc.revisao||"01")), div({style:{marginTop:3}},"Vigente desde "+(doc.vigente_desde||"—")))),
+        h2({style:{fontWeight:600,fontSize:18,color:"#1a2233",marginTop:0}},doc.titulo),
+        div({style:{fontSize:13.5,lineHeight:1.7,whiteSpace:"pre-wrap",marginTop:8}},doc.conteudo||"(sem conteúdo — clique em Editar)"),
+        div({style:{marginTop:22,paddingTop:10,borderTop:"1px solid #dde",fontSize:10.5,color:"#789",textAlign:"center"}},ISO_EMPRESA.nome+" | CNPJ "+ISO_EMPRESA.cnpj+" | "+ISO_EMPRESA.tel)));
+  }
+
+  function IsoAtivoEditor(props){
+    var a0=props.ativo||{}; var editing=!!a0.id;
+    var s=useState({categoria:a0.categoria||"outro",descricao:a0.descricao||"",marca_modelo:a0.marca_modelo||"",numero_serie:a0.numero_serie||"",localizacao:a0.localizacao||"",etiqueta:a0.etiqueta||"",quantidade:a0.quantidade||1,link:a0.link||"",obs:a0.obs||""}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
+      sb.auth.getUser().then(function(res){ var pl=Object.assign({},f,{quantidade:Number(f.quantidade||1)});
+        if(editing){ return sb.from("iso_ativos").update(pl).eq("id",a0.id); }
+        return sb.from("iso_ativos").insert(Object.assign({},pl,{owner:res.data.user.id,cliente_id:props.cliId}));
+      }).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function excluir(){ if(!editing||!window.confirm("Excluir este ativo?")) return; setBusy(true); sb.from("iso_ativos").delete().eq("id",a0.id).then(function(){props.onSaved();}); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}},editing?"Editar ativo":"Novo ativo"),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          campo("Categoria", select({className:"ip-input",value:f.categoria,onChange:set("categoria")}, Object.keys(ISO_CAT_ATIVO).map(function(k){return option({key:k,value:k},ISO_CAT_ATIVO[k]);}))),
+          campo("Quantidade", input({className:"ip-input",type:"number",min:"1",value:f.quantidade,onChange:set("quantidade")}))),
+        div({style:{marginTop:12}}, campo("Descrição", input({className:"ip-input",required:true,value:f.descricao,onChange:set("descricao")}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Marca / Modelo", input({className:"ip-input",value:f.marca_modelo,onChange:set("marca_modelo")})),
+          campo("Nº de série", input({className:"ip-input",value:f.numero_serie,onChange:set("numero_serie")}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Localização", input({className:"ip-input",value:f.localizacao,onChange:set("localizacao")})),
+          campo("Etiqueta", input({className:"ip-input",value:f.etiqueta,onChange:set("etiqueta")}))),
+        div({style:{marginTop:12}}, campo("Link (referência)", input({className:"ip-input",value:f.link,onChange:set("link")}))),
+        div({style:{marginTop:12}}, campo("Observações", textarea({className:"ip-input",rows:2,value:f.obs,onChange:set("obs")}))),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
+          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          div({style:{display:"flex",gap:10}}, button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"), button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar")))));
+  }
+
+  function Iso(props){
+    var docs=props.isoDocs||[], regs=props.isoRegs||[], ativos=props.isoAtivos||[], clientes=props.clientes||[], reload=props.reload;
+    var AVANCO="cb92c888-46bc-46b4-aa99-137cb29fa0d8";
+    var clientesIso=clientes.filter(function(c){ return docs.some(function(d){return d.cliente_id===c.id;}); });
+    if(clientesIso.length===0) clientesIso=clientes;
+    var defCli=(clientesIso.filter(function(c){return c.id===AVANCO;})[0]||clientesIso[0]||{}).id||"";
+    var c1=useState(defCli),cliId=c1[0],setCliId=c1[1];
+    var t1=useState("painel"),tab=t1[0],setTab=t1[1];
+    var ab=useState(null),aberto=ab[0],setAberto=ab[1];
+    var ed=useState(null),editAtivo=ed[0],setEditAtivo=ed[1];
+    var docsCli=docs.filter(function(d){return d.cliente_id===cliId;}).slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+    var regsCli=regs.filter(function(r){return r.cliente_id===cliId;});
+    var ativosCli=ativos.filter(function(a){return a.cliente_id===cliId;}).slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+    var cliNome=(clientes.filter(function(c){return c.id===cliId;})[0]||{}).nome||"—";
+    function abrirForm(doc,reg){ setAberto({tipo:"form",doc:doc,reg:reg||null}); }
+    function abrirDoc(doc){ if(doc.tipo==="form"){ setAberto({tipo:"escolher",doc:doc}); } else if(doc.tipo==="inventario"){ setTab("inventario"); setAberto(null); } else { setAberto({tipo:"estatico",doc:doc}); } }
+
+    if(aberto&&aberto.tipo==="form") return h(IsoForm,{doc:aberto.doc,registro:aberto.reg,cliId:cliId,registros:regsCli,perfil:props.perfil,onVoltar:function(){setAberto(null);},onSaved:function(){setAberto(null);reload();}});
+    if(aberto&&aberto.tipo==="pdf") return h(IsoDocPDF,{doc:aberto.doc,registro:aberto.reg,clienteNome:cliNome,onVoltar:function(){setAberto(aberto.from||null);}});
+    if(aberto&&aberto.tipo==="estatico") return h(IsoDocEstatico,{doc:aberto.doc,perfil:props.perfil,reload:reload,onVoltar:function(){setAberto(null);}});
+    if(aberto&&aberto.tipo==="escolher"){ var dsel=aberto.doc; var rr=regsCli.filter(function(r){return r.documento_codigo===dsel.codigo;}).sort(function(a,b){return (b.competencia||"").localeCompare(a.competencia||"");});
+      return div({className:"ip-view"},
+        div({style:{display:"flex",gap:10,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}, button({className:"ip-btn ghost",onClick:function(){setAberto(null);}},"← Voltar"), span({className:"ip-tag",style:{color:"var(--ip-accent)"}},dsel.codigo), h2({style:{fontWeight:300,margin:0,fontSize:18}},dsel.titulo)),
+        button({className:"ip-btn",onClick:function(){abrirForm(dsel,null);}},"+ Novo preenchimento"),
+        div({className:"ip-list ip-stagger",style:{marginTop:14}}, rr.length===0?div({className:"ip-card",style:{padding:18}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro ainda.")):rr.map(function(r){
+          return div({key:r.id,className:"ip-card ip-row"},
+            div({style:{flex:1,cursor:"pointer"},onClick:function(){abrirForm(dsel,r);}}, strong({style:{fontWeight:400}},"Nº "+(r.numero||"–")+" · "+isoCompLabel(r.competencia)), div({className:"ip-faint",style:{fontSize:12,marginTop:3}},(r.responsavel||"—"))),
+            span({className:"ip-pill",style:{color:ISO_STAT_COR[r.status]}},r.status),
+            button({className:"ip-btn ghost",style:{padding:"7px 11px"},onClick:function(){setAberto({tipo:"pdf",doc:dsel,registro:r,from:aberto});}},"PDF")); }))); }
+
+    var comp=isoCompAtual();
+    var mensais=docsCli.filter(function(d){return d.frequencia==="mensal";});
+    function regDoMes(codigo){ return regsCli.filter(function(r){return r.documento_codigo===codigo&&r.competencia===comp;})[0]; }
+    var feitosMes=mensais.filter(function(d){ var r=regDoMes(d.codigo); return r&&(r.status==="concluido"||r.status==="aprovado"); }).length;
+    var pctMes=mensais.length?Math.round(feitosMes/mensais.length*100):0;
+    var rncAbertas=regsCli.filter(function(r){return r.documento_codigo==="FOR-INC-001"&&r.dados&&r.dados.status_nc&&r.dados.status_nc!=="Fechada";}).length;
+    var mesAtualN=new Date().getMonth(); var semestralAlerta=(mesAtualN===5||mesAtualN===11);
+    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
+
+    function painel(){ return div(null,
+      div({className:"ip-kpis ip-stagger"},
+        kpi(pctMes+"%","Evidências do mês", pctMes>=100?"var(--ip-ok)":(pctMes>0?"var(--ip-warn)":"var(--ip-danger)")),
+        kpi(feitosMes+"/"+mensais.length,"Mensais concluídos",null),
+        kpi(docsCli.length,"Documentos controlados",null),
+        kpi(rncAbertas,"RNCs abertas", rncAbertas?"var(--ip-danger)":"var(--ip-ok)")),
+      div({className:"ip-card",style:{padding:20,marginTop:4}},
+        div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}, strong({style:{fontWeight:300,letterSpacing:".5px"}},"📌 Vence este mês — "+isoCompLabel(comp)), span({className:"ip-faint",style:{fontSize:12}},feitosMes+" de "+mensais.length)),
+        div({className:"ip-list"}, mensais.map(function(d){ var r=regDoMes(d.codigo); var ok=r&&(r.status==="concluido"||r.status==="aprovado");
+          return div({key:d.codigo,className:"ip-card ip-row",style:{borderLeft:"3px solid "+(ok?"var(--ip-ok)":"var(--ip-warn)")}},
+            div({style:{flex:1}}, strong({style:{fontWeight:400}},d.codigo+" · "+d.titulo), div({className:"ip-faint",style:{fontSize:12,marginTop:3}}, ok?("✓ concluído · Nº "+(r.numero||"–")):(r?"rascunho iniciado":"pendente"))),
+            button({className:"ip-btn "+(ok?"ghost":""),style:{padding:"7px 12px"},onClick:function(){ abrirForm(d,r||null); }}, ok?"Ver":"Preencher")); }))),
+      (semestralAlerta||rncAbertas>0)?div({className:"ip-card",style:{padding:16,marginTop:14,border:"1px solid rgba(217,164,65,.4)",background:"rgba(217,164,65,.08)"}},
+        strong({style:{fontWeight:400,color:"var(--ip-warn)"}},"⚠️ Alertas"),
+        div({className:"ip-list",style:{marginTop:8}},
+          semestralAlerta?div({className:"ip-faint",style:{fontSize:13}},"• Mês de auditoria interna semestral (FOR-AUD-001) — Jun/Dez."):null,
+          rncAbertas>0?div({className:"ip-faint",style:{fontSize:13}},"• "+rncAbertas+" não conformidade(s) aberta(s) aguardando tratamento."):null)):null); }
+
+    function listaDocs(){ var grupos={}; docsCli.forEach(function(d){ var s=d.secao||"Outros"; (grupos[s]=grupos[s]||[]).push(d); });
+      return div(null, Object.keys(grupos).sort().map(function(sec){ return div({key:sec,style:{marginBottom:16}},
+        div({className:"ip-faint",style:{fontSize:11.5,letterSpacing:".5px",margin:"4px 2px 8px",textTransform:"uppercase"}},sec),
+        div({className:"ip-list"}, grupos[sec].map(function(d){ var nReg=regsCli.filter(function(r){return r.documento_codigo===d.codigo;}).length;
+          return div({key:d.id,className:"ip-card ip-row",style:{cursor:"pointer"},onClick:function(){abrirDoc(d);}},
+            div({style:{flex:1}}, div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}, span({className:"ip-tag",style:{color:"var(--ip-accent)"}},d.codigo), strong({style:{fontWeight:400}},d.titulo)),
+              div({className:"ip-faint",style:{fontSize:11.5,marginTop:4}}, (ISO_TIPO_LABEL[d.tipo]||d.tipo)+" · "+(ISO_FREQ_LABEL[d.frequencia]||d.frequencia)+" · rev "+(d.revisao||"01")+(nReg?(" · "+nReg+" registro(s)"):""))),
+            span({className:"ip-pill",style:{color:ISO_STAT_COR[d.status]}},d.status),
+            span({className:"ip-faint",style:{fontSize:11.5}},"abrir →")); }))); })); }
+
+    function inventario(){ return div(null,
+      div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:10}},
+        div(null, strong({style:{fontWeight:300,letterSpacing:".5px"}},"🗄️ Inventário de Ativos — INV-ATI-001"), div({className:"ip-faint",style:{fontSize:12,marginTop:2}},ativosCli.length+" itens · "+ativosCli.reduce(function(s,a){return s+Number(a.quantidade||1);},0)+" unidades")),
+        button({className:"ip-btn",onClick:function(){setEditAtivo({});}},"+ Ativo")),
+      div({className:"ip-list ip-stagger"}, ativosCli.length===0?div({className:"ip-card",style:{padding:18}},p({className:"ip-muted",style:{margin:0}},"Sem ativos.")):ativosCli.map(function(a){
+        return div({key:a.id,className:"ip-card ip-row",style:{cursor:"pointer"},onClick:function(){setEditAtivo(a);}},
+          span({className:"ip-tag",style:{color:"var(--ip-accent)",minWidth:90}},ISO_CAT_ATIVO[a.categoria]||a.categoria),
+          div({style:{flex:1}}, strong({style:{fontWeight:400}},(a.quantidade>1?(a.quantidade+"× "):"")+a.descricao), div({className:"ip-faint",style:{fontSize:12,marginTop:3}},[a.marca_modelo,a.localizacao,a.numero_serie].filter(Boolean).join(" · ")||"—")),
+          span({className:"ip-faint",style:{fontSize:11.5}},"editar →")); }))); }
+
+    function arquivo(){ var ord=regsCli.slice().sort(function(a,b){return (b.criado_em||"").localeCompare(a.criado_em||"");});
+      return div(null, div({className:"ip-faint",style:{fontSize:12,marginBottom:10}},ord.length+" registros (evidências) — rastreabilidade para auditoria."),
+        div({className:"ip-list ip-stagger"}, ord.length===0?div({className:"ip-card",style:{padding:18}},p({className:"ip-muted",style:{margin:0}},"Nenhuma evidência registrada ainda.")):ord.map(function(r){ var d=docsCli.filter(function(x){return x.codigo===r.documento_codigo;})[0]||{titulo:r.documento_codigo};
+          return div({key:r.id,className:"ip-card ip-row"},
+            div({style:{flex:1,cursor:"pointer"},onClick:function(){abrirForm(d,r);}}, strong({style:{fontWeight:400}},r.documento_codigo+" · Nº "+(r.numero||"–")+" · "+isoCompLabel(r.competencia)), div({className:"ip-faint",style:{fontSize:12,marginTop:3}},d.titulo+" · "+(r.responsavel||"—"))),
+            span({className:"ip-pill",style:{color:ISO_STAT_COR[r.status]}},r.status),
+            button({className:"ip-btn ghost",style:{padding:"7px 11px"},onClick:function(){setAberto({tipo:"pdf",doc:d,registro:r,from:null});}},"PDF")); }))); }
+
+    var tabs=[["painel","Painel"],["docs","Documentos"],["inventario","Inventário"],["arquivo","Arquivo"]];
+    return div({className:"ip-view"},
+      topo("CONFORMIDADE · ISO 9001:2015","Qualidade ISO","Documentos controlados, evidências mensais e rastreabilidade da infraestrutura — fornecedor externo qualificado (8.4).",
+        clientesIso.length>1?select({className:"ip-input",style:{maxWidth:240},value:cliId,onChange:function(e){setCliId(e.target.value);}}, clientesIso.map(function(c){return option({key:c.id,value:c.id},c.nome);})):null),
+      div({className:"ip-toolbar"}, div({className:"ip-seg"}, tabs.map(function(o){ return button({key:o[0],className:tab===o[0]?"on":"",onClick:function(){setTab(o[0]);}},o[1]); }))),
+      tab==="painel"?painel():tab==="docs"?listaDocs():tab==="inventario"?inventario():arquivo(),
+      editAtivo!==null && h(IsoAtivoEditor,{ativo:editAtivo,cliId:cliId,onClose:function(){setEditAtivo(null);},onSaved:function(){setEditAtivo(null);reload();}}));
+  }
+
   /* ===================== SHELL ===================== */
   var MODULOS=[
     {id:"dashboard",ic:"🏠",nome:"Início"},
@@ -1185,6 +1503,7 @@ window.IP_LOGOS={
     {id:"docs",ic:"📁",nome:"Documentos"},
     {id:"relatorios",ic:"📊",nome:"Relatórios"},
     {id:"care",ic:"📦",nome:"Planos & Propostas"},
+    {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
 
@@ -1199,6 +1518,9 @@ window.IP_LOGOS={
     var s9=useState([]),anexos=s9[0],setAnexos=s9[1];
     var s11=useState(null),briefing=s11[0],setBriefing=s11[1];
     var s12=useState([]),notas=s12[0],setNotas=s12[1];
+    var s13=useState([]),isoDocs=s13[0],setIsoDocs=s13[1];
+    var s14=useState([]),isoRegs=s14[0],setIsoRegs=s14[1];
+    var s15=useState([]),isoAtivos=s15[0],setIsoAtivos=s15[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
 
@@ -1217,8 +1539,11 @@ window.IP_LOGOS={
           sb.from("lancamentos").select("*"),
           sb.from("anexos").select("*"),
           sb.from("briefings").select("*").order("data",{ascending:false}).limit(1),
-          sb.from("notas").select("*").order("atualizado_em",{ascending:false})
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); });
+          sb.from("notas").select("*").order("atualizado_em",{ascending:false}),
+          sb.from("iso_documentos").select("*").order("ordem",{ascending:true}),
+          sb.from("iso_registros").select("*"),
+          sb.from("iso_ativos").select("*").order("ordem",{ascending:true})
+        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); });
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
@@ -1226,15 +1551,17 @@ window.IP_LOGOS={
     if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
-    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,config:Configuracoes};
+    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,iso:Iso,config:Configuracoes};
+    var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
+    if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
 
     return div(null, h(BgFx),
       div({className:"ip-shell"},
         h("aside",{className:"ip-side"+(menu?" open":"")},
           div({className:"brand"}, Logo("hz","ip-brand-img")),
-          div({className:"ip-navwrap"}, MODULOS.map(function(m){
+          div({className:"ip-navwrap"}, modulosNav.map(function(m){
             return div({key:m.id,className:"ip-nav"+(view===m.id?" active":""), onClick:function(){ setView(m.id); setMenu(false); }},
               span({className:"ic"},m.ic), span(null,m.nome)); })),
           div({style:{margin:"12px 4px 6px",display:"flex",flexDirection:"column",gap:8}},
