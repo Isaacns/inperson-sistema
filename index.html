@@ -151,8 +151,8 @@ h1,h2,h3{font-weight:300}
 .ip-msg.ok{background:rgba(95,191,143,.12);border:1px solid rgba(95,191,143,.4);color:#A5DCBF}
 
 /* ---------- MODAIS GLASS ---------- */
-.ip-modal-bg{position:fixed;inset:0;background:rgba(1,5,16,.62);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;animation:ip-fadeup .25s ease both}
-.ip-modal{position:relative;width:100%;max-width:480px;padding:28px;border-radius:20px;animation:ip-fadeup .35s cubic-bezier(.2,.8,.2,1) both}
+.ip-modal-bg{position:fixed;inset:0;background:rgba(1,5,16,.62);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;overflow-y:auto;animation:ip-fadeup .25s ease both}
+.ip-modal{position:relative;width:100%;max-width:480px;max-height:calc(100vh - 40px);overflow-y:auto;padding:28px;border-radius:20px;margin:auto;animation:ip-fadeup .35s cubic-bezier(.2,.8,.2,1) both}
 
 /* ---------- UPGRADE ---------- */
 .ip-upbtn{position:relative;display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;border:1px solid rgba(180,210,235,.4);color:#eaf4fb;font-weight:600;letter-spacing:.6px;font-size:13px;cursor:pointer;overflow:hidden;background:linear-gradient(110deg,#0d2c45,#175a86,#33b6d8,#175a86,#0d2c45);background-size:220% auto;animation:ip-shimmer 5s linear infinite;box-shadow:0 6px 22px rgba(51,182,216,.3)}
@@ -980,6 +980,60 @@ window.IP_LOGOS={
         div({className:"ip-upfoot"}, button({className:"ip-btn",style:{padding:"12px 26px"},onClick:function(){ alert("Perfeito! Te aviso no lançamento. A base de cobrança (Stripe) já existe no vizio-core."); props.onClose(); }},"✨  Quero ser avisado"))));
   }
 
+  /* ===================== NOTAS (BLOCO DE NOTAS) ===================== */
+  var NOTA_CORS={azul:"rgba(116,176,216,.14)",verde:"rgba(95,191,143,.14)",amber:"rgba(217,164,65,.14)",roxo:"rgba(155,140,255,.14)",neutro:"rgba(255,255,255,.05)"};
+  function Notas(props){
+    var notas=props.notas, reload=props.reload;
+    var q=useState(""),busca=q[0],setBusca=q[1];
+    var ed=useState(null),edit=ed[0],setEdit=ed[1];
+    var termo=busca.trim().toLowerCase();
+    var lista=notas.slice()
+      .filter(function(n){ if(!termo) return true; return [n.titulo,n.corpo].join(" ").toLowerCase().indexOf(termo)>-1; })
+      .sort(function(a,b){ if((b.fixado?1:0)!==(a.fixado?1:0)) return (b.fixado?1:0)-(a.fixado?1:0); return (b.atualizado_em||"").localeCompare(a.atualizado_em||""); });
+    return div({className:"ip-view"},
+      topo("BLOCO DE NOTAS","Notas","Anotações rápidas, ideias e lembretes — sempre à mão.",
+        button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Nova nota")),
+      div({className:"ip-toolbar"}, input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar nas notas…",style:{maxWidth:320}})),
+      div({className:"ip-grid-cards ip-stagger",style:{gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))"}},
+        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhuma nota ainda. Clique em \"+ Nova nota\".")),
+        lista.map(function(n){ return div({key:n.id,className:"ip-card",style:{padding:16,minHeight:130,cursor:"pointer",background:NOTA_CORS[n.cor]||NOTA_CORS.azul,display:"flex",flexDirection:"column"},onClick:function(){setEdit(n);}},
+          div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}},
+            strong({style:{fontWeight:500,fontSize:14}},n.titulo||"(sem título)"),
+            n.fixado?span({title:"fixada"},"📌"):null),
+          div({className:"ip-muted",style:{fontSize:12.5,marginTop:8,whiteSpace:"pre-wrap",lineHeight:1.5,flex:1,overflow:"hidden"}}, (n.corpo||"").slice(0,240)),
+          div({className:"ip-faint",style:{fontSize:10.5,marginTop:10}}, "atualizada "+(n.atualizado_em?new Date(n.atualizado_em).toLocaleDateString("pt-BR"):"agora"))); })),
+      edit!==null && h(NotaEditor,{nota:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
+  }
+  function NotaEditor(props){
+    var n0=props.nota||{}; var editing=!!n0.id;
+    var s=useState({titulo:n0.titulo||"",corpo:n0.corpo||"",cor:n0.cor||"azul",fixado:!!n0.fixado}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function set(k,v){ var nn={}; nn[k]=v; setF(Object.assign({},f,nn)); }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
+      var payload={titulo:f.titulo,corpo:f.corpo,cor:f.cor,fixado:f.fixado,atualizado_em:new Date().toISOString()};
+      var op=editing?sb.from("notas").update(payload).eq("id",n0.id):sb.from("notas").insert(payload);
+      op.then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function excluir(){ if(!editing) return; if(!window.confirm("Excluir esta nota?")) return; setBusy(true); setErr(null);
+      sb.from("notas").delete().eq("id",n0.id).then(function(r){ if(r&&r.error){ setErr(r.error.message); setBusy(false); return; } props.onSaved(); }); }
+    var CORS=[["azul","Azul"],["verde","Verde"],["amber","Âmbar"],["roxo","Roxo"],["neutro","Neutro"]];
+    var swatch={azul:"#74B0D8",verde:"#5FBF8F",amber:"#D9A441",roxo:"#9B8CFF",neutro:"#8FA3BE"};
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}}, editing?"Editar nota":"Nova nota"),
+        input({className:"ip-input",value:f.titulo,onChange:function(e){set("titulo",e.target.value);},placeholder:"Título",style:{marginBottom:12}}),
+        textarea({className:"ip-input",rows:8,value:f.corpo,onChange:function(e){set("corpo",e.target.value);},placeholder:"Escreva aqui…",style:{resize:"vertical"}}),
+        div({style:{display:"flex",alignItems:"center",gap:10,marginTop:12,flexWrap:"wrap"}},
+          span({className:"ip-faint",style:{fontSize:12}},"Cor:"),
+          CORS.map(function(c){ return span({key:c[0],onClick:function(){set("cor",c[0]);},title:c[1],style:{width:22,height:22,borderRadius:99,background:swatch[c[0]],cursor:"pointer",display:"inline-block",border:f.cor===c[0]?"2px solid #FAFAFA":"2px solid transparent"}}); }),
+          label({style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",marginLeft:"auto",cursor:"pointer"}}, input({type:"checkbox",checked:f.fixado,onChange:function(e){set("fixado",e.target.checked);}}), "📌 Fixar")),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
+          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          div({style:{display:"flex",gap:10}},
+            button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+            button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar nota")))));
+  }
+
   /* ===================== PLANOS & PROPOSTAS (INPERSON CARE) ===================== */
   var CARE_PLANOS=[
     {id:"essencial",nome:"INPERSON Care · Essencial",preco:890,cor:"#8FA3BE",resumo:"Cobertura essencial para manter tudo funcionando.",itens:["Suporte remoto em horário comercial","Monitoramento básico de disponibilidade","1 visita técnica preventiva/mês","SLA de resposta: 8h úteis","Verificação mensal de backup","Relatório mensal simplificado"]},
@@ -1062,6 +1116,7 @@ window.IP_LOGOS={
     {id:"dashboard",ic:"🏠",nome:"Início"},
     {id:"assistente",ic:"🤖",nome:"Assistente IA"},
     {id:"agenda",ic:"📅",nome:"Agenda de Registros"},
+    {id:"notas",ic:"📝",nome:"Notas"},
     {id:"projetos",ic:"🧩",nome:"Projetos & Softwares"},
     {id:"clientes",ic:"👥",nome:"Clientes"},
     {id:"financeiro",ic:"💰",nome:"Financeiro"},
@@ -1081,6 +1136,7 @@ window.IP_LOGOS={
     var s8=useState([]),lancamentos=s8[0],setLancamentos=s8[1];
     var s9=useState([]),anexos=s9[0],setAnexos=s9[1];
     var s11=useState(null),briefing=s11[0],setBriefing=s11[1];
+    var s12=useState([]),notas=s12[0],setNotas=s12[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
 
@@ -1098,8 +1154,9 @@ window.IP_LOGOS={
           sb.from("clientes").select("*").order("ordem",{ascending:true}),
           sb.from("lancamentos").select("*"),
           sb.from("anexos").select("*"),
-          sb.from("briefings").select("*").order("data",{ascending:false}).limit(1)
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); });
+          sb.from("briefings").select("*").order("data",{ascending:false}).limit(1),
+          sb.from("notas").select("*").order("atualizado_em",{ascending:false})
+        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); });
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
@@ -1107,8 +1164,8 @@ window.IP_LOGOS={
     if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
-    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,config:Configuracoes};
+    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,config:Configuracoes};
     var body=h(VIEWS[view]||Dashboard, P);
 
     return div(null, h(BgFx),
