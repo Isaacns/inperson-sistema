@@ -269,7 +269,7 @@ window.INPERSON_CONFIG = {
   SUPABASE_KEY: "sb_publishable_PY2YDxUzGgaXRVtvCcasBA_Ml7YUBTC",
   APP_NOME: "Sistema INPERSON",
   APP_VERSAO: "v1.3 · IA+",
-  APP_URL: "https://isaacns.github.io/inperson-sistema/",
+  APP_URL: "https://inpersonaltec.com.br/",
   LOGIN_SUGERIDO: "isaacnogueira.ti@gmail.com"
 };
 
@@ -1413,15 +1413,37 @@ window.IP_LOGOS={
           div({style:{display:"flex",gap:10}}, button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"), button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar")))));
   }
 
-  // ---------- marca / capa INPERSON (vetorial) ----------
-  function IsoMarca(tam){ var s=tam||120;
-    return h("svg",{viewBox:"0 0 120 130",width:s,height:Math.round(s*1.08),fill:"none",style:{display:"block"}},
-      h("circle",{cx:28,cy:18,r:7,stroke:"#2E6FE6",strokeWidth:5}),
-      h("path",{d:"M28 34 V104",stroke:"#2E6FE6",strokeWidth:6,strokeLinecap:"round"}),
-      h("path",{d:"M64 104 V26 H92 a20 20 0 0 1 0 40 H64",stroke:"#2E6FE6",strokeWidth:6,strokeLinecap:"round",strokeLinejoin:"round"})); }
-  function IsoWordmark(fs){ var f=fs||34;
-    return div({style:{display:"flex",alignItems:"center",justifyContent:"center",gap:f*0.34,fontWeight:300,fontSize:f,letterSpacing:f*0.16+"px",color:"#1a2233"}},
-      span(null,"I"),span(null,"N"),span(null,"P"),span({style:{color:"#2E6FE6"}},"E"),span(null,"R"),span(null,"S"),span(null,"O"),span(null,"N")); }
+  // ---------- identidade visual INPERSON (vetorial, fiel ao padrão 2026) ----------
+  var ISO_AZUL="#0A5BFD", ISO_AZUL_NEON="#2E8BFF", ISO_NAVY="#15233a";
+  function IsoMarca(tam,cor){ var s=tam||120; var c=cor||ISO_AZUL;
+    return h("svg",{viewBox:"0 0 130 124",width:s,height:Math.round(s*0.95),fill:"none",style:{display:"block"}},
+      h("circle",{cx:34,cy:20,r:7.5,stroke:c,strokeWidth:5}),
+      h("path",{d:"M34 37 V92 a15 15 0 0 0 15 15",stroke:c,strokeWidth:7,strokeLinecap:"round"}),
+      h("path",{d:"M64 107 V23 H88 a23 23 0 0 1 0 46 H64",stroke:c,strokeWidth:7,strokeLinecap:"round",strokeLinejoin:"round"})); }
+  function IsoBarE(cor,fs){ var t=Math.max(2,Math.round(fs*0.085));
+    return h("span",{style:{display:"inline-flex",flexDirection:"column",justifyContent:"space-between",height:fs*0.74,width:fs*0.52,verticalAlign:"middle",margin:"0 "+(fs*0.04)+"px"}},
+      span({style:{height:t,background:cor,borderRadius:t,width:"100%"}}),
+      span({style:{height:t,background:cor,borderRadius:t,width:"82%"}}),
+      span({style:{height:t,background:cor,borderRadius:t,width:"100%"}})); }
+  function IsoWordmark(fs,corTexto){ var f=fs||34; var ct=corTexto||ISO_NAVY;
+    var L=function(c){return span({style:{color:ct}},c);};
+    return div({style:{display:"flex",alignItems:"center",justifyContent:"center",gap:f*0.28,fontWeight:300,fontSize:f,letterSpacing:f*0.05+"px",lineHeight:1,fontFamily:"var(--ip-font)"}},
+      L("I"),L("N"),L("P"),IsoBarE(ISO_AZUL,f),L("R"),L("S"),L("O"),L("N")); }
+  function IsoCantos(cor){ var c=cor||ISO_AZUL; var ln={position:"absolute",borderColor:c,borderStyle:"solid",opacity:.5};
+    return [
+      h("div",{key:"tr",style:Object.assign({},ln,{top:-1,right:-1,width:150,height:118,borderWidth:"1.4px 1.4px 0 0",borderTopRightRadius:10,borderBottomLeftRadius:42})}),
+      h("div",{key:"trd",style:{position:"absolute",top:128,right:34,display:"flex",gap:6}}, [0,1,2,3].map(function(i){return span({key:i,style:{width:4,height:4,borderRadius:9,background:c,opacity:.55}});})),
+      h("div",{key:"bl",style:Object.assign({},ln,{bottom:-1,left:-1,width:150,height:118,borderWidth:"0 0 1.4px 1.4px",borderBottomLeftRadius:10,borderTopRightRadius:42})}),
+      h("div",{key:"bld",style:{position:"absolute",bottom:50,left:34,display:"flex",gap:7}}, [0,1,2,3,4,5].map(function(i){return span({key:i,style:{width:4,height:4,borderRadius:9,background:c,opacity:.5}});}))
+    ]; }
+  function IsoCapaHeader(cor,corTexto,corTag){
+    return div({style:{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}},
+      div({style:{display:"flex",justifyContent:"center"}},IsoMarca(94,cor)),
+      div({style:{marginTop:16}},IsoWordmark(36,corTexto)),
+      div({style:{fontSize:11.5,letterSpacing:"6px",color:corTag,marginTop:8,fontWeight:300}},"PERSONAL TECNOLÓGICO"),
+      div({style:{display:"flex",alignItems:"center",gap:10,margin:"26px 0",width:300}}, div({style:{flex:1,height:1,background:corTag,opacity:.4}}), span({style:{width:7,height:7,borderRadius:9,background:cor}}), div({style:{flex:1,height:1,background:corTag,opacity:.4}})),
+      div({style:{fontSize:12.5,letterSpacing:"3px",color:corTexto,opacity:.85,lineHeight:1.7}},"SOLUÇÕES TECNOLÓGICAS PERSONALIZADAS"),
+      div({style:{fontSize:12.5,letterSpacing:"3px",color:corTexto,opacity:.85}},"PARA SUA ROTINA")); }
 
   function IsoRelatorio(props){
     var cfg=props.cfg, docs=props.docs||[], regs=props.regs||[], ativos=props.ativos||[];
