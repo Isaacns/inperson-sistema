@@ -238,7 +238,7 @@ h1,h2,h3{font-weight:300}
 .bub{filter:blur(.3px)}
 
 /* ===== v0.7 — Matrix azul (fluxo de energia) + logo de fundo colorida e em movimento ===== */
-.ip-rain{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.5;mix-blend-mode:screen;pointer-events:none}
+.ip-rain{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.62;mix-blend-mode:screen;pointer-events:none}
 .ip-watermark{left:auto;right:4vw;top:50%;width:58vh;height:58vh;opacity:.22;transform:translateY(-50%);animation:ip-wm3 14s ease-in-out infinite;z-index:1}
 .ip-watermark img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 26px rgba(116,176,216,.6)) saturate(1.25) brightness(1.1)}
 @keyframes ip-wm3{0%{transform:translateY(-50%) translateX(0) scale(1) rotate(0deg);opacity:.20}25%{transform:translateY(-54%) translateX(-1vw) scale(1.05) rotate(2.5deg);opacity:.26}50%{transform:translateY(-50%) translateX(0) scale(1.08) rotate(0deg);opacity:.30}75%{transform:translateY(-46%) translateX(1vw) scale(1.05) rotate(-2.5deg);opacity:.26}100%{transform:translateY(-50%) translateX(0) scale(1) rotate(0deg);opacity:.20}}
@@ -319,27 +319,45 @@ window.IP_LOGOS={
   function rainRef(cv){
     if(!cv || cv._ip) return; cv._ip=true;
     var ctx=cv.getContext("2d");
-    var WORDS=["Amor","Prosperidade","Gratidão","Abundância","Força","Princípios","Valores","Crescimento","Sorte","Sucesso","Aura","Eu Sou","Felicidade","Alegria","Riqueza","Liberdade"];
-    var toks=[];
-    function spawn(t,initial){ t.txt=WORDS[(Math.random()*WORDS.length)|0]; t.x=Math.random(); t.sp=0.14+Math.random()*0.26; t.size=13+Math.random()*8; t.a=0.20+Math.random()*0.46; t.y=initial?Math.random()*cv.height:cv.height+24+Math.random()*160; }
-    function init(){ cv.width=window.innerWidth; cv.height=window.innerHeight; toks=[]; var n=Math.max(12,Math.round(cv.width/110)); for(var i=0;i<n;i++){ var t={}; spawn(t,true); toks.push(t); } }
-    init(); window.addEventListener("resize",init);
+    var WORDS=["Amor","Prosperidade","Gratidão","Abundância","Força","Princípios","Valores","Crescimento","Sorte","Sucesso","Aura","Eu Sou","Felicidade","Alegria","Riqueza","Liberdade","Fé","Foco","Disciplina","Propósito","Vitória","Coragem","Sabedoria","Paz","Saúde","Energia","Confiança","Determinação","Conquista","Grandeza","Inspiração","Evolução","Resiliência","Equilíbrio","Plenitude","Realização"];
+    var parts=[], ready=false, phase="form", pt=0;
+    var img=new Image();
+    function build(){
+      var W=cv.width=window.innerWidth, H=cv.height=window.innerHeight;
+      var size=Math.min(H*0.72, W*0.52), ox=(W-size)/2, oy=(H-size)/2;
+      var S=150, oc=document.createElement("canvas"); oc.width=oc.height=S;
+      var octx=oc.getContext("2d"); octx.clearRect(0,0,S,S); octx.drawImage(img,0,0,S,S);
+      var d; try{ d=octx.getImageData(0,0,S,S).data; }catch(e){ return; }
+      var pts=[];
+      for(var y=0;y<S;y+=4){ for(var x=0;x<S;x+=4){ if(d[(y*S+x)*4+3]>70){ pts.push([ox+(x/S)*size, oy+(y/S)*size]); } } }
+      for(var i=pts.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=pts[i]; pts[i]=pts[j]; pts[j]=tmp; }
+      pts=pts.slice(0, Math.min(pts.length, 92));
+      parts=pts.map(function(tp,i){ return { w:WORDS[i%WORDS.length], tx:tp[0], ty:tp[1], x:Math.random()*W, y:H+30+Math.random()*H*0.8, locked:false, sz:11+Math.random()*5, vy:0, dx:0 }; });
+      ready=true; phase="form"; pt=0;
+    }
+    img.onload=build; img.src=(window.IP_LOGOS&&window.IP_LOGOS.mark)||"";
+    window.addEventListener("resize",function(){ if(img.complete && img.naturalWidth) build(); });
     function draw(){
-      ctx.fillStyle="rgba(1,5,16,0.05)"; ctx.fillRect(0,0,cv.width,cv.height);
-      ctx.textAlign="center";
-      for(var i=0;i<toks.length;i++){ var t=toks[i];
-        ctx.font="300 "+t.size+"px 'Segoe UI', Inter, sans-serif";
-        ctx.shadowColor="rgba(116,176,216,0.55)"; ctx.shadowBlur=9;
-        ctx.fillStyle="rgba(160,206,238,"+t.a+")";
-        ctx.fillText(t.txt, t.x*cv.width, t.y);
-        ctx.shadowBlur=0;
-        t.y-=t.sp;
-        if(t.y<-26){ spawn(t,false); }
+      if(!cv.isConnected) return;
+      ctx.fillStyle="rgba(1,5,16,0.16)"; ctx.fillRect(0,0,cv.width,cv.height);
+      if(ready){
+        ctx.textAlign="center"; var all=true;
+        for(var i=0;i<parts.length;i++){ var q=parts[i];
+          if(phase==="form"){ q.x+=(q.tx-q.x)*0.085; q.y+=(q.ty-q.y)*0.085; if(Math.abs(q.x-q.tx)<1.2 && Math.abs(q.y-q.ty)<1.2){ q.locked=true; } else { all=false; } }
+          else { q.y+=q.vy; q.x+=q.dx; }
+          ctx.font="600 "+q.sz+"px 'Segoe UI', Inter, sans-serif";
+          ctx.shadowColor="rgba(116,176,216,0.9)"; ctx.shadowBlur=q.locked?13:6;
+          ctx.fillStyle="rgba(116,176,216,"+(q.locked?0.95:0.55)+")";
+          ctx.fillText(q.w, q.x, q.y); ctx.shadowBlur=0;
+        }
+        if(phase==="form" && all){ pt++; if(pt>260){ phase="scatter"; pt=0; for(var a=0;a<parts.length;a++){ parts[a].locked=false; parts[a].vy=-(1.4+Math.random()*2.6); parts[a].dx=(Math.random()-0.5)*1.2; } } }
+        else if(phase==="scatter"){ pt++; if(pt>140){ for(var b=0;b<parts.length;b++){ parts[b].x=Math.random()*cv.width; parts[b].y=cv.height+30+Math.random()*cv.height*0.8; parts[b].vy=0; parts[b].dx=0; parts[b].w=WORDS[(Math.random()*WORDS.length)|0]; } phase="form"; pt=0; } }
       }
-      if(cv.isConnected) requestAnimationFrame(draw);
+      requestAnimationFrame(draw);
     }
     draw();
   }
+
   function BgFx(){
     return div({className:"ip-bgfx"},
       span({className:"ip-blob b1"}), span({className:"ip-blob b2"}), span({className:"ip-blob b3"}),
