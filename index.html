@@ -299,7 +299,7 @@ window.IP_LOGOS={
   var useState = React.useState, useEffect = React.useEffect, useCallback = React.useCallback;
   var CFG = window.INPERSON_CONFIG || {};
   var L = window.IP_LOGOS || {};
-  var sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
+  var sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY, {auth:{storage:window.sessionStorage, persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
   var IP_STANDALONE = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone===true;
 
   function E(t){ return function(p){ var c=[].slice.call(arguments,1); return h.apply(null,[t,p].concat(c)); }; }
@@ -317,6 +317,19 @@ window.IP_LOGOS={
   var STATUS_LABEL={no_ar:"No ar",desenvolvimento:"Em desenvolvimento",planejado:"Planejado",manutencao:"Manutenção",ativo:"Ativo",prospect:"Prospect",pausado:"Pausado"};
 
   function Logo(k,cls,style){ return img({src:L[k],alt:"INPERSON",className:cls,style:style,draggable:false}); }
+  function PasswordInput(props){
+    var st=useState(false),show=st[0],setShow=st[1];
+    var ip=Object.assign({},props,{type:show?"text":"password",style:Object.assign({width:"100%",paddingRight:"42px"},props.style||{})});
+    return div({style:{position:"relative"}},
+      input(ip),
+      span({onClick:function(){setShow(!show);},title:show?"Ocultar senha":"Mostrar senha",
+        style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:15,opacity:.7,userSelect:"none"}}, show?"🙈":"👁️"));
+  }
+  function useCanInstall(){
+    var s=useState(!!window.IP_CANINSTALL && !IP_STANDALONE),can=s[0],setCan=s[1];
+    useEffect(function(){ function u(){ setCan(!!window.IP_CANINSTALL && !IP_STANDALONE); } window.addEventListener("ip-installchange",u); return function(){ window.removeEventListener("ip-installchange",u); }; },[]);
+    return can;
+  }
   function bgRef(cv){
     if(!cv || cv._ip) return; cv._ip=true;
     var ctx=cv.getContext("2d");
@@ -416,6 +429,7 @@ window.IP_LOGOS={
     var e2=useState(""),senha=e2[0],setSenha=e2[1];
     var e4=useState(null),msg=e4[0],setMsg=e4[1];
     var e5=useState(false),busy=e5[0],setBusy=e5[1];
+    var canInstall=useCanInstall();
     function traduz(m){ if(/Invalid login/i.test(m)) return "E-mail ou senha inválidos."; if(/Email not confirmed/i.test(m)) return "E-mail ainda não confirmado."; return m; }
     function submit(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
       sb.auth.signInWithPassword({email:email,password:senha}).then(function(r){ if(r.error) throw r.error; })
@@ -427,11 +441,11 @@ window.IP_LOGOS={
           label({className:"ip-label"},"E-mail"),
           input({className:"ip-input",type:"email",required:true,value:email,onChange:function(e){setEmail(e.target.value);},placeholder:"voce@email.com",style:{marginBottom:12}}),
           label({className:"ip-label"},"Senha"),
-          input({className:"ip-input",type:"password",required:true,value:senha,onChange:function(e){setSenha(e.target.value);},placeholder:"••••••••"}),
+          h(PasswordInput,{className:"ip-input",required:true,value:senha,onChange:function(e){setSenha(e.target.value);},placeholder:"••••••••"}),
           msg && div({className:"ip-msg "+msg.t},msg.m),
           button({className:"ip-btn",style:{width:"100%",marginTop:18},disabled:busy}, busy?"Entrando…":"Entrar no Sistema")),
         p({className:"ip-faint",style:{textAlign:"center",marginTop:16,fontSize:11.5,letterSpacing:".5px"}},"🔒 Acesso Restrito"),
-        (!IP_STANDALONE) && button({className:"ip-btn ghost",type:"button",style:{width:"100%",marginTop:14,fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app no dispositivo")));
+        canInstall && button({className:"ip-btn ghost",type:"button",style:{width:"100%",marginTop:14,fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app no dispositivo")));
   }
 
   /* ===================== DASHBOARD ===================== */
@@ -932,8 +946,8 @@ window.IP_LOGOS={
       h3({style:{fontWeight:300,marginTop:0}},"🔑 Segurança — alterar senha"),
       form({onSubmit:salvar},
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-          div(null,label({className:"ip-label"},"Nova senha"), input({className:"ip-input",type:"password",value:s1,onChange:function(e){set1(e.target.value);},placeholder:"mín. 6 caracteres"})),
-          div(null,label({className:"ip-label"},"Confirmar"), input({className:"ip-input",type:"password",value:s2,onChange:function(e){set2(e.target.value);}}))),
+          div(null,label({className:"ip-label"},"Nova senha"), h(PasswordInput,{className:"ip-input",value:s1,onChange:function(e){set1(e.target.value);},placeholder:"mín. 6 caracteres"})),
+          div(null,label({className:"ip-label"},"Confirmar"), h(PasswordInput,{className:"ip-input",value:s2,onChange:function(e){set2(e.target.value);}}))),
         msg && div({className:"ip-msg "+msg.t},msg.m),
         div({style:{marginTop:12}}, button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Alterar senha"))));
   }
@@ -1524,11 +1538,18 @@ window.IP_LOGOS={
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
 
+    var canInstall=useCanInstall();
     useEffect(function(){
       sb.auth.getSession().then(function(r){ setSessao(r.data.session); });
       var sub=sb.auth.onAuthStateChange(function(_e,sess){ setSessao(sess); });
       return function(){ sub.data.subscription.unsubscribe(); };
     },[]);
+    useEffect(function(){ if(!sessao) return; var t,TO=20*60*1000;
+      function reset(){ clearTimeout(t); t=setTimeout(function(){ try{sb.auth.signOut();}catch(_e){} }, TO); }
+      var evs=["mousemove","keydown","mousedown","scroll","touchstart"];
+      evs.forEach(function(ev){ window.addEventListener(ev,reset,{passive:true}); }); reset();
+      return function(){ clearTimeout(t); evs.forEach(function(ev){ window.removeEventListener(ev,reset); }); };
+    },[sessao]);
     var carregar=useCallback(function(){
       sb.auth.getUser().then(function(res){ var user=res.data.user; if(!user) return;
         return Promise.all([
@@ -1566,7 +1587,7 @@ window.IP_LOGOS={
               span({className:"ic"},m.ic), span(null,m.nome)); })),
           div({style:{margin:"12px 4px 6px",display:"flex",flexDirection:"column",gap:8}},
             button({className:"ip-upbtn",onClick:function(){setUpgrade(true);}}, span({className:"spark"},"✦"), "UPGRADE"),
-            (!IP_STANDALONE) && button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
+            canInstall && button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
           div({className:"ip-sidefoot"},
             div({style:{padding:"4px 8px"}}, div({style:{fontSize:13}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
             button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
@@ -1579,9 +1600,10 @@ window.IP_LOGOS={
 
   function fatal(msg){ var r=document.getElementById("root"); if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar</h2><pre>'+String(msg).replace(/</g,"&lt;")+'</pre></div>'; }
   function auraInit(){ if(document.querySelector(".ip-aura")) return; var el=document.createElement("div"); el.className="ip-aura"; document.body.appendChild(el); var raf=0,cx=innerWidth/2,cy=innerHeight*0.35; window.addEventListener("mousemove",function(e){ cx=e.clientX; cy=e.clientY; if(!raf){ raf=requestAnimationFrame(function(){ el.style.left=cx+"px"; el.style.top=cy+"px"; raf=0; }); } }); }
-  var deferredPrompt=null;
-  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferredPrompt=e; });
-  window.ipInstall=function(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; } else { alert("Para instalar como app: no Chrome/Edge do computador, clique no ícone de instalar na barra de endereço ou menu (⋮) → \"Instalar Sistema INPERSON\". No celular: menu → \"Adicionar à tela inicial\"."); } };
+  var deferredPrompt=null; window.IP_CANINSTALL=false;
+  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferredPrompt=e; window.IP_CANINSTALL=true; window.dispatchEvent(new Event("ip-installchange")); });
+  window.addEventListener("appinstalled",function(){ deferredPrompt=null; window.IP_CANINSTALL=false; window.dispatchEvent(new Event("ip-installchange")); });
+  window.ipInstall=function(){ if(!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(function(){ deferredPrompt=null; window.IP_CANINSTALL=false; window.dispatchEvent(new Event("ip-installchange")); }); };
   window.addEventListener("error",function(e){ if(!document.querySelector(".ip-shell, .ip-auth")) fatal(e.message||e.error||"erro"); });
   try{
     if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas não carregaram.");
