@@ -845,7 +845,7 @@ window.IP_LOGOS={
     var n=useState(perfil?perfil.nome||"":""),nome=n[0],setNome=n[1]; var ms=useState(null),msg=ms[0],setMsg=ms[1];
     function salvarPerfil(){ sb.from("perfis").update({nome:nome}).eq("id",perfil.id).then(function(r){ setMsg(r.error?{t:"err",m:r.error.message}:{t:"ok",m:"Perfil atualizado."}); reload(); }); }
     return div({className:"ip-view"},
-      topo("AJUSTES","Configurações","Perfil, acessos aos sistemas e usuários."),
+      topo("AJUSTES","Configurações","Perfil, segurança, empresa, sistemas, usuários e backup."),
       div({className:"ip-card",style:{padding:20,marginBottom:16}},
         h3({style:{fontWeight:300,marginTop:0}},"👤 Meu perfil"),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
@@ -854,8 +854,60 @@ window.IP_LOGOS={
         div({style:{marginTop:8,fontSize:12,color:"var(--ip-muted)"}},"Papel: "+(perfil?(perfil.role_label||perfil.papel):"-")),
         msg && div({className:"ip-msg "+msg.t},msg.m),
         div({style:{marginTop:12}}, button({className:"ip-btn",onClick:salvarPerfil},"Salvar perfil"))),
+      h(AlterarSenha),
+      isAdmin && h(EmpresaCard),
       isAdmin && h(SistemasEditor,{sistemas:sistemas,reload:reload}),
-      isAdmin && h(UsuariosAdmin));
+      isAdmin && h(UsuariosAdmin),
+      isAdmin && h(BackupCard,{registros:props.registros,clientes:props.clientes,lancamentos:props.lancamentos,sistemas:sistemas}));
+  }
+  function AlterarSenha(){
+    var p1=useState(""),s1=p1[0],set1=p1[1]; var p2=useState(""),s2=p2[0],set2=p2[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var m=useState(null),msg=m[0],setMsg=m[1];
+    function salvar(ev){ ev.preventDefault(); if(s1.length<6){ setMsg({t:"err",m:"Mínimo de 6 caracteres."}); return; } if(s1!==s2){ setMsg({t:"err",m:"As senhas não conferem."}); return; }
+      setBusy(true); setMsg(null);
+      sb.auth.updateUser({password:s1}).then(function(r){ if(r.error){ setMsg({t:"err",m:r.error.message}); } else { setMsg({t:"ok",m:"Senha alterada com sucesso."}); set1(""); set2(""); } setBusy(false); }); }
+    return div({className:"ip-card",style:{padding:20,marginBottom:16}},
+      h3({style:{fontWeight:300,marginTop:0}},"🔑 Segurança — alterar senha"),
+      form({onSubmit:salvar},
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          div(null,label({className:"ip-label"},"Nova senha"), input({className:"ip-input",type:"password",value:s1,onChange:function(e){set1(e.target.value);},placeholder:"mín. 6 caracteres"})),
+          div(null,label({className:"ip-label"},"Confirmar"), input({className:"ip-input",type:"password",value:s2,onChange:function(e){set2(e.target.value);}}))),
+        msg && div({className:"ip-msg "+msg.t},msg.m),
+        div({style:{marginTop:12}}, button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Alterar senha"))));
+  }
+  function EmpresaCard(){
+    var d=useState({nome:"",cnpj:"",contato:"",email:"",telefone:"",cidade:""}),f=d[0],setF=d[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var m=useState(null),msg=m[0],setMsg=m[1];
+    useEffect(function(){ sb.from("config").select("valor").eq("chave","empresa").maybeSingle().then(function(r){ if(r.data&&r.data.valor) setF(Object.assign({nome:"",cnpj:"",contato:"",email:"",telefone:"",cidade:""},r.data.valor)); }); },[]);
+    function set(k){ return function(e){ var nn={}; nn[k]=e.target.value; setF(Object.assign({},f,nn)); }; }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
+      sb.from("config").upsert({chave:"empresa",valor:f},{onConflict:"chave"}).then(function(r){ setMsg(r.error?{t:"err",m:r.error.message}:{t:"ok",m:"Dados da empresa salvos."}); setBusy(false); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-card",style:{padding:20,marginBottom:16}},
+      h3({style:{fontWeight:300,marginTop:0}},"🏢 Dados da empresa"),
+      p({className:"ip-sub",style:{marginTop:0}},"Usados nas propostas (INPERSON Care) e na futura página pública."),
+      form({onSubmit:salvar},
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          campo("Razão social / Nome", input({className:"ip-input",value:f.nome,onChange:set("nome"),placeholder:"INPERSON Soluções em Tecnologia"})),
+          campo("CNPJ", input({className:"ip-input",value:f.cnpj,onChange:set("cnpj"),placeholder:"00.000.000/0001-00"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("E-mail", input({className:"ip-input",value:f.email,onChange:set("email"),placeholder:"contato@inpersonaltec.com.br"})),
+          campo("Telefone / WhatsApp", input({className:"ip-input",value:f.telefone,onChange:set("telefone"),placeholder:"(00) 00000-0000"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Responsável / Contato", input({className:"ip-input",value:f.contato,onChange:set("contato"),placeholder:"Isaac Nogueira"})),
+          campo("Cidade/UF", input({className:"ip-input",value:f.cidade,onChange:set("cidade"),placeholder:"Salvador/BA"}))),
+        msg && div({className:"ip-msg "+msg.t},msg.m),
+        div({style:{marginTop:12}}, button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar dados da empresa"))));
+  }
+  function BackupCard(props){
+    var m=useState(null),msg=m[0],setMsg=m[1];
+    function exportar(){ var dump={ exportado_em:new Date().toISOString(), registros:props.registros, clientes:props.clientes, lancamentos:props.lancamentos, sistemas:props.sistemas };
+      var blob=new Blob([JSON.stringify(dump,null,2)],{type:"application/json"}); var u=URL.createObjectURL(blob); var a2=document.createElement("a"); a2.href=u; a2.download="inperson_backup_"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(function(){URL.revokeObjectURL(u);},1500); setMsg({t:"ok",m:"Backup gerado (JSON)."}); }
+    return div({className:"ip-card",style:{padding:20}},
+      h3({style:{fontWeight:300,marginTop:0}},"💾 Backup & exportação"),
+      p({className:"ip-sub",style:{marginTop:0}},"Baixe um backup completo dos seus dados (registros, clientes, financeiro e sistemas) em JSON."),
+      msg && div({className:"ip-msg "+msg.t},msg.m),
+      div({style:{marginTop:6}}, button({className:"ip-btn ghost",onClick:exportar},"⬇️ Exportar tudo (JSON)")));
   }
   function SistemasEditor(props){
     var sistemas=props.sistemas, reload=props.reload;
