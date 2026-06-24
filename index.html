@@ -733,28 +733,90 @@ window.IP_LOGOS={
   }
 
   /* ===================== DOCUMENTOS ===================== */
+  function fileIcon(it,nome){ var t=((it||"")+" "+(nome||"")).toLowerCase();
+    if(/pdf/.test(t)) return "📕"; if(/(image|png|jpg|jpeg|gif|webp|svg)/.test(t)) return "🖼️";
+    if(/(sheet|excel|xlsx|xls|csv)/.test(t)) return "📊"; if(/(word|document|docx|\.doc)/.test(t)) return "📄";
+    if(/(zip|rar|7z|tar|gz)/.test(t)) return "🗜️"; if(/(video|mp4|mov|avi|mkv)/.test(t)) return "🎬";
+    if(/(audio|mp3|wav|m4a)/.test(t)) return "🎵"; return "📄"; }
   function Documentos(props){
     var anexos=props.anexos, reload=props.reload;
+    var c=useState(""),cwd=c[0],setCwd=c[1];
+    var v=useState("grade"),vista=v[0],setVista=v[1];
     var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
-    function upload(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; setBusy(true); setErr(null);
-      sb.auth.getUser().then(function(res){ var uid=res.data.user.id; var path=uid+"/"+Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-        return sb.storage.from("anexos").upload(path,file).then(function(up){ if(up.error) throw up.error;
-          return sb.from("anexos").insert({owner:uid,nome:file.name,tipo:file.type,tamanho:file.size,path:path}); }); })
-        .then(function(r){ if(r&&r.error) throw r.error; setBusy(false); reload(); })
-        .catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    var np=useState(false),npOpen=np[0],setNpOpen=np[1]; var npn=useState(""),npNome=npn[0],setNpNome=npn[1];
+    function full(folder){ return cwd?cwd+"/"+folder:folder; }
+    var subpastas=anexos.filter(function(a){return a.tipo==="folder"&&(a.pasta||"")===cwd;}).sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"");});
+    var arquivos=anexos.filter(function(a){return a.tipo!=="folder"&&(a.pasta||"")===cwd;}).sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"");});
     function abrir(at){ sb.storage.from("anexos").createSignedUrl(at.path,120).then(function(r){ if(r.data&&r.data.signedUrl) window.open(r.data.signedUrl,"_blank","noopener"); else alert("Não foi possível abrir o arquivo."); }); }
-    var ord=anexos.slice().sort(function(a,b){return (b.criado_em||"").localeCompare(a.criado_em||"");});
+    function criarPasta(){ var nome=npNome.trim(); if(!nome) return; setBusy(true); setErr(null);
+      sb.auth.getUser().then(function(res){ return sb.from("anexos").insert({owner:res.data.user.id,nome:nome,tipo:"folder",pasta:cwd,tamanho:0,path:null}); })
+        .then(function(r){ if(r&&r.error) throw r.error; setNpNome(""); setNpOpen(false); setBusy(false); reload(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function subir(ev){ var files=ev.target.files; if(!files||!files.length) return; setBusy(true); setErr(null);
+      var arr=[].slice.call(files);
+      sb.auth.getUser().then(function(res){ var uid=res.data.user.id;
+        var folders={}; arr.forEach(function(f){ var rel=f.webkitRelativePath||f.name; var parts=rel.split("/"); parts.pop(); var acc=cwd;
+          for(var i=0;i<parts.length;i++){ var parent=acc; var fp=acc?acc+"/"+parts[i]:parts[i]; folders[fp]={nome:parts[i],pasta:parent}; acc=fp; } });
+        var existing={}; anexos.forEach(function(a){ if(a.tipo==="folder"){ var fp=a.pasta?a.pasta+"/"+a.nome:a.nome; existing[fp]=true; } });
+        var toCreate=Object.keys(folders).filter(function(k){return !existing[k];}).map(function(k){ return {owner:uid,nome:folders[k].nome,tipo:"folder",pasta:folders[k].pasta,tamanho:0,path:null}; });
+        var chain=Promise.resolve();
+        if(toCreate.length) chain=chain.then(function(){ return sb.from("anexos").insert(toCreate).then(function(r){ if(r&&r.error) throw r.error; }); });
+        arr.forEach(function(f){ chain=chain.then(function(){ var rel=f.webkitRelativePath||f.name; var parts=rel.split("/"); var fname=parts.pop();
+          var dir=cwd; if(parts.length){ dir=cwd?cwd+"/"+parts.join("/"):parts.join("/"); }
+          var path=uid+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+"_"+fname.replace(/[^a-zA-Z0-9._-]/g,"_");
+          return sb.storage.from("anexos").upload(path,f).then(function(up){ if(up.error) throw up.error; return sb.from("anexos").insert({owner:uid,nome:fname,tipo:f.type||"arquivo",tamanho:f.size,path:path,pasta:dir}); }).then(function(r){ if(r&&r.error) throw r.error; }); }); });
+        return chain;
+      }).then(function(){ setBusy(false); reload(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); });
+      ev.target.value=""; }
+    function excluirArquivo(at){ if(!window.confirm("Excluir \""+at.nome+"\"?")) return; setBusy(true);
+      sb.storage.from("anexos").remove([at.path]).then(function(){ return sb.from("anexos").delete().eq("id",at.id); }).then(function(){ setBusy(false); reload(); }); }
+    function excluirPasta(fp,nome){ if(!window.confirm("Excluir a pasta \""+nome+"\" e todo o conteúdo?")) return; setBusy(true);
+      var dentro=anexos.filter(function(a){ var ap=a.pasta||""; return ap===fp||ap.indexOf(fp+"/")===0; });
+      var marker=anexos.filter(function(a){ return a.tipo==="folder"&&(a.pasta||"")===cwd&&a.nome===nome; });
+      var paths=dentro.filter(function(a){return a.path;}).map(function(a){return a.path;});
+      var ids=dentro.concat(marker).map(function(a){return a.id;});
+      var chain=Promise.resolve();
+      if(paths.length) chain=chain.then(function(){ return sb.storage.from("anexos").remove(paths); });
+      chain.then(function(){ return sb.from("anexos").delete().in("id",ids); }).then(function(){ setBusy(false); reload(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    var crumbs=cwd?cwd.split("/"):[];
+    var card={display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"16px 10px",borderRadius:12,cursor:"pointer",position:"relative",border:"1px solid var(--glass-brd)",background:"rgba(255,255,255,.02)",minHeight:108};
+    function delBtn(fn){ return span({onClick:function(e){e.stopPropagation();fn();},title:"Excluir",style:{position:"absolute",top:6,right:8,fontSize:13,color:"var(--ip-faint)",cursor:"pointer"}},"✕"); }
     return div({className:"ip-view"},
-      topo("ARQUIVOS","Documentos","Contratos, propostas e arquivos no Storage seguro da INPERSON.",
-        h("label",{className:"ip-btn",style:{cursor:"pointer"}}, busy?"Enviando…":"⬆️ Enviar arquivo", input({type:"file",style:{display:"none"},onChange:upload,disabled:busy}))),
+      topo("ARQUIVOS","Documentos","Arquivos e pastas no Storage seguro da INPERSON.",
+        div({style:{display:"flex",gap:8,flexWrap:"wrap"}},
+          button({className:"ip-btn ghost",onClick:function(){setNpOpen(true);}},"📁 Nova pasta"),
+          h("label",{className:"ip-btn ghost",style:{cursor:"pointer"}}, "📂 Enviar pasta", h("input",{type:"file",style:{display:"none"},webkitdirectory:"true",directory:"true",multiple:true,onChange:subir,disabled:busy})),
+          h("label",{className:"ip-btn",style:{cursor:"pointer"}}, busy?"Enviando…":"⬆️ Enviar arquivos", h("input",{type:"file",style:{display:"none"},multiple:true,onChange:subir,disabled:busy})))),
+      div({className:"ip-toolbar",style:{justifyContent:"space-between"}},
+        div({style:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",fontSize:13}},
+          span({onClick:function(){setCwd("");},style:{cursor:"pointer",color:cwd?"var(--ip-accent)":"var(--ip-text)"}},"🏠 Início"),
+          crumbs.map(function(seg,i){ var pathTo=crumbs.slice(0,i+1).join("/"); return span({key:i,style:{display:"inline-flex",gap:6,alignItems:"center"}}, span({className:"ip-faint"},"/"), span({onClick:function(){setCwd(pathTo);},style:{cursor:"pointer",color:i===crumbs.length-1?"var(--ip-text)":"var(--ip-accent)"}},seg)); })),
+        div({className:"ip-seg"}, [["grade","▦ Grade"],["lista","☰ Lista"]].map(function(o){ return button({key:o[0],className:vista===o[0]?"on":"",onClick:function(){setVista(o[0]);}},o[1]); }))),
       err && div({className:"ip-msg err",style:{marginBottom:14}},err),
-      div({className:"ip-list ip-stagger"},
-        ord.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum documento ainda. Envie o primeiro arquivo.")),
-        ord.map(function(at){ return div({key:at.id,className:"ip-card ip-row",style:{cursor:"pointer"},onClick:function(){abrir(at);}},
-          div({style:{fontSize:22}},"📄"),
-          div({style:{flex:1}}, div({style:{fontWeight:400}},at.nome),
-            div({className:"ip-faint",style:{fontSize:12,marginTop:3}},(at.tipo||"arquivo")+" · "+(at.tamanho?Math.round(at.tamanho/1024)+" KB":"")+" · "+fmtDia(at.criado_em)+"/"+fmtMesAno(at.criado_em))),
-          span({className:"ip-faint",style:{fontSize:11.5}},"abrir →")); })));
+      npOpen && div({className:"ip-card",style:{padding:14,marginBottom:14,display:"flex",gap:10,alignItems:"center"}},
+        span({style:{fontSize:20}},"📁"),
+        input({className:"ip-input",value:npNome,onChange:function(e){setNpNome(e.target.value);},placeholder:"Nome da pasta",style:{flex:1},onKeyDown:function(e){if(e.key==="Enter"){e.preventDefault();criarPasta();}}}),
+        button({className:"ip-btn",onClick:criarPasta,disabled:busy},"Criar"),
+        button({className:"ip-btn ghost",onClick:function(){setNpOpen(false);setNpNome("");}},"Cancelar")),
+      (subpastas.length+arquivos.length)===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Pasta vazia. Crie uma pasta ou envie arquivos.")),
+      vista==="grade"
+        ? div({style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(118px,1fr))",gap:12}},
+            subpastas.map(function(f){ return div({key:f.id,style:card,onDoubleClick:function(){setCwd(full(f.nome));},onClick:function(){setCwd(full(f.nome));}},
+              delBtn(function(){excluirPasta(full(f.nome),f.nome);}),
+              div({style:{fontSize:42,lineHeight:1}},"📁"),
+              div({style:{fontSize:12.5,marginTop:8,wordBreak:"break-word"}},f.nome)); }),
+            arquivos.map(function(a){ return div({key:a.id,style:card,onClick:function(){abrir(a);}},
+              delBtn(function(){excluirArquivo(a);}),
+              div({style:{fontSize:42,lineHeight:1}},fileIcon(a.tipo,a.nome)),
+              div({style:{fontSize:12.5,marginTop:8,wordBreak:"break-word"}},a.nome),
+              div({className:"ip-faint",style:{fontSize:10.5,marginTop:3}},a.tamanho?Math.round(a.tamanho/1024)+" KB":"")); }))
+        : div({className:"ip-list"},
+            subpastas.map(function(f){ return div({key:f.id,className:"ip-card ip-row",style:{cursor:"pointer"},onClick:function(){setCwd(full(f.nome));}},
+              div({style:{fontSize:22}},"📁"), div({style:{flex:1,fontWeight:400}},f.nome),
+              button({className:"ip-btn ghost",style:{padding:"6px 10px"},onClick:function(e){e.stopPropagation();excluirPasta(full(f.nome),f.nome);}},"Excluir")); }),
+            arquivos.map(function(a){ return div({key:a.id,className:"ip-card ip-row",style:{cursor:"pointer"},onClick:function(){abrir(a);}},
+              div({style:{fontSize:22}},fileIcon(a.tipo,a.nome)),
+              div({style:{flex:1}}, div({style:{fontWeight:400}},a.nome), div({className:"ip-faint",style:{fontSize:12,marginTop:3}},(a.tipo||"arquivo")+" · "+(a.tamanho?Math.round(a.tamanho/1024)+" KB":"")+" · "+fmtDia(a.criado_em)+"/"+fmtMesAno(a.criado_em))),
+              button({className:"ip-btn ghost",style:{padding:"6px 10px"},onClick:function(e){e.stopPropagation();excluirArquivo(a);}},"Excluir")); })));
   }
 
   /* ===================== RELATÓRIOS ===================== */
