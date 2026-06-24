@@ -79,6 +79,8 @@ h1,h2,h3{font-weight:300}
 .ip-btn.ghost:hover{background:rgba(116,176,216,.12);border-color:var(--ip-accent)}
 .ip-input{width:100%;padding:12px 14px;border-radius:var(--ip-radius-sm);background:rgba(255,255,255,.04);border:1px solid var(--glass-brd);color:var(--ip-text);font-size:14px;backdrop-filter:blur(8px);transition:.18s}
 .ip-input::placeholder{color:var(--ip-faint)}
+select.ip-input option,.ip-input option{color:#10243a;background:#ffffff}
+select.ip-input optgroup{color:#10243a;background:#ffffff}
 .ip-input:focus{outline:none;border-color:var(--ip-accent);box-shadow:0 0 0 3px var(--ip-accent-dim)}
 .ip-label{font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--ip-muted);margin-bottom:6px;display:block}
 
@@ -1411,6 +1413,101 @@ window.IP_LOGOS={
           div({style:{display:"flex",gap:10}}, button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"), button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar")))));
   }
 
+  // ---------- marca / capa INPERSON (vetorial) ----------
+  function IsoMarca(tam){ var s=tam||120;
+    return h("svg",{viewBox:"0 0 120 130",width:s,height:Math.round(s*1.08),fill:"none",style:{display:"block"}},
+      h("circle",{cx:28,cy:18,r:7,stroke:"#2E6FE6",strokeWidth:5}),
+      h("path",{d:"M28 34 V104",stroke:"#2E6FE6",strokeWidth:6,strokeLinecap:"round"}),
+      h("path",{d:"M64 104 V26 H92 a20 20 0 0 1 0 40 H64",stroke:"#2E6FE6",strokeWidth:6,strokeLinecap:"round",strokeLinejoin:"round"})); }
+  function IsoWordmark(fs){ var f=fs||34;
+    return div({style:{display:"flex",alignItems:"center",justifyContent:"center",gap:f*0.34,fontWeight:300,fontSize:f,letterSpacing:f*0.16+"px",color:"#1a2233"}},
+      span(null,"I"),span(null,"N"),span(null,"P"),span({style:{color:"#2E6FE6"}},"E"),span(null,"R"),span(null,"S"),span(null,"O"),span(null,"N")); }
+
+  function IsoRelatorio(props){
+    var cfg=props.cfg, docs=props.docs||[], regs=props.regs||[], ativos=props.ativos||[];
+    function noPeriodo(c){ var s=String(c||""); if(cfg.tipo==="tudo") return true; if(cfg.tipo==="ano") return s.slice(0,4)===String(cfg.val); return s.slice(0,7)===cfg.val; }
+    var periodoLabel = cfg.tipo==="tudo"?"Histórico completo":(cfg.tipo==="ano"?("Ano "+cfg.val):isoCompLabel(cfg.val));
+    var evid=regs.filter(function(r){return noPeriodo(r.competencia);}).slice().sort(function(a,b){return (a.documento_codigo+"").localeCompare(b.documento_codigo+"")||(a.competencia+"").localeCompare(b.competencia+"");});
+    var concl=evid.filter(function(r){return r.status==="concluido"||r.status==="aprovado";});
+    var mensais=docs.filter(function(d){return d.frequencia==="mensal";});
+    function tituloDoc(cod){ var d=docs.filter(function(x){return x.codigo===cod;})[0]; return d?d.titulo:cod; }
+    var kpis=evid.filter(function(r){return r.documento_codigo==="FOR-KPI-001";});
+    var rncs=evid.filter(function(r){return r.documento_codigo==="FOR-INC-001";});
+    var auds=evid.filter(function(r){return r.documento_codigo==="FOR-AUD-001";});
+    var rncAbertas=rncs.filter(function(r){return r.dados&&r.dados.status_nc&&r.dados.status_nc!=="Fechada";}).length;
+    var emis=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+    var tdH={textAlign:"left",padding:"7px 9px",borderBottom:"2px solid #1f3a5f",fontSize:10.5,color:"#1f3a5f",textTransform:"uppercase",letterSpacing:".4px"};
+    var tdC={padding:"6px 9px",borderBottom:"1px solid #e3e9f2",fontSize:12,verticalAlign:"top",color:"#1a2233"};
+    var secStyle={background:"#fff",color:"#1a2233",padding:"30px 38px",maxWidth:820,margin:"16px auto 0",borderRadius:10,pageBreakInside:"avoid"};
+    function secHead(n,t){ return div({style:{display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e3e9f2",paddingBottom:8,marginBottom:12}}, span({style:{width:26,height:26,borderRadius:7,background:"#2E6FE6",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600}},n), strong({style:{fontWeight:600,fontSize:15,color:"#1f3a5f"}},t)); }
+    function box(v,l,cor){ return div({style:{flex:"1 1 120px",border:"1px solid #e3e9f2",borderRadius:10,padding:"12px 14px"}}, div({style:{fontSize:24,fontWeight:300,color:cor||"#1a2233"}},v), div({style:{fontSize:10.5,color:"#789",textTransform:"uppercase",letterSpacing:".4px",marginTop:2}},l)); }
+    var corner={position:"absolute",width:120,height:120,border:"1px solid rgba(46,111,230,.45)"};
+    return div({className:"ip-view"},
+      div({className:"ip-noprint",style:{display:"flex",gap:10,marginBottom:16}},
+        button({className:"ip-btn ghost",onClick:props.onVoltar},"← Voltar"),
+        button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF / Imprimir")),
+      // CAPA
+      div({className:"ip-doc-print",style:{position:"relative",background:"#f7f8fa",color:"#1a2233",maxWidth:820,margin:"0 auto",borderRadius:10,padding:"70px 50px 60px",overflow:"hidden",pageBreakAfter:"always",minHeight:560}},
+        div({style:Object.assign({top:-1,right:-1,borderLeft:"none",borderBottom:"none",borderTopRightRadius:10,borderBottomLeftRadius:34},corner)}),
+        div({style:Object.assign({bottom:-1,left:-1,borderRight:"none",borderTop:"none",borderBottomLeftRadius:10,borderTopRightRadius:34},corner)}),
+        div({style:{position:"absolute",top:150,right:46,display:"flex",gap:6}}, [0,1,2,3].map(function(i){return span({key:i,style:{width:4,height:4,borderRadius:9,background:"rgba(46,111,230,.5)"}});})),
+        div({style:{position:"absolute",bottom:60,left:50,display:"flex",gap:7}}, [0,1,2,3,4,5].map(function(i){return span({key:i,style:{width:4,height:4,borderRadius:9,background:"rgba(46,111,230,.4)"}});})),
+        div({style:{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}},
+          div({style:{display:"flex",justifyContent:"center"}},IsoMarca(96)),
+          div({style:{marginTop:14}},IsoWordmark(34)),
+          div({style:{fontSize:11,letterSpacing:"5px",color:"#2E6FE6",marginTop:6}},"PERSONAL TECNOLÓGICO"),
+          div({style:{display:"flex",alignItems:"center",gap:10,margin:"26px 0 22px",width:280}}, div({style:{flex:1,height:1,background:"#d6deea"}}), span({style:{width:7,height:7,borderRadius:9,background:"#2E6FE6"}}), div({style:{flex:1,height:1,background:"#d6deea"}})),
+          div({style:{fontSize:12,letterSpacing:"3px",color:"#1f3a5f",textTransform:"uppercase"}},"Relatório de Conformidade"),
+          h2({style:{fontWeight:300,fontSize:22,margin:"6px 0 0",color:"#1a2233"}},"Infraestrutura Tecnológica"),
+          div({style:{fontSize:12,color:"#789",marginTop:6,letterSpacing:".5px"}},"ISO 9001:2015 · Documento controlado"),
+          div({style:{marginTop:40,padding:"16px 22px",border:"1px solid #e3e9f2",borderRadius:12,background:"#fff",minWidth:340}},
+            div({style:{display:"flex",justifyContent:"space-between",gap:24,fontSize:13}}, span({style:{color:"#789"}},"Cliente"), strong(null,props.clienteNome||"—")),
+            div({style:{display:"flex",justifyContent:"space-between",gap:24,fontSize:13,marginTop:6}}, span({style:{color:"#789"}},"Período"), strong(null,periodoLabel)),
+            div({style:{display:"flex",justifyContent:"space-between",gap:24,fontSize:13,marginTop:6}}, span({style:{color:"#789"}},"Emissão"), strong(null,emis)),
+            div({style:{display:"flex",justifyContent:"space-between",gap:24,fontSize:13,marginTop:6}}, span({style:{color:"#789"}},"Elaborado por"), strong(null,ISO_EMPRESA.elaborador))),
+          div({style:{marginTop:34,fontSize:10.5,color:"#789"}},ISO_EMPRESA.nome+" | CNPJ "+ISO_EMPRESA.cnpj+" | "+ISO_EMPRESA.tel))),
+      // 1. RESUMO
+      cfg.resumo?div({style:secStyle}, secHead("1","Resumo executivo"),
+        div({style:{display:"flex",flexWrap:"wrap",gap:10}},
+          box((mensais.length&&cfg.tipo==="mes")?(Math.round(concl.filter(function(r){return mensais.some(function(d){return d.codigo===r.documento_codigo;});}).length/mensais.length*100)+"%"):(concl.length+"/"+evid.length),"Evidências concluídas","#2E6FE6"),
+          box(String(evid.length),"Registros no período",null),
+          box(String(docs.length),"Documentos controlados",null),
+          box(String(ativos.reduce(function(s,a){return s+Number(a.quantidade||1);},0)),"Ativos inventariados",null),
+          box(String(rncAbertas),"RNCs abertas",rncAbertas?"#c0392b":"#1f7a44")),
+        p({style:{fontSize:12.5,lineHeight:1.65,color:"#33414f",marginTop:14,marginBottom:0}},"Este relatório consolida as evidências documentais da infraestrutura tecnológica mantida pela "+ISO_EMPRESA.nome+" como fornecedor externo qualificado (ISO 9001:2015, cláusula 8.4) para "+(props.clienteNome||"o cliente")+", referente ao período de "+periodoLabel+". Contempla manutenção, segurança física, indicadores de desempenho (9.1), controle de acesso, não conformidades e inventário de ativos.")):null,
+      // 2. EVIDÊNCIAS
+      cfg.evidencias?div({style:secStyle}, secHead("2","Evidências do período"),
+        evid.length===0?p({style:{fontSize:12.5,color:"#789",margin:0}},"Nenhuma evidência registrada no período."):
+        h("table",{style:{width:"100%",borderCollapse:"collapse"}}, h("thead",null,h("tr",null,h("th",{style:tdH},"Código"),h("th",{style:tdH},"Documento"),h("th",{style:tdH},"Competência"),h("th",{style:tdH},"Nº"),h("th",{style:tdH},"Status"),h("th",{style:tdH},"Responsável"))),
+          h("tbody",null, evid.map(function(r){ return h("tr",{key:r.id}, h("td",{style:Object.assign({fontWeight:600,color:"#2E6FE6"},tdC)},r.documento_codigo), h("td",{style:tdC},tituloDoc(r.documento_codigo)), h("td",{style:tdC},isoCompLabel(r.competencia)), h("td",{style:tdC},r.numero||"–"), h("td",{style:tdC},r.status), h("td",{style:tdC},r.responsavel||"—")); })))):null,
+      // 3. KPIs
+      (cfg.evidencias&&kpis.length)?div({style:secStyle}, secHead("3","Indicadores de desempenho (9.1)"),
+        h("table",{style:{width:"100%",borderCollapse:"collapse"}}, h("thead",null,h("tr",null,[["Competência",""],["Disp. rede %","disp_rede"],["Chamados","chamados"],["TMR (h)","tmr"],["Bkp exec.","bkp_exec"],["Bkp test.","bkp_test"],["Incid.","incidentes"],["Uptime CFTV %","uptime_cftv"]].map(function(c){return h("th",{key:c[0],style:tdH},c[0]);}))),
+          h("tbody",null, kpis.map(function(r){ var d=r.dados||{}; return h("tr",{key:r.id}, h("td",{style:Object.assign({fontWeight:600},tdC)},isoCompLabel(r.competencia)), h("td",{style:tdC},d.disp_rede||"—"), h("td",{style:tdC},d.chamados||"—"), h("td",{style:tdC},d.tmr||"—"), h("td",{style:tdC},d.bkp_exec||"—"), h("td",{style:tdC},d.bkp_test||"—"), h("td",{style:tdC},d.incidentes||"—"), h("td",{style:tdC},d.uptime_cftv||"—")); })))):null,
+      // 4. INVENTÁRIO
+      cfg.inventario?div({style:secStyle}, secHead("4","Inventário de ativos (INV-ATI-001)"),
+        ativos.length===0?p({style:{fontSize:12.5,color:"#789",margin:0}},"Sem ativos cadastrados."):
+        h("table",{style:{width:"100%",borderCollapse:"collapse"}}, h("thead",null,h("tr",null,h("th",{style:tdH},"Categoria"),h("th",{style:tdH},"Descrição"),h("th",{style:tdH},"Marca/Modelo"),h("th",{style:tdH},"Qtd"),h("th",{style:tdH},"Localização"),h("th",{style:tdH},"Nº série"))),
+          h("tbody",null, ativos.map(function(a){ return h("tr",{key:a.id}, h("td",{style:tdC},ISO_CAT_ATIVO[a.categoria]||a.categoria), h("td",{style:tdC},a.descricao), h("td",{style:tdC},a.marca_modelo||"—"), h("td",{style:tdC},a.quantidade||1), h("td",{style:tdC},a.localizacao||"—"), h("td",{style:tdC},a.numero_serie||"—")); })))):null,
+      // 5. DOCUMENTOS
+      cfg.documentos?div({style:secStyle}, secHead("5","Documentos controlados"),
+        h("table",{style:{width:"100%",borderCollapse:"collapse"}}, h("thead",null,h("tr",null,h("th",{style:tdH},"Código"),h("th",{style:tdH},"Título"),h("th",{style:tdH},"Tipo"),h("th",{style:tdH},"Frequência"),h("th",{style:tdH},"Rev"),h("th",{style:tdH},"Status"))),
+          h("tbody",null, docs.map(function(d){ return h("tr",{key:d.id}, h("td",{style:Object.assign({fontWeight:600,color:"#2E6FE6"},tdC)},d.codigo), h("td",{style:tdC},d.titulo), h("td",{style:tdC},ISO_TIPO_LABEL[d.tipo]||d.tipo), h("td",{style:tdC},ISO_FREQ_LABEL[d.frequencia]||d.frequencia), h("td",{style:tdC},d.revisao||"01"), h("td",{style:tdC},d.status)); })))):null,
+      // 6. RNCs
+      cfg.rnc?div({style:secStyle}, secHead("6","Não conformidades (RNC)"),
+        rncs.length===0?p({style:{fontSize:12.5,color:"#789",margin:0}},"Nenhuma não conformidade registrada no período."):
+        div(null, rncs.map(function(r){ var d=r.dados||{}; return div({key:r.id,style:{border:"1px solid #e3e9f2",borderRadius:8,padding:"10px 12px",marginBottom:8}},
+          div({style:{display:"flex",justifyContent:"space-between",gap:10}}, strong({style:{fontSize:12.5}},"RNC Nº "+(r.numero||"–")+" · "+(d.classificacao||"—")), span({style:{fontSize:11.5,color:d.status_nc==="Fechada"?"#1f7a44":"#c0392b"}},d.status_nc||"—")),
+          div({style:{fontSize:12,color:"#33414f",marginTop:4}},d.descricao||"—"),
+          d.acao_corretiva?div({style:{fontSize:11.5,color:"#789",marginTop:4}},"Ação: "+d.acao_corretiva):null); }))):null,
+      // 7. AUDITORIA
+      cfg.auditoria?div({style:secStyle}, secHead("7","Auditorias internas"),
+        auds.length===0?p({style:{fontSize:12.5,color:"#789",margin:0}},"Nenhuma auditoria interna no período."):
+        div(null, auds.map(function(r){ var its=(r.dados&&r.dados.itens)||[]; var conf=its.filter(function(x){return x.resultado==="Conforme";}).length; var nc=its.filter(function(x){return x.resultado==="Não conforme";}).length;
+          return div({key:r.id,style:{border:"1px solid #e3e9f2",borderRadius:8,padding:"10px 12px",marginBottom:8}}, strong({style:{fontSize:12.5}},"Auditoria Nº "+(r.numero||"–")+" · "+isoCompLabel(r.competencia)), div({style:{fontSize:12,color:"#33414f",marginTop:4}},conf+" conforme(s) · "+nc+" não conforme(s)"+(r.dados&&r.dados.conclusao?(" — "+r.dados.conclusao):""))); }))):null,
+      div({style:{maxWidth:820,margin:"14px auto 0",textAlign:"center",fontSize:10.5,color:"#9aa6b4"}},ISO_EMPRESA.nome+" · "+ISO_EMPRESA.elaborador+" · documento gerado pelo Sistema INPERSON"));
+  }
+
   function Iso(props){
     var docs=props.isoDocs||[], regs=props.isoRegs||[], ativos=props.isoAtivos||[], clientes=props.clientes||[], reload=props.reload;
     var AVANCO="cb92c888-46bc-46b4-aa99-137cb29fa0d8";
@@ -1421,6 +1518,7 @@ window.IP_LOGOS={
     var t1=useState("painel"),tab=t1[0],setTab=t1[1];
     var ab=useState(null),aberto=ab[0],setAberto=ab[1];
     var ed=useState(null),editAtivo=ed[0],setEditAtivo=ed[1];
+    var rc=useState({tipo:"mes",val:isoCompAtual(),resumo:true,evidencias:true,inventario:true,documentos:true,rnc:true,auditoria:true}),repCfg=rc[0],setRepCfg=rc[1];
     var docsCli=docs.filter(function(d){return d.cliente_id===cliId;}).slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
     var regsCli=regs.filter(function(r){return r.cliente_id===cliId;});
     var ativosCli=ativos.filter(function(a){return a.cliente_id===cliId;}).slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
@@ -1431,6 +1529,7 @@ window.IP_LOGOS={
     if(aberto&&aberto.tipo==="form") return h(IsoForm,{doc:aberto.doc,registro:aberto.reg,cliId:cliId,registros:regsCli,perfil:props.perfil,onVoltar:function(){setAberto(null);},onSaved:function(){setAberto(null);reload();}});
     if(aberto&&aberto.tipo==="pdf") return h(IsoDocPDF,{doc:aberto.doc,registro:aberto.reg,clienteNome:cliNome,onVoltar:function(){setAberto(aberto.from||null);}});
     if(aberto&&aberto.tipo==="estatico") return h(IsoDocEstatico,{doc:aberto.doc,perfil:props.perfil,reload:reload,onVoltar:function(){setAberto(null);}});
+    if(aberto&&aberto.tipo==="relatorio") return h(IsoRelatorio,{cfg:aberto.cfg,docs:docsCli,regs:regsCli,ativos:ativosCli,clienteNome:cliNome,onVoltar:function(){setAberto(null);}});
     if(aberto&&aberto.tipo==="escolher"){ var dsel=aberto.doc; var rr=regsCli.filter(function(r){return r.documento_codigo===dsel.codigo;}).sort(function(a,b){return (b.competencia||"").localeCompare(a.competencia||"");});
       return div({className:"ip-view"},
         div({style:{display:"flex",gap:10,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}, button({className:"ip-btn ghost",onClick:function(){setAberto(null);}},"← Voltar"), span({className:"ip-tag",style:{color:"var(--ip-accent)"}},dsel.codigo), h2({style:{fontWeight:300,margin:0,fontSize:18}},dsel.titulo)),
@@ -1496,12 +1595,28 @@ window.IP_LOGOS={
             span({className:"ip-pill",style:{color:ISO_STAT_COR[r.status]}},r.status),
             button({className:"ip-btn ghost",style:{padding:"7px 11px"},onClick:function(){setAberto({tipo:"pdf",doc:d,registro:r,from:null});}},"PDF")); }))); }
 
-    var tabs=[["painel","Painel"],["docs","Documentos"],["inventario","Inventário"],["arquivo","Arquivo"]];
+    function relatorios(){
+      function setC(k,v){ var n={}; n[k]=v; setRepCfg(Object.assign({},repCfg,n)); }
+      function setTipo(v){ var val = v==="ano"?String(new Date().getFullYear()) : (v==="mes"?isoCompAtual():""); setRepCfg(Object.assign({},repCfg,{tipo:v,val:val})); }
+      var secs=[["resumo","Resumo executivo"],["evidencias","Evidências do período"],["inventario","Inventário"],["documentos","Documentos controlados"],["rnc","Não conformidades"],["auditoria","Auditorias"]];
+      return div({className:"ip-card",style:{padding:22,maxWidth:760}},
+        strong({style:{fontWeight:300,letterSpacing:".5px",fontSize:16}},"📄 Gerar relatório de conformidade"),
+        p({className:"ip-sub",style:{marginTop:4}},"Relatório com a identidade INPERSON — capa, resumo executivo, evidências, indicadores, inventário e auditoria, pronto para imprimir/PDF."),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}},
+          div(null,label({className:"ip-label"},"Período"), select({className:"ip-input",value:repCfg.tipo,onChange:function(e){setTipo(e.target.value);}}, [["mes","Mês específico"],["ano","Ano inteiro"],["tudo","Histórico completo"]].map(function(o){return option({key:o[0],value:o[0]},o[1]);}))),
+          div(null,label({className:"ip-label"}, repCfg.tipo==="ano"?"Ano":(repCfg.tipo==="tudo"?"Abrangência":"Competência")),
+            repCfg.tipo==="tudo"?input({className:"ip-input",value:"Todos os registros",disabled:true}):(repCfg.tipo==="ano"?input({className:"ip-input",type:"number",value:repCfg.val,onChange:function(e){setC("val",e.target.value);}}):input({className:"ip-input",type:"month",value:repCfg.val,onChange:function(e){setC("val",e.target.value);}})))),
+        div({style:{marginTop:14}}, label({className:"ip-label"},"Seções incluídas"),
+          div({style:{display:"flex",flexWrap:"wrap",gap:14,marginTop:6}}, secs.map(function(s){ return label({key:s[0],style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",cursor:"pointer"}}, input({type:"checkbox",checked:!!repCfg[s[0]],onChange:function(e){setC(s[0],e.target.checked);}}), s[1]); }))),
+        div({style:{marginTop:20}}, button({className:"ip-btn",onClick:function(){ setAberto({tipo:"relatorio",cfg:Object.assign({},repCfg)}); }},"📄 Gerar relatório")));
+    }
+
+    var tabs=[["painel","Painel"],["docs","Documentos"],["inventario","Inventário"],["arquivo","Arquivo"],["relatorios","Relatórios"]];
     return div({className:"ip-view"},
       topo("CONFORMIDADE · ISO 9001:2015","Qualidade ISO","Documentos controlados, evidências mensais e rastreabilidade da infraestrutura — fornecedor externo qualificado (8.4).",
         clientesIso.length>1?select({className:"ip-input",style:{maxWidth:240},value:cliId,onChange:function(e){setCliId(e.target.value);}}, clientesIso.map(function(c){return option({key:c.id,value:c.id},c.nome);})):null),
       div({className:"ip-toolbar"}, div({className:"ip-seg"}, tabs.map(function(o){ return button({key:o[0],className:tab===o[0]?"on":"",onClick:function(){setTab(o[0]);}},o[1]); }))),
-      tab==="painel"?painel():tab==="docs"?listaDocs():tab==="inventario"?inventario():arquivo(),
+      tab==="painel"?painel():tab==="docs"?listaDocs():tab==="inventario"?inventario():tab==="relatorios"?relatorios():arquivo(),
       editAtivo!==null && h(IsoAtivoEditor,{ativo:editAtivo,cliId:cliId,onClose:function(){setEditAtivo(null);},onSaved:function(){setEditAtivo(null);reload();}}));
   }
 
