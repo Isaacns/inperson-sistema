@@ -868,6 +868,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   function Relatorios(props){
     var registros=props.registros, sistemas=props.sistemas, clientes=props.clientes, lancamentos=props.lancamentos;
     var p1=useState("tudo"),per=p1[0],setPer=p1[1];
+    var rv=useState(false),verRel=rv[0],setVerRel=rv[1];
     function inPer(d){ if(per==="tudo") return true; var dt=parseD(d); if(!dt) return false; var diff=(new Date()-dt)/86400000; var n=new Date();
       if(per==="mes") return dt.getMonth()===n.getMonth()&&dt.getFullYear()===n.getFullYear();
       if(per==="30") return diff>=0&&diff<=30; if(per==="90") return diff>=0&&diff<=90; if(per==="ano") return dt.getFullYear()===n.getFullYear(); return true; }
@@ -885,11 +886,37 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
     var linhaKV=function(k,kk,v){ return div({key:k,className:"ip-row ip-card",style:{justifyContent:"space-between"}}, span({className:"ip-muted"},kk), strong({style:{fontWeight:400}},v)); };
     var pers=[["mes","Este mês"],["30","30 dias"],["90","90 dias"],["ano","Este ano"],["tudo","Tudo"]];
+    var perLabel=({mes:"Este mês","30":"Últimos 30 dias","90":"Últimos 90 dias",ano:"Este ano",tudo:"Período completo"})[per]||per;
+    var repRow=function(k,v){ return div({key:k,className:"ip-rep-row"}, span(null,k), strong({style:{fontWeight:400}},v)); };
+    if(verRel){
+      return div({className:"ip-view"},
+        div({className:"ip-noprint",style:{display:"flex",gap:10,marginBottom:16}},
+          button({className:"ip-btn ghost",onClick:function(){setVerRel(false);}},"← Voltar"),
+          button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF / Imprimir")),
+        h(ReportShell,{eyebrow:"RELATÓRIO FINANCEIRO E OPERACIONAL",title:"Resumo do negócio",sub:perLabel+" · emitido em "+new Date().toLocaleDateString("pt-BR")},
+          div({className:"ip-rep-kpis"},
+            div({className:"ip-rep-kpi"}, div({className:"v"},money(rec)), div({className:"l"},"Receitas")),
+            div({className:"ip-rep-kpi"}, div({className:"v"},money(desp)), div({className:"l"},"Despesas")),
+            div({className:"ip-rep-kpi"}, div({className:"v"},money(rec-desp)), div({className:"l"},"Saldo")),
+            div({className:"ip-rep-kpi"}, div({className:"v"},money(mrr)), div({className:"l"},"MRR (recorrente)"))),
+          div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:20}},
+            div(null, div({className:"ip-rep-eyebrow"},"Receitas por categoria"),
+              div({style:{marginTop:8}}, catRec.length===0?p({className:"ip-rep-muted",style:{margin:0,fontSize:13}},"Sem receitas no período."):catRec.map(function(x){return repRow(x.k,money(x.v));}))),
+            div(null, div({className:"ip-rep-eyebrow"},"Despesas por categoria"),
+              div({style:{marginTop:8}}, catDesp.length===0?p({className:"ip-rep-muted",style:{margin:0,fontSize:13}},"Sem despesas no período."):catDesp.map(function(x){return repRow(x.k,money(x.v));})))),
+          div({style:{marginTop:22}}, div({className:"ip-rep-eyebrow"},"Indicadores operacionais"),
+            div({style:{marginTop:8}},
+              repRow("Sistemas no ar", sistemas.filter(function(s){return s.status==="no_ar";}).length+" de "+sistemas.length),
+              repRow("Clientes ativos", clientes.filter(function(c){return (c.status||"ativo")==="ativo";}).length+" de "+clientes.length),
+              repRow("Registros ativos", registros.filter(function(r){return r.status!=="concluido"&&r.status!=="arquivado";}).length),
+              repRow("Vencimentos em ≤60 dias", venc60),
+              repRow("Lançamentos no período", lan.length)))));
+    }
     return div({className:"ip-view"},
       topo("RELATÓRIOS","Relatórios","Resumo executivo do negócio — filtre por período, exporte e gere PDF.",
         div({style:{display:"flex",gap:8}},
           button({className:"ip-btn ghost",onClick:exportCSV},"⬇️ CSV"),
-          button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ PDF"))),
+          button({className:"ip-btn",onClick:function(){setVerRel(true);}},"🖨️ PDF"))),
       div({className:"ip-toolbar"}, div({className:"ip-seg"}, pers.map(function(o){ return button({key:o[0],className:per===o[0]?"on":"",onClick:function(){setPer(o[0]);}},o[1]); }))),
       div({className:"ip-kpis ip-stagger"},
         kpi(money(rec),"Receitas","var(--ip-ok)"),
@@ -1037,33 +1064,51 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   }
   function UsuariosAdmin(){
     var l=useState([]),lista=l[0],setLista=l[1];
+    var sel=useState(null),selId=sel[0],setSelId=sel[1];
     var f=useState({email:"",senha:"",nome:"",papel:"cliente"}),form2=f[0],setForm=f[1];
     var b=useState(false),busy=b[0],setBusy=b[1]; var m=useState(null),msg=m[0],setMsg=m[1];
     function carregar(){ sb.functions.invoke("admin-usuarios",{body:{action:"list"}}).then(function(r){ if(r.data&&r.data.usuarios) setLista(r.data.usuarios); }); }
     useEffect(function(){ carregar(); },[]);
     function set(k){ return function(e){ var n={}; n[k]=e.target.value; setForm(Object.assign({},form2,n)); }; }
-    function criar(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
-      sb.functions.invoke("admin-usuarios",{body:Object.assign({action:"create"},form2)}).then(function(r){
+    function novo(){ setSelId(null); setForm({email:"",senha:"",nome:"",papel:"cliente"}); setMsg(null); }
+    function selecionar(u){ setSelId(u.id); setForm({email:u.email||"",senha:"",nome:u.nome||"",papel:u.papel||"cliente"}); setMsg(null); }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
+      var body=selId?{action:"update",id:selId,nome:form2.nome,papel:form2.papel,senha:form2.senha}:Object.assign({action:"create"},form2);
+      sb.functions.invoke("admin-usuarios",{body:body}).then(function(r){
         if(r.error||(r.data&&r.data.error)){ setMsg({t:"err",m:(r.data&&r.data.error)||r.error.message}); }
-        else { setMsg({t:"ok",m:"Usuário criado."}); setForm({email:"",senha:"",nome:"",papel:"cliente"}); carregar(); }
+        else { setMsg({t:"ok",m:selId?"Usuário atualizado.":"Usuário criado."}); novo(); carregar(); }
+        setBusy(false);
+      }).catch(function(x){ setMsg({t:"err",m:String(x)}); setBusy(false); }); }
+    function excluir(){ if(!selId) return; var u=lista.filter(function(x){return x.id===selId;})[0];
+      if(!window.confirm("Excluir o usuário \""+((u&&(u.nome||u.email))||"")+"\"? Esta ação não pode ser desfeita.")) return;
+      setBusy(true); setMsg(null);
+      sb.functions.invoke("admin-usuarios",{body:{action:"delete",id:selId}}).then(function(r){
+        if(r.error||(r.data&&r.data.error)){ setMsg({t:"err",m:(r.data&&r.data.error)||r.error.message}); }
+        else { setMsg({t:"ok",m:"Usuário excluído."}); novo(); carregar(); }
         setBusy(false);
       }).catch(function(x){ setMsg({t:"err",m:String(x)}); setBusy(false); }); }
     var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
     return div({className:"ip-card",style:{padding:20}},
       h3({style:{fontWeight:300,marginTop:0}},"👥 Usuários & permissões"),
-      div({className:"ip-list",style:{marginBottom:14}}, lista.map(function(u){ return div({key:u.id,className:"ip-card ip-row",style:{alignItems:"center"}},
+      p({className:"ip-sub",style:{marginTop:0}},"Clique num usuário para editar — os campos preenchem automaticamente."),
+      div({className:"ip-list",style:{marginBottom:14}}, lista.map(function(u){ return div({key:u.id,className:"ip-card ip-row",style:{alignItems:"center",cursor:"pointer",borderColor:selId===u.id?"var(--ip-accent)":undefined},onClick:function(){selecionar(u);}},
         div({style:{flex:1}}, div({style:{fontWeight:400}},u.nome||u.email), div({className:"ip-faint",style:{fontSize:12}},u.email)),
-        pill(u.papel==="admin"?"ativo":"prospect"), span({className:"ip-tag",style:{marginLeft:8}},u.role_label||u.papel)); })),
-      form({onSubmit:criar},
-        h3({style:{fontWeight:300,fontSize:14}},"Criar novo usuário"),
-        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+        pill(u.papel==="admin"?"ativo":"prospect"), span({className:"ip-tag",style:{marginLeft:8}},u.role_label||u.papel),
+        span({className:"ip-faint",style:{fontSize:11.5,marginLeft:8}},"editar →")); })),
+      form({onSubmit:salvar},
+        div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},
+          h3({style:{fontWeight:300,fontSize:14,margin:0}}, selId?"Editar usuário":"Criar novo usuário"),
+          selId?button({type:"button",className:"ip-btn ghost",style:{padding:"6px 12px",fontSize:12.5},onClick:novo},"+ Novo"):null),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:10}},
           campo("Nome", input({className:"ip-input",value:form2.nome,onChange:set("nome"),placeholder:"Nome"})),
-          campo("E-mail", input({className:"ip-input",type:"email",required:true,value:form2.email,onChange:set("email"),placeholder:"email@dominio.com"}))),
+          campo("E-mail", input({className:"ip-input",type:"email",required:!selId,value:form2.email,onChange:set("email"),placeholder:"email@dominio.com",disabled:!!selId}))),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
-          campo("Senha (mín. 6)", input({className:"ip-input",type:"text",required:true,value:form2.senha,onChange:set("senha"),placeholder:"senha inicial"})),
+          campo(selId?"Nova senha (opcional)":"Senha (mín. 6)", h(PasswordInput,{className:"ip-input",required:!selId,value:form2.senha,onChange:set("senha"),placeholder:selId?"deixe vazio para manter":"senha inicial"})),
           campo("Permissão", select({className:"ip-input",value:form2.papel,onChange:set("papel")}, [["cliente","Usuário (limitado)"],["admin","Administrador"]].map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
         msg && div({className:"ip-msg "+msg.t},msg.m),
-        div({style:{marginTop:14}}, button({className:"ip-btn",disabled:busy},busy?"Criando…":"Criar usuário"))));
+        div({style:{marginTop:14,display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}},
+          selId?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          button({className:"ip-btn",disabled:busy},busy?"Salvando…":(selId?"Salvar alterações":"Criar usuário")))));
   }
 
   /* ===================== UPGRADE ===================== */
