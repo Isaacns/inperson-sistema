@@ -4,133 +4,116 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sistema INPERSON</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%232563EB'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%23010510'/%3E%3Ccircle cx='17' cy='14' r='3' fill='none' stroke='%2374B0D8' stroke-width='2'/%3E%3Cpath d='M17 20v16M26 36V15h7a8 8 0 0 1 0 16h-7' fill='none' stroke='%2374B0D8' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
 <style>
 /* ============================================================
-   INPERSON — Identidade Visual (Design Tokens) · v0.1
-   Tema "cockpit vivo" — escuro, profissional, tecnológico.
-   Kit oficial: substituir por C:\Users\isaac\Meu Drive\Claude quando conectado.
+   INPERSON — Identidade Visual OFICIAL · v0.2
+   Extraída da arte de marca: fundo #010510, acento azul aço #74B0D8,
+   texto #FAFAFA. Estilo premium, minimalista, linha fina, espaçado.
    ============================================================ */
 :root{
-  /* Marca */
-  --ip-brand:      #2563EB;   /* azul royal  */
-  --ip-brand-2:    #22D3EE;   /* ciano       */
-  --ip-vizio:      #7C3AED;   /* violeta (sub-marca VIZIO) */
-  --ip-grad:       linear-gradient(135deg, #2563EB 0%, #22D3EE 100%);
-  /* Superfícies */
-  --ip-bg:         #0A1428;
-  --ip-bg-2:       #0D1B33;
-  --ip-surface:    #111E38;
-  --ip-surface-2:  #16233F;
-  --ip-border:     #1E3052;
-  --ip-border-2:   #27406B;
-  /* Texto */
-  --ip-text:       #E8EEF9;
-  --ip-muted:      #93A4C3;
-  --ip-faint:      #5E7099;
-  /* Estado */
-  --ip-ok:    #22C55E;
-  --ip-warn:  #F59E0B;
-  --ip-danger:#EF4444;
-  --ip-info:  #38BDF8;
-  /* Forma */
-  --ip-radius:   16px;
-  --ip-radius-sm:10px;
-  --ip-shadow:   0 10px 30px rgba(0,0,0,.35);
+  --ip-bg:        #010510;
+  --ip-bg-2:      #050A16;
+  --ip-surface:   #080F1E;
+  --ip-surface-2: #0C1426;
+  --ip-border:    #15223A;
+  --ip-border-2:  #21344E;
+  --ip-accent:    #74B0D8;   /* azul aço INPERSON */
+  --ip-accent-2:  #5B9BC4;
+  --ip-accent-dim:rgba(116,176,216,.12);
+  --ip-text:      #FAFAFA;
+  --ip-muted:     #8FA3BE;
+  --ip-faint:     #52647F;
+  --ip-ok:    #5FBF8F;
+  --ip-warn:  #D9A441;
+  --ip-danger:#D9655B;
+  --ip-radius:   14px;
+  --ip-radius-sm:9px;
   --ip-font: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
 }
-
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{
-  margin:0; font-family:var(--ip-font);
+  margin:0; font-family:var(--ip-font); font-weight:400;
   background:
-    radial-gradient(1200px 600px at 100% -10%, rgba(37,99,235,.18), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(34,211,238,.12), transparent 60%),
+    radial-gradient(1100px 520px at 88% -12%, rgba(116,176,216,.10), transparent 62%),
+    radial-gradient(820px 460px at -8% 112%, rgba(116,176,216,.06), transparent 60%),
     var(--ip-bg);
-  color:var(--ip-text); -webkit-font-smoothing:antialiased;
+  color:var(--ip-text); -webkit-font-smoothing:antialiased; letter-spacing:.2px;
 }
-a{color:var(--ip-brand-2); text-decoration:none}
+a{color:var(--ip-accent); text-decoration:none}
 button{font-family:inherit}
+h1,h2,h3{font-weight:300}
 
 /* utilidades */
-.ip-grad-text{background:var(--ip-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.ip-card{background:var(--ip-surface); border:1px solid var(--ip-border); border-radius:var(--ip-radius); box-shadow:var(--ip-shadow)}
-.ip-muted{color:var(--ip-muted)}
-.ip-faint{color:var(--ip-faint)}
-.ip-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--ip-border-2)}
-.ip-btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:11px 16px;border-radius:var(--ip-radius-sm);border:1px solid transparent;background:var(--ip-grad);color:#05101f;font-weight:700;cursor:pointer;transition:.15s transform,.15s filter}
-.ip-btn:hover{filter:brightness(1.06)}
+.ip-card{background:var(--ip-surface); border:1px solid var(--ip-border); border-radius:var(--ip-radius)}
+.ip-muted{color:var(--ip-muted)} .ip-faint{color:var(--ip-faint)}
+.ip-accent{color:var(--ip-accent)}
+.ip-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:500;letter-spacing:.4px;border:1px solid var(--ip-border-2);color:var(--ip-muted)}
+.ip-btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:10px 16px;border-radius:var(--ip-radius-sm);border:1px solid var(--ip-accent);background:var(--ip-accent);color:#03101c;font-weight:600;letter-spacing:.4px;cursor:pointer;transition:.15s}
+.ip-btn:hover{background:var(--ip-accent-2);border-color:var(--ip-accent-2)}
 .ip-btn:active{transform:translateY(1px)}
+.ip-btn:disabled{opacity:.5;cursor:not-allowed}
 .ip-btn.ghost{background:transparent;border-color:var(--ip-border-2);color:var(--ip-text)}
-.ip-btn.ghost:hover{background:var(--ip-surface-2)}
+.ip-btn.ghost:hover{background:var(--ip-surface-2);border-color:var(--ip-accent)}
 .ip-input{width:100%;padding:11px 13px;border-radius:var(--ip-radius-sm);background:var(--ip-bg-2);border:1px solid var(--ip-border-2);color:var(--ip-text);font-size:14px}
-.ip-input:focus{outline:none;border-color:var(--ip-brand);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
-.ip-label{font-size:12px;font-weight:600;color:var(--ip-muted);margin-bottom:6px;display:block}
+.ip-input:focus{outline:none;border-color:var(--ip-accent);box-shadow:0 0 0 3px var(--ip-accent-dim)}
+.ip-label{font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--ip-muted);margin-bottom:6px;display:block}
 
-/* status helpers */
-.st-no_ar{color:var(--ip-ok)} .dot-no_ar{background:var(--ip-ok)}
-.st-desenvolvimento{color:var(--ip-info)} .dot-desenvolvimento{background:var(--ip-info)}
-.st-planejado{color:var(--ip-muted)} .dot-planejado{background:var(--ip-faint)}
-.st-manutencao{color:var(--ip-warn)} .dot-manutencao{background:var(--ip-warn)}
+.st-no_ar,.st-ativo{color:var(--ip-ok)} .dot-no_ar,.dot-ativo{background:var(--ip-ok)}
+.st-desenvolvimento{color:var(--ip-accent)} .dot-desenvolvimento{background:var(--ip-accent)}
+.st-planejado,.st-prospect{color:var(--ip-muted)} .dot-planejado,.dot-prospect{background:var(--ip-faint)}
+.st-manutencao,.st-pausado{color:var(--ip-warn)} .dot-manutencao,.dot-pausado{background:var(--ip-warn)}
 
-/* ===== Layout app ===== */
-.ip-shell{display:grid;grid-template-columns:260px 1fr;min-height:100%}
-.ip-side{background:linear-gradient(180deg,var(--ip-bg-2),var(--ip-bg));border-right:1px solid var(--ip-border);padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
-.ip-side .brand{padding:6px 8px 16px}
-.ip-nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--ip-radius-sm);color:var(--ip-muted);font-weight:600;cursor:pointer;font-size:14px;border:1px solid transparent}
+/* ===== Layout ===== */
+.ip-shell{display:grid;grid-template-columns:264px 1fr;min-height:100%}
+.ip-side{background:linear-gradient(180deg,var(--ip-bg-2),var(--ip-bg));border-right:1px solid var(--ip-border);padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.ip-side .brand{padding:4px 8px 18px}
+.ip-nav{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:var(--ip-radius-sm);color:var(--ip-muted);font-size:14px;cursor:pointer;border:1px solid transparent;transition:.12s}
 .ip-nav:hover{background:var(--ip-surface);color:var(--ip-text)}
-.ip-nav.active{background:var(--ip-surface-2);color:var(--ip-text);border-color:var(--ip-border-2)}
-.ip-nav.soon{opacity:.5;cursor:not-allowed}
-.ip-nav .ic{width:22px;text-align:center}
-.ip-main{padding:26px 30px;max-width:1180px;width:100%}
-.ip-topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:16px;flex-wrap:wrap}
-.ip-h1{font-size:24px;font-weight:800;margin:0}
-.ip-sub{color:var(--ip-muted);font-size:13px;margin-top:4px}
+.ip-nav.active{background:var(--ip-accent-dim);color:var(--ip-text);border-color:var(--ip-border-2)}
+.ip-nav.active .ic{color:var(--ip-accent)}
+.ip-nav.soon{opacity:.45;cursor:not-allowed}
+.ip-nav .ic{width:20px;text-align:center;font-size:15px}
+.ip-main{padding:30px 34px;max-width:1200px;width:100%}
+.ip-topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;gap:16px;flex-wrap:wrap}
+.ip-h1{font-size:26px;font-weight:300;margin:0;letter-spacing:.5px}
+.ip-sub{color:var(--ip-muted);font-size:13px;margin-top:5px;font-weight:400}
+.ip-eyebrow{font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--ip-accent);font-weight:500}
 
-.ip-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
-.ip-kpi{padding:18px}
-.ip-kpi .v{font-size:30px;font-weight:800;line-height:1}
-.ip-kpi .l{color:var(--ip-muted);font-size:12.5px;margin-top:8px;font-weight:600}
+.ip-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.ip-kpi{padding:20px}
+.ip-kpi .v{font-size:32px;font-weight:200;line-height:1;letter-spacing:.5px}
+.ip-kpi .l{color:var(--ip-muted);font-size:12px;margin-top:9px;letter-spacing:.3px}
 
-.ip-grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
-.ip-syscard{padding:18px;cursor:pointer;transition:.15s transform,.15s border-color;display:flex;flex-direction:column;gap:10px;min-height:150px}
-.ip-syscard:hover{transform:translateY(-3px);border-color:var(--ip-border-2)}
-.ip-syscard .ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
-.ip-syscard .nome{font-weight:700;font-size:16px}
-.ip-syscard .desc{color:var(--ip-muted);font-size:13px;line-height:1.45;flex:1}
+.ip-grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:15px}
+.ip-syscard{padding:20px;cursor:pointer;transition:.16s;display:flex;flex-direction:column;gap:11px;min-height:158px}
+.ip-syscard:hover{transform:translateY(-3px);border-color:var(--ip-accent)}
+.ip-syscard .ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--ip-border-2)}
+.ip-syscard .nome{font-weight:400;font-size:16px;letter-spacing:.3px}
+.ip-syscard .desc{color:var(--ip-muted);font-size:12.5px;line-height:1.5;flex:1}
 
 .ip-list{display:flex;flex-direction:column;gap:10px}
-.ip-row{display:flex;gap:14px;align-items:flex-start;padding:14px 16px}
-.ip-row .when{min-width:96px;text-align:center}
-.ip-row .when .d{font-weight:800;font-size:15px}
-.ip-row .when .m{font-size:11px;color:var(--ip-muted);text-transform:uppercase;letter-spacing:.06em}
-.ip-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--ip-surface-2);border:1px solid var(--ip-border-2);color:var(--ip-muted)}
-.ip-venc-prox{border-left:3px solid var(--ip-warn)}
-.ip-venc-crit{border-left:3px solid var(--ip-danger)}
+.ip-row{display:flex;gap:15px;align-items:flex-start;padding:15px 17px}
+.ip-row .when{min-width:84px;text-align:center}
+.ip-row .when .d{font-weight:300;font-size:20px;letter-spacing:.5px}
+.ip-row .when .m{font-size:10px;color:var(--ip-muted);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.ip-tag{font-size:10.5px;font-weight:500;letter-spacing:.4px;padding:2px 9px;border-radius:6px;background:var(--ip-surface-2);border:1px solid var(--ip-border-2);color:var(--ip-muted)}
+.ip-venc-prox{border-left:2px solid var(--ip-warn)}
+.ip-venc-crit{border-left:2px solid var(--ip-danger)}
 
-.ip-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.ip-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
 .ip-seg{display:flex;background:var(--ip-bg-2);border:1px solid var(--ip-border-2);border-radius:var(--ip-radius-sm);overflow:hidden}
-.ip-seg button{padding:8px 13px;background:transparent;border:0;color:var(--ip-muted);font-weight:600;cursor:pointer;font-size:13px}
-.ip-seg button.on{background:var(--ip-surface-2);color:var(--ip-text)}
+.ip-seg button{padding:8px 13px;background:transparent;border:0;color:var(--ip-muted);cursor:pointer;font-size:12.5px;letter-spacing:.3px}
+.ip-seg button.on{background:var(--ip-accent-dim);color:var(--ip-text)}
 
-/* Auth */
 .ip-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.ip-auth .box{width:100%;max-width:400px;padding:30px}
+.ip-auth .box{width:100%;max-width:400px;padding:34px}
 .ip-msg{padding:10px 12px;border-radius:var(--ip-radius-sm);font-size:13px;margin-top:12px}
-.ip-msg.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#FCA5A5}
-.ip-msg.ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:#86EFAC}
+.ip-msg.err{background:rgba(217,101,91,.12);border:1px solid rgba(217,101,91,.4);color:#E9A39C}
+.ip-msg.ok{background:rgba(95,191,143,.12);border:1px solid rgba(95,191,143,.4);color:#A5DcBF}
 
-.ip-modal-bg{position:fixed;inset:0;background:rgba(4,9,20,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
-.ip-modal{width:100%;max-width:460px;padding:24px}
-
-@media (max-width:880px){
-  .ip-shell{grid-template-columns:1fr}
-  .ip-side{position:fixed;left:-280px;transition:.2s;z-index:40}
-  .ip-side.open{left:0}
-  .ip-kpis{grid-template-columns:repeat(2,1fr)}
-}
-
+.ip-modal-bg{position:fixed;inset:0;background:rgba(1,5,16,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding
 </style>
 <script>
 // Configuração de conexão — Sistema INPERSON
@@ -140,388 +123,366 @@ window.INPERSON_CONFIG = {
   SUPABASE_URL: "https://emyjzjadmxgbtmxnzazu.supabase.co",
   SUPABASE_KEY: "sb_publishable_PY2YDxUzGgaXRVtvCcasBA_Ml7YUBTC",
   APP_NOME: "Sistema INPERSON",
-  APP_VERSAO: "0.1 (MVP)"
-};
-
+  APP_VERSAO: "0.1 (MVP)",
+  
 </script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+  <div class="ip-auth"><div class="ip-muted">Carregando o Sistema INPERSON…</div></div>
+</div>
+<script>
+/* ============================================================
+   Sistema INPERSON — app (sem JSX; React.createElement)
+   Robusto: sem dependência de Babel em runtime + erro visível.
+   ============================================================ */
+(function () {
+  "use strict";
+  var h = React.createElement;
+  var useState = React.useState, useEffect = React.useEffect, useCallback = React.useCallback;
+  var CFG = window.INPERSON_CONFIG || {};
+  var sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
 
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo, useCallback } = React;
-const CFG = window.INPERSON_CONFIG;
-const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
+  /* tags helpers */
+  function E(t){ return function(p){ var c=[].slice.call(arguments,1); return h.apply(null,[t,p].concat(c)); }; }
+  var div=E("div"), span=E("span"), p=E("p"), button=E("button"), img=E("img"),
+      a=E("a"), input=E("input"), form=E("form"), label=E("label"),
+      h1=E("h1"), h2=E("h2"), select=E("select"), option=E("option"), textarea=E("textarea"), strong=E("strong");
 
-/* ---------- helpers ---------- */
-const MES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
-const hoje = () => new Date();
-const parseD = (s) => s ? new Date(s + "T00:00:00") : null;
-const diasAte = (s) => { const d = parseD(s); if(!d) return null; return Math.ceil((d - hoje())/(1000*60*60*24)); };
-const fmtData = (s) => { const d = parseD(s); return d ? `${String(d.getDate()).padStart(2,"0")}/${MES[d.getMonth()]}/${d.getFullYear()}` : "—"; };
+  /* datas */
+  var MES=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+  function parseD(s){ return s ? new Date(s+"T00:00:00") : null; }
+  function diasAte(s){ var d=parseD(s); if(!d) return null; return Math.ceil((d-new Date())/86400000); }
+  function fmtDia(s){ var d=parseD(s); return d? String(d.getDate()).padStart(2,"0"):"–"; }
+  function fmtMesAno(s){ var d=parseD(s); return d? MES[d.getMonth()]+" "+d.getFullYear():"sem prazo"; }
+  var CAT_COR={token:"#D9A441",contrato:"#9B8CFF",dominio:"#74B0D8",licenca:"#74B0D8",prazo:"#D9655B",nota:"#8FA3BE",credencial:"#D9A441"};
+  var STATUS_LABEL={no_ar:"No ar",desenvolvimento:"Em desenvolvimento",planejado:"Planejado",manutencao:"Manutenção",ativo:"Ativo",prospect:"Prospect",pausado:"Pausado"};
 
-const CAT_COR = { token:"#F59E0B", contrato:"#7C3AED", dominio:"#22D3EE", licenca:"#38BDF8", prazo:"#EF4444", nota:"#93A4C3", credencial:"#F59E0B" };
-const STATUS_LABEL = { no_ar:"No ar", desenvolvimento:"Em desenvolvimento", planejado:"Planejado", manutencao:"Manutenção" };
-
-/* ============================================================ AUTH ============================================================ */
-function Auth({ onLogin }){
-  const [modo,setModo] = useState("login");
-  const [email,setEmail] = useState("");
-  const [senha,setSenha] = useState("");
-  const [nome,setNome] = useState("");
-  const [msg,setMsg] = useState(null);
-  const [busy,setBusy] = useState(false);
-
-  async function submit(e){
-    e.preventDefault(); setBusy(true); setMsg(null);
-    try{
-      if(modo==="login"){
-        const { error } = await sb.auth.signInWithPassword({ email, password: senha });
-        if(error) throw error;
-        onLogin();
-      }else{
-        const { error } = await sb.auth.signUp({ email, password: senha, options:{ data:{ nome } } });
-        if(error) throw error;
-        setMsg({t:"ok", m:"Conta criada. Se a confirmação por e-mail estiver ativa, verifique sua caixa de entrada; senão, já pode entrar."});
-        setModo("login");
-      }
-    }catch(err){ setMsg({t:"err", m: traduzErro(err.message)}); }
-    finally{ setBusy(false); }
-  }
-  function traduzErro(m){
-    if(/Invalid login/i.test(m)) return "E-mail ou senha inválidos.";
-    if(/already registered/i.test(m)) return "Este e-mail já tem conta. Faça login.";
-    if(/at least 6/i.test(m)) return "A senha precisa ter ao menos 6 caracteres.";
-    return m;
+  function pill(status){
+    return span({className:"ip-pill st-"+status},
+      span({className:"dot-"+status,style:{width:7,height:7,borderRadius:99,display:"inline-block"}}),
+      STATUS_LABEL[status]||status);
   }
 
-  return (
-    <div className="ip-auth">
-      <div className="ip-card box">
-        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjU2IiB2aWV3Qm94PSIwIDAgMjQwIDU2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04iPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJpcC1ncmFkIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzI1NjNFQiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDwhLS0gTW9ub2dyYW1hIC0tPgogIDxyZWN0IHg9IjIiIHk9IjYiIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCIgcng9IjEyIiBmaWxsPSJ1cmwoI2lwLWdyYWQpIi8+CiAgPHJlY3QgeD0iMTMiIHk9IjE2IiB3aWR0aD0iNiIgaGVpZ2h0PSIyNCIgcng9IjMiIGZpbGw9IiMwQTE0MjgiLz4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE4IiByPSIzLjQiIGZpbGw9IiMwQTE0MjgiLz4KICA8cGF0aCBkPSJNMjYgNDAgVjIwIGE4IDggMCAwIDEgMTMgNiB2MTQiIHN0cm9rZT0iIzBBMTQyOCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz4KICA8IS0tIFdvcmRtYXJrIC0tPgogIDx0ZXh0IHg9IjU4IiB5PSIzMCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLCBJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iODAwIiBsZXR0ZXItc3BhY2luZz0iMS41IiBmaWxsPSIjRThFRUY5Ij5JTlBFUlNPTjwvdGV4dD4KICA8dGV4dCB4PSI1OSIgeT0iNDYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSwgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iNTAwIiBsZXR0ZXItc3BhY2luZz0iMi42IiBmaWxsPSIjMjJEM0VFIj5TT0xVw4fDlUVTIEVNIFRFQ05PTE9HSUE8L3RleHQ+Cjwvc3ZnPgo=" alt="INPERSON" style={{height:48, marginBottom:8}}/>
-        <p className="ip-sub" style={{marginTop:0}}>O sistema operacional do seu negócio — Salvador/BA</p>
-        <form onSubmit={submit} style={{marginTop:18}}>
-          {modo==="signup" && (<>
-            <label className="ip-label">Nome</label>
-            <input className="ip-input" value={nome} onChange={e=>setNome(e.target.value)} placeholder="Seu nome" style={{marginBottom:12}}/>
-          </>)}
-          <label className="ip-label">E-mail</label>
-          <input className="ip-input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="voce@email.com" style={{marginBottom:12}}/>
-          <label className="ip-label">Senha</label>
-          <input className="ip-input" type="password" required value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"/>
-          {msg && <div className={"ip-msg "+(msg.t)}>{msg.m}</div>}
-          <button className="ip-btn" style={{width:"100%", marginTop:16}} disabled={busy}>
-            {busy ? "Aguarde…" : (modo==="login" ? "Entrar" : "Criar conta")}
-          </button>
-        </form>
-        <p className="ip-sub" style={{textAlign:"center", marginTop:16}}>
-          {modo==="login"
-            ? <>Não tem conta? <a href="#" onClick={e=>{e.preventDefault();setModo("signup");setMsg(null);}}>Criar conta</a></>
-            : <>Já tem conta? <a href="#" onClick={e=>{e.preventDefault();setModo("login");setMsg(null);}}>Entrar</a></>}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================ DASHBOARD ============================================================ */
-function Dashboard({ registros, sistemas, perfil, go }){
-  const noAr = sistemas.filter(s=>s.status==="no_ar").length;
-  const abertos = registros.filter(r=>r.status!=="concluido" && r.status!=="arquivado").length;
-  const venc60 = registros.filter(r=>{const d=diasAte(r.vence_em); return d!==null && d<=60;});
-  const proximos = [...registros].filter(r=>r.vence_em).sort((a,b)=>parseD(a.vence_em)-parseD(b.vence_em)).slice(0,5);
-
-  return (<>
-    <div className="ip-topbar">
-      <div>
-        <h1 className="ip-h1">Olá, {(perfil?.nome||"").split(" ")[0] || "Isaac"} 👋</h1>
-        <div className="ip-sub">Visão geral do Sistema INPERSON — {new Date().toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long"})}</div>
-      </div>
-    </div>
-
-    <div className="ip-kpis">
-      <div className="ip-card ip-kpi"><div className="v ip-grad-text">{noAr}</div><div className="l">Sistemas no ar</div></div>
-      <div className="ip-card ip-kpi"><div className="v">{sistemas.length}</div><div className="l">Projetos & Softwares</div></div>
-      <div className="ip-card ip-kpi"><div className="v">{abertos}</div><div className="l">Registros ativos</div></div>
-      <div className="ip-card ip-kpi"><div className="v" style={{color: venc60.length? "var(--ip-warn)":"var(--ip-text)"}}>{venc60.length}</div><div className="l">Vencem em ≤ 60 dias</div></div>
-    </div>
-
-    <div style={{display:"grid", gridTemplateColumns:"1.3fr 1fr", gap:18}}>
-      <div className="ip-card" style={{padding:18}}>
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
-          <strong>⏰ Vence em breve</strong>
-          <a href="#" onClick={e=>{e.preventDefault();go("agenda");}}>Ver agenda →</a>
-        </div>
-        <div className="ip-list">
-          {proximos.length===0 && <p className="ip-muted">Nenhum vencimento cadastrado.</p>}
-          {proximos.map(r=>{
-            const d = diasAte(r.vence_em);
-            const cls = d!==null && d<=30 ? "ip-venc-crit" : (d!==null && d<=60 ? "ip-venc-prox" : "");
-            return (
-              <div key={r.id} className={"ip-card ip-row "+cls} style={{background:"var(--ip-surface-2)"}}>
-                <div className="when"><div className="d">{fmtData(r.vence_em).slice(0,2)}</div><div className="m">{fmtData(r.vence_em).slice(3,6)} {fmtData(r.vence_em).slice(7)}</div></div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700}}>{r.titulo}</div>
-                  <div className="ip-muted" style={{fontSize:13, marginTop:2}}>{r.projeto||"—"} · {d!==null ? (d<0? `vencido há ${-d} dia(s)` : `faltam ${d} dia(s)`) : ""}</div>
-                </div>
-                <span className="ip-tag" style={{color:CAT_COR[r.categoria]||"var(--ip-muted)"}}>{r.categoria}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="ip-card" style={{padding:18}}>
-        <strong>🚀 Atalhos</strong>
-        <div style={{display:"flex", flexDirection:"column", gap:10, marginTop:14}}>
-          <button className="ip-btn ghost" onClick={()=>go("projetos")}>🧩 Abrir Projetos & Softwares</button>
-          <button className="ip-btn ghost" onClick={()=>go("agenda")}>📅 Abrir Agenda de Registros</button>
-          <button className="ip-btn ghost" disabled style={{opacity:.5, cursor:"not-allowed"}}>💰 Financeiro (em breve)</button>
-          <button className="ip-btn ghost" disabled style={{opacity:.5, cursor:"not-allowed"}}>🤖 Assistente IA (em breve)</button>
-        </div>
-        <div className="ip-card" style={{background:"var(--ip-bg-2)", padding:14, marginTop:14}}>
-          <div className="ip-faint" style={{fontSize:12}}>INPERSON é a matriz. VIZIO Studio e os sistemas de clientes vivem dentro dela.</div>
-        </div>
-      </div>
-    </div>
-  </>);
-}
-
-/* ============================================================ AGENDA DE REGISTROS ============================================================ */
-function Agenda({ registros, reload, isAdmin }){
-  const [fcat,setFcat] = useState("todos");
-  const [fstatus,setFstatus] = useState("ativos");
-  const [novo,setNovo] = useState(false);
-
-  const cats = ["todos", ...Array.from(new Set(registros.map(r=>r.categoria))).filter(Boolean)];
-  const lista = registros
-    .filter(r=> fcat==="todos" || r.categoria===fcat)
-    .filter(r=> fstatus==="todos" || (fstatus==="ativos" ? (r.status!=="concluido"&&r.status!=="arquivado") : r.status===fstatus))
-    .sort((a,b)=>{
-      const da=a.vence_em?parseD(a.vence_em):null, db=b.vence_em?parseD(b.vence_em):null;
-      if(da&&db) return da-db; if(da) return -1; if(db) return 1; return 0;
-    });
-
-  async function concluir(r){
-    await sb.from("registros").update({ status: r.status==="concluido"?"aberto":"concluido" }).eq("id", r.id);
-    reload();
+  /* ===================== AUTH ===================== */
+  function Auth(){
+    var s=useState("login"),modo=s[0],setModo=s[1];
+    var e1=useState(""),email=e1[0],setEmail=e1[1];
+    var e2=useState(""),senha=e2[0],setSenha=e2[1];
+    var e3=useState(""),nome=e3[0],setNome=e3[1];
+    var e4=useState(null),msg=e4[0],setMsg=e4[1];
+    var e5=useState(false),busy=e5[0],setBusy=e5[1];
+    function traduz(m){
+      if(/Invalid login/i.test(m)) return "E-mail ou senha inválidos.";
+      if(/already registered/i.test(m)) return "Este e-mail já tem conta. Faça login.";
+      if(/at least 6/i.test(m)) return "A senha precisa ter ao menos 6 caracteres.";
+      if(/Email not confirmed/i.test(m)) return "E-mail ainda não confirmado.";
+      return m;
+    }
+    function submit(ev){
+      ev.preventDefault(); setBusy(true); setMsg(null);
+      var pr = modo==="login"
+        ? sb.auth.signInWithPassword({email:email,password:senha})
+        : sb.auth.signUp({email:email,password:senha,options:{data:{nome:nome}}});
+      pr.then(function(r){
+        if(r.error) throw r.error;
+        if(modo==="signup"){ setMsg({t:"ok",m:"Conta criada. Se houver confirmação por e-mail, verifique a caixa; senão já pode entrar."}); setModo("login"); }
+      }).catch(function(err){ setMsg({t:"err",m:traduz(err.message||String(err))}); })
+        .then(function(){ setBusy(false); });
+    }
+    return div({className:"ip-auth"},
+      div({className:"ip-card box"},
+        img({src:"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjYwIiBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgMjYwIDY0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04g4oCUIFBlcnNvbmFsIFRlY25vbMOzZ2ljbyI+CiAgPGcgc3Ryb2tlPSIjNzRCMEQ4IiBzdHJva2Utd2lkdGg9IjIuNCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICAgIDwhLS0gaSAtLT4KICAgIDxjaXJjbGUgY3g9IjE0IiBjeT0iMTMiIHI9IjMuNCIvPgogICAgPHBhdGggZD0iTTE0IDIzIFY1MSIvPgogICAgPCEtLSBQIChsaW5oYSBmaW5hKSAtLT4KICAgIDxwYXRoIGQ9Ik0zMCA1MSBWMTUgaDkgYTEwIDEwIDAgMCAxIDAgMjAgaC05Ii8+CiAgPC9nPgogIDwhLS0gV29yZG1hcmsgLS0+CiAgPHRleHQgeD0iNjQiIHk9IjMzIiBmb250LWZhbWlseT0iJ1NlZ29lIFVJJywgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjMwMCIgbGV0dGVyLXNwYWNpbmc9IjYiIGZpbGw9IiNGQUZBRkEiPklOUDx0c3BhbiBmaWxsPSIjNzRCMEQ4Ij5FPC90c3Bhbj5SU09OPC90ZXh0PgogIDx0ZXh0IHg9IjY1IiB5PSI1MCIgZm9udC1mYW1pbHk9IidTZWdvZSBVSScsIEludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOC41IiBmb250LXdlaWdodD0iNDAwIiBsZXR0ZXItc3BhY2luZz0iNC41IiBmaWxsPSIjNzRCMEQ4Ij5QRVJTT05BTCBURUNOT0zDk0dJQ088L3RleHQ+Cjwvc3ZnPgoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",alt:"INPERSON",style:{height:52,marginBottom:6}}),
+        p({className:"ip-sub",style:{marginTop:0}},"O sistema operacional do seu negócio · Salvador/BA"),
+        form({onSubmit:submit,style:{marginTop:20}},
+          modo==="signup" && div(null,
+            label({className:"ip-label"},"Nome"),
+            input({className:"ip-input",value:nome,onChange:function(e){setNome(e.target.value);},placeholder:"Seu nome",style:{marginBottom:12}})),
+          label({className:"ip-label"},"E-mail"),
+          input({className:"ip-input",type:"email",required:true,value:email,onChange:function(e){setEmail(e.target.value);},placeholder:"voce@email.com",style:{marginBottom:12}}),
+          label({className:"ip-label"},"Senha"),
+          input({className:"ip-input",type:"password",required:true,value:senha,onChange:function(e){setSenha(e.target.value);},placeholder:"••••••••"}),
+          msg && div({className:"ip-msg "+msg.t},msg.m),
+          button({className:"ip-btn",style:{width:"100%",marginTop:18},disabled:busy}, busy?"Aguarde…":(modo==="login"?"Entrar":"Criar conta"))
+        ),
+        p({className:"ip-sub",style:{textAlign:"center",marginTop:16}},
+          modo==="login"
+            ? span(null,"Não tem conta? ",a({href:"#",onClick:function(e){e.preventDefault();setModo("signup");setMsg(null);}},"Criar conta"))
+            : span(null,"Já tem conta? ",a({href:"#",onClick:function(e){e.preventDefault();setModo("login");setMsg(null);}},"Entrar")))
+      )
+    );
   }
 
-  return (<>
-    <div className="ip-topbar">
-      <div><h1 className="ip-h1">📅 Agenda de Registros</h1>
-        <div className="ip-sub">Cofre operacional: tokens, contratos, domínios, licenças e prazos — com alerta de vencimento.</div></div>
-      <button className="ip-btn" onClick={()=>setNovo(true)}>+ Novo registro</button>
-    </div>
-
-    <div className="ip-toolbar">
-      <div className="ip-seg">
-        {["todos","ativos","aberto","em_andamento","concluido"].map(s=>
-          <button key={s} className={fstatus===s?"on":""} onClick={()=>setFstatus(s)}>{s.replace("_"," ")}</button>)}
-      </div>
-      <div className="ip-seg">
-        {cats.map(c=> <button key={c} className={fcat===c?"on":""} onClick={()=>setFcat(c)}>{c}</button>)}
-      </div>
-    </div>
-
-    <div className="ip-list">
-      {lista.length===0 && <div className="ip-card" style={{padding:20}}><p className="ip-muted">Nenhum registro com esses filtros.</p></div>}
-      {lista.map(r=>{
-        const d = diasAte(r.vence_em);
-        const cls = d!==null && d<=30 ? "ip-venc-crit" : (d!==null && d<=60 ? "ip-venc-prox" : "");
-        return (
-          <div key={r.id} className={"ip-card ip-row "+cls}>
-            <div className="when">
-              <div className="d">{r.vence_em? fmtData(r.vence_em).slice(0,2):"–"}</div>
-              <div className="m">{r.vence_em? fmtData(r.vence_em).slice(3):"sem prazo"}</div>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
-                <strong style={{textDecoration: r.status==="concluido"?"line-through":"none", opacity:r.status==="concluido"?.6:1}}>{r.titulo}</strong>
-                <span className="ip-tag" style={{color:CAT_COR[r.categoria]||"var(--ip-muted)"}}>{r.categoria}</span>
-                {r.prioridade==="critica" && <span className="ip-tag" style={{color:"var(--ip-danger)"}}>crítica</span>}
-              </div>
-              <div className="ip-muted" style={{fontSize:13, marginTop:4, lineHeight:1.45}}>{r.descricao}</div>
-              <div className="ip-faint" style={{fontSize:12, marginTop:6}}>
-                {r.projeto||"—"}{d!==null && <> · {d<0? `vencido há ${-d}d` : `faltam ${d}d`}{r.alerta_em && ` · alerta ${fmtData(r.alerta_em)}`}</>}
-              </div>
-            </div>
-            <button className="ip-btn ghost" style={{padding:"7px 11px"}} onClick={()=>concluir(r)}>
-              {r.status==="concluido"?"Reabrir":"Concluir"}
-            </button>
-          </div>
-        );
-      })}
-    </div>
-
-    {novo && <NovoRegistro onClose={()=>setNovo(false)} onSaved={()=>{setNovo(false);reload();}} />}
-  </>);
-}
-
-function NovoRegistro({ onClose, onSaved }){
-  const [f,setF] = useState({ titulo:"", categoria:"prazo", projeto:"", descricao:"", vence_em:"", prioridade:"media" });
-  const [busy,setBusy] = useState(false); const [err,setErr] = useState(null);
-  const set = (k)=>(e)=>setF({...f,[k]:e.target.value});
-  async function salvar(e){
-    e.preventDefault(); setBusy(true); setErr(null);
-    const { data:{ user } } = await sb.auth.getUser();
-    const payload = { ...f, owner:user.id, status:"aberto", tipo:"nota",
-      alerta_em: f.vence_em ? new Date(parseD(f.vence_em).getTime()-60*86400000).toISOString().slice(0,10) : null };
-    if(!payload.vence_em) delete payload.vence_em;
-    const { error } = await sb.from("registros").insert(payload);
-    if(error){ setErr(error.message); setBusy(false); return; }
-    onSaved();
+  /* ===================== DASHBOARD ===================== */
+  function Dashboard(props){
+    var registros=props.registros, sistemas=props.sistemas, clientes=props.clientes, perfil=props.perfil, go=props.go;
+    var noAr=sistemas.filter(function(s){return s.status==="no_ar";}).length;
+    var ativos=registros.filter(function(r){return r.status!=="concluido"&&r.status!=="arquivado";}).length;
+    var venc60=registros.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d<=60;});
+    var proximos=registros.filter(function(r){return r.vence_em;}).slice().sort(function(a,b){return parseD(a.vence_em)-parseD(b.vence_em);}).slice(0,5);
+    var primeiro=(perfil&&perfil.nome?perfil.nome.split(" ")[0]:"Isaac");
+    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor}:null},v), div({className:"l"},l)); };
+    return div(null,
+      div({className:"ip-topbar"}, div(null,
+        div({className:"ip-eyebrow"},"INPERSON · COCKPIT"),
+        h1({className:"ip-h1",style:{marginTop:6}},"Olá, "+primeiro),
+        div({className:"ip-sub"},"Visão geral — "+new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})))),
+      div({className:"ip-kpis"},
+        kpi(noAr,"Sistemas no ar",null),
+        kpi(clientes.length,"Clientes",null),
+        kpi(ativos,"Registros ativos",null),
+        kpi(venc60.length,"Vencem em ≤ 60 dias", venc60.length?"var(--ip-warn)":null)),
+      div({style:{display:"grid",gridTemplateColumns:"1.35fr 1fr",gap:18}},
+        div({className:"ip-card",style:{padding:20}},
+          div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
+            strong({style:{fontWeight:300,letterSpacing:".5px"}},"⏰  Vence em breve"),
+            a({href:"#",onClick:function(e){e.preventDefault();go("agenda");}},"Ver agenda →")),
+          div({className:"ip-list"},
+            proximos.length===0 && p({className:"ip-muted"},"Nenhum vencimento cadastrado."),
+            proximos.map(function(r){
+              var d=diasAte(r.vence_em);
+              var cls=d!==null&&d<=30?"ip-venc-crit":(d!==null&&d<=60?"ip-venc-prox":"");
+              return div({key:r.id,className:"ip-card ip-row "+cls,style:{background:"var(--ip-surface-2)"}},
+                div({className:"when"}, div({className:"d"},fmtDia(r.vence_em)), div({className:"m"},fmtMesAno(r.vence_em))),
+                div({style:{flex:1}},
+                  div({style:{fontWeight:400}},r.titulo),
+                  div({className:"ip-muted",style:{fontSize:12.5,marginTop:3}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":"faltam "+d+"d")):""))),
+                span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria));
+            }))),
+        div({className:"ip-card",style:{padding:20}},
+          strong({style:{fontWeight:300,letterSpacing:".5px"}},"🚀  Atalhos"),
+          div({style:{display:"flex",flexDirection:"column",gap:10,marginTop:14}},
+            button({className:"ip-btn ghost",onClick:function(){go("projetos");}},"🧩  Projetos & Softwares"),
+            button({className:"ip-btn ghost",onClick:function(){go("agenda");}},"📅  Agenda de Registros"),
+            button({className:"ip-btn ghost",onClick:function(){go("clientes");}},"👥  Clientes")),
+          div({className:"ip-card",style:{background:"var(--ip-bg-2)",padding:14,marginTop:14}},
+            p({className:"ip-faint",style:{fontSize:12,margin:0,lineHeight:1.5}},"INPERSON é a matriz. VIZIO Studio e os sistemas de clientes vivem dentro dela — um login, um lugar."))))
+    );
   }
-  return (
-    <div className="ip-modal-bg" onClick={onClose}>
-      <form className="ip-card ip-modal" onClick={e=>e.stopPropagation()} onSubmit={salvar}>
-        <h2 style={{margin:"0 0 4px"}}>Novo registro</h2>
-        <p className="ip-sub" style={{marginTop:0}}>Adiciona ao cofre operacional com alerta automático.</p>
-        <label className="ip-label" style={{marginTop:12}}>Título</label>
-        <input className="ip-input" required value={f.titulo} onChange={set("titulo")} placeholder="Ex.: Renovação domínio inperson.com.br"/>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:12}}>
-          <div><label className="ip-label">Categoria</label>
-            <select className="ip-input" value={f.categoria} onChange={set("categoria")}>
-              {["token","contrato","dominio","licenca","prazo","credencial","nota"].map(c=><option key={c} value={c}>{c}</option>)}
-            </select></div>
-          <div><label className="ip-label">Prioridade</label>
-            <select className="ip-input" value={f.prioridade} onChange={set("prioridade")}>
-              {["baixa","media","alta","critica"].map(c=><option key={c} value={c}>{c}</option>)}
-            </select></div>
-        </div>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:12}}>
-          <div><label className="ip-label">Projeto</label><input className="ip-input" value={f.projeto} onChange={set("projeto")} placeholder="INPERSON / Cliente"/></div>
-          <div><label className="ip-label">Vence em</label><input className="ip-input" type="date" value={f.vence_em} onChange={set("vence_em")}/></div>
-        </div>
-        <label className="ip-label" style={{marginTop:12}}>Descrição</label>
-        <textarea className="ip-input" rows="3" value={f.descricao} onChange={set("descricao")} placeholder="Detalhes, ação necessária ao vencer…"></textarea>
-        {err && <div className="ip-msg err">{err}</div>}
-        <div style={{display:"flex", gap:10, marginTop:16, justifyContent:"flex-end"}}>
-          <button type="button" className="ip-btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="ip-btn" disabled={busy}>{busy?"Salvando…":"Salvar registro"}</button>
-        </div>
-      </form>
-    </div>
-  );
-}
 
-/* ============================================================ PROJETOS & SOFTWARES ============================================================ */
-function Projetos({ sistemas, isAdmin, reload }){
-  function abrir(s){
-    if(s.url){ window.open(s.url, "_blank"); }
-    else { alert(`"${s.nome}" ainda não tem URL configurada.\n\n${isAdmin? "Como admin, você pode editar o card e adicionar a URL no ar." : ""}`); }
+  /* ===================== AGENDA ===================== */
+  function Agenda(props){
+    var registros=props.registros, reload=props.reload;
+    var s1=useState("todos"),fcat=s1[0],setFcat=s1[1];
+    var s2=useState("ativos"),fstatus=s2[0],setFstatus=s2[1];
+    var s3=useState(false),novo=s3[0],setNovo=s3[1];
+    var cats=["todos"].concat(registros.map(function(r){return r.categoria;}).filter(function(v,i,arr){return v&&arr.indexOf(v)===i;}));
+    var lista=registros
+      .filter(function(r){return fcat==="todos"||r.categoria===fcat;})
+      .filter(function(r){return fstatus==="todos"?true:(fstatus==="ativos"?(r.status!=="concluido"&&r.status!=="arquivado"):r.status===fstatus);})
+      .slice().sort(function(a,b){var da=a.vence_em?parseD(a.vence_em):null,db=b.vence_em?parseD(b.vence_em):null; if(da&&db)return da-db; if(da)return -1; if(db)return 1; return 0;});
+    function concluir(r){
+      sb.from("registros").update({status:r.status==="concluido"?"aberto":"concluido"}).eq("id",r.id).then(reload);
+    }
+    return div(null,
+      div({className:"ip-topbar"},
+        div(null, div({className:"ip-eyebrow"},"COFRE OPERACIONAL"),
+          h1({className:"ip-h1",style:{marginTop:6}},"Agenda de Registros"),
+          div({className:"ip-sub"},"Tokens, contratos, domínios, licenças e prazos — com alerta de vencimento.")),
+        button({className:"ip-btn",onClick:function(){setNovo(true);}},"+ Novo registro")),
+      div({className:"ip-toolbar"},
+        div({className:"ip-seg"}, ["todos","ativos","aberto","concluido"].map(function(st){
+          return button({key:st,className:fstatus===st?"on":"",onClick:function(){setFstatus(st);}},st);})),
+        div({className:"ip-seg"}, cats.map(function(c){
+          return button({key:c,className:fcat===c?"on":"",onClick:function(){setFcat(c);}},c);}))),
+      div({className:"ip-list"},
+        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro com esses filtros.")),
+        lista.map(function(r){
+          var d=diasAte(r.vence_em);
+          var cls=d!==null&&d<=30?"ip-venc-crit":(d!==null&&d<=60?"ip-venc-prox":"");
+          return div({key:r.id,className:"ip-card ip-row "+cls},
+            div({className:"when"}, div({className:"d"},fmtDia(r.vence_em)), div({className:"m"},fmtMesAno(r.vence_em))),
+            div({style:{flex:1}},
+              div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+                strong({style:{fontWeight:400,textDecoration:r.status==="concluido"?"line-through":"none",opacity:r.status==="concluido"?.6:1}},r.titulo),
+                span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria),
+                r.prioridade==="critica" && span({className:"ip-tag",style:{color:"var(--ip-danger)"}},"crítica")),
+              r.descricao && div({className:"ip-muted",style:{fontSize:12.5,marginTop:4,lineHeight:1.5}},r.descricao),
+              div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":"faltam "+d+"d")+(r.alerta_em?" · alerta "+fmtDia(r.alerta_em)+"/"+fmtMesAno(r.alerta_em):"")):""))),
+            button({className:"ip-btn ghost",style:{padding:"7px 12px"},onClick:function(){concluir(r);}},r.status==="concluido"?"Reabrir":"Concluir"));
+        })),
+      novo && NovoRegistro({onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
   }
-  const ordenado = [...sistemas].sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-  return (<>
-    <div className="ip-topbar">
-      <div><h1 className="ip-h1">🧩 Projetos & Softwares</h1>
-        <div className="ip-sub">Todos os sistemas da INPERSON. Clique num card para abrir o sistema/VIZIO Studio.</div></div>
-    </div>
-    <div className="ip-grid-cards">
-      {ordenado.map(s=>(
-        <div key={s.id} className="ip-card ip-syscard" onClick={()=>abrir(s)}>
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
-            <div className="ico" style={{background:`${s.cor}22`, color:s.cor}}>{s.icone}</div>
-            {s.destaque && <span className="ip-pill" style={{color:s.cor, borderColor:s.cor+"55"}}>destaque</span>}
-          </div>
-          <div className="nome">{s.nome}</div>
-          <div className="desc">{s.descricao}</div>
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-            <span className={"ip-pill st-"+s.status}>
-              <span style={{width:7,height:7,borderRadius:99, display:"inline-block"}} className={"dot-"+s.status}></span>
-              {STATUS_LABEL[s.status]||s.status}
-            </span>
-            <span className="ip-faint" style={{fontSize:12}}>{s.url? "abrir →" : "sem URL"}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-    {isAdmin && <p className="ip-faint" style={{fontSize:12, marginTop:18}}>Você é admin. Edição de cards (URL/status) e novos sistemas entram na v0.2.</p>}
-  </>);
-}
 
-/* ============================================================ APP SHELL ============================================================ */
-const MODULOS = [
-  { id:"dashboard", ic:"🏠", nome:"Início" },
-  { id:"agenda",    ic:"📅", nome:"Agenda de Registros" },
-  { id:"projetos",  ic:"🧩", nome:"Projetos & Softwares" },
-  { id:"financeiro",ic:"💰", nome:"Financeiro", soon:true },
-  { id:"crm",       ic:"👥", nome:"Clientes (CRM)", soon:true },
-  { id:"docs",      ic:"📁", nome:"Documentos", soon:true },
-  { id:"relatorios",ic:"📊", nome:"Relatórios", soon:true },
-  { id:"assistente",ic:"🤖", nome:"Assistente IA", soon:true },
-  { id:"config",    ic:"⚙️", nome:"Configurações", soon:true },
-];
+  function NovoRegistro(props){
+    var s=useState({titulo:"",categoria:"prazo",projeto:"",descricao:"",vence_em:"",prioridade:"media"}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1];
+    var e=useState(null),err=e[0],setErr=e[1];
+    function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
+    function salvar(ev){
+      ev.preventDefault(); setBusy(true); setErr(null);
+      sb.auth.getUser().then(function(res){
+        var user=res.data.user;
+        var payload=Object.assign({},f,{owner:user.id,status:"aberto",tipo:"nota",
+          alerta_em: f.vence_em ? new Date(parseD(f.vence_em).getTime()-60*86400000).toISOString().slice(0,10) : null});
+        if(!payload.vence_em) delete payload.vence_em;
+        return sb.from("registros").insert(payload);
+      }).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); })
+        .catch(function(x){ setErr(x.message||String(x)); setBusy(false); });
+    }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 4px",fontWeight:300}},"Novo registro"),
+        p({className:"ip-sub",style:{marginTop:0}},"Adiciona ao cofre com alerta automático (60 dias antes)."),
+        div({style:{marginTop:12}}, campo("Título", input({className:"ip-input",required:true,value:f.titulo,onChange:set("titulo"),placeholder:"Ex.: Renovação domínio inperson.com.br"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Categoria", select({className:"ip-input",value:f.categoria,onChange:set("categoria")}, ["token","contrato","dominio","licenca","prazo","credencial","nota"].map(function(c){return option({key:c,value:c},c);}))),
+          campo("Prioridade", select({className:"ip-input",value:f.prioridade,onChange:set("prioridade")}, ["baixa","media","alta","critica"].map(function(c){return option({key:c,value:c},c);})))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Projeto", input({className:"ip-input",value:f.projeto,onChange:set("projeto"),placeholder:"INPERSON / Cliente"})),
+          campo("Vence em", input({className:"ip-input",type:"date",value:f.vence_em,onChange:set("vence_em")}))),
+        div({style:{marginTop:12}}, campo("Descrição", textarea({className:"ip-input",rows:3,value:f.descricao,onChange:set("descricao"),placeholder:"Detalhes, ação necessária ao vencer…"}))),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}},
+          button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+          button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar registro"))));
+  }
 
-function App(){
-  const [sessao,setSessao] = useState(undefined); // undefined=carregando
-  const [view,setView] = useState("dashboard");
-  const [perfil,setPerfil] = useState(null);
-  const [registros,setRegistros] = useState([]);
-  const [sistemas,setSistemas] = useState([]);
-  const [menu,setMenu] = useState(false);
+  /* ===================== PROJETOS & SOFTWARES ===================== */
+  function Projetos(props){
+    var sistemas=props.sistemas, isAdmin=props.isAdmin;
+    function abrir(s){
+      if(s.url){ window.open(s.url,"_blank","noopener"); }
+      else { alert('"'+s.nome+'" ainda não tem URL configurada.'+(isAdmin?"\n\nComo admin, você poderá editar o card e adicionar a URL no ar (v0.3).":"")); }
+    }
+    var ord=sistemas.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+    return div(null,
+      div({className:"ip-topbar"}, div(null,
+        div({className:"ip-eyebrow"},"ECOSSISTEMA"),
+        h1({className:"ip-h1",style:{marginTop:6}},"Projetos & Softwares"),
+        div({className:"ip-sub"},"Clique num card para abrir o sistema / VIZIO Studio."))),
+      div({className:"ip-grid-cards"},
+        ord.map(function(s){
+          return div({key:s.id,className:"ip-card ip-syscard",onClick:function(){abrir(s);}},
+            div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+              div({className:"ico",style:{background:(s.cor||"#74B0D8")+"1f",color:s.cor||"#74B0D8"}},s.icone||"🧩"),
+              s.destaque && span({className:"ip-pill",style:{color:s.cor,borderColor:(s.cor||"#74B0D8")+"55"}},"destaque")),
+            div({className:"nome"},s.nome),
+            div({className:"desc"},s.descricao),
+            div({style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              pill(s.status),
+              span({className:"ip-faint",style:{fontSize:11.5}},s.url?"abrir →":"sem URL")));
+        })));
+  }
 
-  useEffect(()=>{
-    sb.auth.getSession().then(({data})=> setSessao(data.session));
-    const { data:sub } = sb.auth.onAuthStateChange((_e,s)=> setSessao(s));
-    return ()=> sub.subscription.unsubscribe();
-  },[]);
+  /* ===================== CLIENTES ===================== */
+  function Clientes(props){
+    var clientes=props.clientes;
+    var ord=clientes.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+    return div(null,
+      div({className:"ip-topbar"}, div(null,
+        div({className:"ip-eyebrow"},"CARTEIRA"),
+        h1({className:"ip-h1",style:{marginTop:6}},"Clientes"),
+        div({className:"ip-sub"},clientes.length+" clientes · base inicial do CRM (v0.2 adiciona contatos, contratos e histórico)."))),
+      div({className:"ip-grid-cards"},
+        ord.map(function(c){
+          return div({key:c.id,className:"ip-card ip-syscard",style:{cursor:"default",minHeight:140}},
+            div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+              div({className:"ico",style:{background:"var(--ip-accent-dim)",color:"var(--ip-accent)",fontSize:16,fontWeight:300}},(c.nome||"?").slice(0,2).toUpperCase()),
+              pill(c.status||"ativo")),
+            div({className:"nome"},c.nome),
+            div({className:"desc"}, c.segmento && div({style:{color:"var(--ip-accent)",fontSize:11.5,marginBottom:4,letterSpacing:".4px"}},c.segmento), c.obs||""));
+        })));
+  }
 
-  const carregar = useCallback(async ()=>{
-    const { data:{ user } } = await sb.auth.getUser();
-    if(!user) return;
-    const [p,r,s] = await Promise.all([
-      sb.from("perfis").select("*").eq("id", user.id).single(),
-      sb.from("registros").select("*").order("vence_em",{ascending:true, nullsFirst:false}),
-      sb.from("sistemas").select("*").order("ordem",{ascending:true}),
-    ]);
-    setPerfil(p.data); setRegistros(r.data||[]); setSistemas(s.data||[]);
-  },[]);
+  /* ===================== SHELL ===================== */
+  var MODULOS=[
+    {id:"dashboard",ic:"🏠",nome:"Início"},
+    {id:"agenda",ic:"📅",nome:"Agenda de Registros"},
+    {id:"projetos",ic:"🧩",nome:"Projetos & Softwares"},
+    {id:"clientes",ic:"👥",nome:"Clientes"},
+    {id:"financeiro",ic:"💰",nome:"Financeiro",soon:true},
+    {id:"docs",ic:"📁",nome:"Documentos",soon:true},
+    {id:"relatorios",ic:"📊",nome:"Relatórios",soon:true},
+    {id:"assistente",ic:"🤖",nome:"Assistente IA",soon:true},
+    {id:"config",ic:"⚙️",nome:"Configurações",soon:true}
+  ];
 
-  useEffect(()=>{ if(sessao) carregar(); },[sessao, carregar]);
+  function App(){
+    var s0=useState(undefined),sessao=s0[0],setSessao=s0[1];
+    var s1=useState("dashboard"),view=s1[0],setView=s1[1];
+    var s2=useState(null),perfil=s2[0],setPerfil=s2[1];
+    var s3=useState([]),registros=s3[0],setRegistros=s3[1];
+    var s4=useState([]),sistemas=s4[0],setSistemas=s4[1];
+    var s5=useState([]),clientes=s5[0],setClientes=s5[1];
+    var s6=useState(false),menu=s6[0],setMenu=s6[1];
 
-  if(sessao===undefined) return <div className="ip-auth"><div className="ip-muted">Carregando…</div></div>;
-  if(!sessao) return <Auth onLogin={()=>{}} />;
+    useEffect(function(){
+      sb.auth.getSession().then(function(r){ setSessao(r.data.session); });
+      var sub=sb.auth.onAuthStateChange(function(_e,sess){ setSessao(sess); });
+      return function(){ sub.data.subscription.unsubscribe(); };
+    },[]);
 
-  const isAdmin = perfil?.papel === "admin";
+    var carregar=useCallback(function(){
+      sb.auth.getUser().then(function(res){
+        var user=res.data.user; if(!user) return;
+        return Promise.all([
+          sb.from("perfis").select("*").eq("id",user.id).single(),
+          sb.from("registros").select("*"),
+          sb.from("sistemas").select("*").order("ordem",{ascending:true}),
+          sb.from("clientes").select("*").order("ordem",{ascending:true})
+        ]).then(function(out){
+          setPerfil(out[0].data);
+          setRegistros(out[1].data||[]);
+          setSistemas(out[2].data||[]);
+          setClientes(out[3].data||[]);
+        });
+      });
+    },[]);
 
-  return (
-    <div className="ip-shell">
-      <aside className={"ip-side"+(menu?" open":"")}>
-        <div className="brand"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjU2IiB2aWV3Qm94PSIwIDAgMjQwIDU2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04iPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJpcC1ncmFkIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzI1NjNFQiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDwhLS0gTW9ub2dyYW1hIC0tPgogIDxyZWN0IHg9IjIiIHk9IjYiIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCIgcng9IjEyIiBmaWxsPSJ1cmwoI2lwLWdyYWQpIi8+CiAgPHJlY3QgeD0iMTMiIHk9IjE2IiB3aWR0aD0iNiIgaGVpZ2h0PSIyNCIgcng9IjMiIGZpbGw9IiMwQTE0MjgiLz4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE4IiByPSIzLjQiIGZpbGw9IiMwQTE0MjgiLz4KICA8cGF0aCBkPSJNMjYgNDAgVjIwIGE4IDggMCAwIDEgMTMgNiB2MTQiIHN0cm9rZT0iIzBBMTQyOCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz4KICA8IS0tIFdvcmRtYXJrIC0tPgogIDx0ZXh0IHg9IjU4IiB5PSIzMCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLCBJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iODAwIiBsZXR0ZXItc3BhY2luZz0iMS41IiBmaWxsPSIjRThFRUY5Ij5JTlBFUlNPTjwvdGV4dD4KICA8dGV4dCB4PSI1OSIgeT0iNDYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSwgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iNTAwIiBsZXR0ZXItc3BhY2luZz0iMi42IiBmaWxsPSIjMjJEM0VFIj5TT0xVw4fDlUVTIEVNIFRFQ05PTE9HSUE8L3RleHQ+Cjwvc3ZnPgo=" alt="INPERSON" style={{height:40}}/></div>
-        {MODULOS.map(m=>(
-          <div key={m.id}
-            className={"ip-nav"+(view===m.id?" active":"")+(m.soon?" soon":"")}
-            onClick={()=>{ if(!m.soon){ setView(m.id); setMenu(false);} }}>
-            <span className="ic">{m.ic}</span><span>{m.nome}</span>
-            {m.soon && <span className="ip-faint" style={{marginLeft:"auto", fontSize:10}}>em breve</span>}
-          </div>
-        ))}
-        <div style={{marginTop:"auto", paddingTop:14, borderTop:"1px solid var(--ip-border)"}}>
-          <div style={{padding:"4px 8px"}}>
-            <div style={{fontWeight:700, fontSize:13}}>{perfil?.nome||"—"}</div>
-            <div className="ip-faint" style={{fontSize:11}}>{perfil?.role_label||perfil?.papel}</div>
-          </div>
-          <button className="ip-btn ghost" style={{width:"100%", marginTop:8}} onClick={()=>sb.auth.signOut()}>Sair</button>
-          <div className="ip-faint" style={{fontSize:10, textAlign:"center", marginTop:10}}>{CFG.APP_NOME} · {CFG.APP_VERSAO}</div>
-        </div>
-      </aside>
+    useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
 
-      <main className="ip-main">
-        <button className="ip-btn ghost" style={{display:"none", marginBottom:12}} id="mbtn" onClick={()=>setMenu(!menu)}>☰ Menu</button>
-        {view==="dashboard" && <Dashboard registros={registros} sistemas={sistemas} perfil={perfil} go={setView} />}
-        {view==="agenda" && <Agenda registros={registros} reload={carregar} isAdmin={isAdmin} />}
-        {view==="projetos" && <Projetos sistemas={sistemas} isAdmin={isAdmin} reload={carregar} />}
-      </main>
-    </div>
-  );
-}
+    if(sessao===undefined) return div({className:"ip-auth"}, div({className:"ip-muted"},"Carregando…"));
+    if(!sessao) return h(Auth);
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+    var isAdmin = perfil && perfil.papel==="admin";
+    var body;
+    if(view==="dashboard") body=Dashboard({registros:registros,sistemas:sistemas,clientes:clientes,perfil:perfil,go:setView});
+    else if(view==="agenda") body=Agenda({registros:registros,reload:carregar});
+    else if(view==="projetos") body=Projetos({sistemas:sistemas,isAdmin:isAdmin});
+    else if(view==="clientes") body=Clientes({clientes:clientes});
+
+    return div({className:"ip-shell"},
+      h("aside",{className:"ip-side"+(menu?" open":"")},
+        div({className:"brand"}, img({src:"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjYwIiBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgMjYwIDY0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04g4oCUIFBlcnNvbmFsIFRlY25vbMOzZ2ljbyI+CiAgPGcgc3Ryb2tlPSIjNzRCMEQ4IiBzdHJva2Utd2lkdGg9IjIuNCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICAgIDwhLS0gaSAtLT4KICAgIDxjaXJjbGUgY3g9IjE0IiBjeT0iMTMiIHI9IjMuNCIvPgogICAgPHBhdGggZD0iTTE0IDIzIFY1MSIvPgogICAgPCEtLSBQIChsaW5oYSBmaW5hKSAtLT4KICAgIDxwYXRoIGQ9Ik0zMCA1MSBWMTUgaDkgYTEwIDEwIDAgMCAxIDAgMjAgaC05Ii8+CiAgPC9nPgogIDwhLS0gV29yZG1hcmsgLS0+CiAgPHRleHQgeD0iNjQiIHk9IjMzIiBmb250LWZhbWlseT0iJ1NlZ29lIFVJJywgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjMwMCIgbGV0dGVyLXNwYWNpbmc9IjYiIGZpbGw9IiNGQUZBRkEiPklOUDx0c3BhbiBmaWxsPSIjNzRCMEQ4Ij5FPC90c3Bhbj5SU09OPC90ZXh0PgogIDx0ZXh0IHg9IjY1IiB5PSI1MCIgZm9udC1mYW1pbHk9IidTZWdvZSBVSScsIEludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOC41IiBmb250LXdlaWdodD0iNDAwIiBsZXR0ZXItc3BhY2luZz0iNC41IiBmaWxsPSIjNzRCMEQ4Ij5QRVJTT05BTCBURUNOT0zDk0dJQ088L3RleHQ+Cjwvc3ZnPgoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",alt:"INPERSON",style:{height:42}})),
+        MODULOS.map(function(m){
+          return div({key:m.id,className:"ip-nav"+(view===m.id?" active":"")+(m.soon?" soon":""),
+            onClick:function(){ if(!m.soon){ setView(m.id); setMenu(false);} }},
+            span({className:"ic"},m.ic), span(null,m.nome),
+            m.soon && span({className:"ip-faint",style:{marginLeft:"auto",fontSize:9.5,letterSpacing:".5px"}},"EM BREVE"));
+        }),
+        div({style:{marginTop:"auto",paddingTop:14,borderTop:"1px solid var(--ip-border)"}},
+          div({style:{padding:"4px 8px"}},
+            div({style:{fontSize:13}},perfil?perfil.nome:"—"),
+            div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
+          button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
+          div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))
+      ),
+      h("main",{className:"ip-main"},
+        button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
+        body)
+    );
+  }
+
+  /* mount + erro visível */
+  function fatal(msg){
+    var r=document.getElementById("root");
+    if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar o Sistema INPERSON</h2>'+
+      '<p class="ip-muted">Detalhes técnicos abaixo. Verifique a conexão e recarregue.</p><pre>'+
+      String(msg).replace(/</g,"&lt;")+'</pre></div>';
+  }
+  window.addEventListener("error",function(e){ if(!document.querySelector(".ip-shell, .ip-auth")) fatal(e.message||e.error||"erro"); });
+  try{
+    if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas (React/Supabase) não carregaram. Sem internet ou CDN bloqueado.");
+    ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+  }catch(err){ fatal(err.stack||err.message||err); }
+})();
+
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
