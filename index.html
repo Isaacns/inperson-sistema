@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sistema INPERSON</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%232563EB'/%3E%3C/svg%3E" />
+<style>
+/* ============================================================
+   INPERSON — Identidade Visual (Design Tokens) · v0.1
+   Tema "cockpit vivo" — escuro, profissional, tecnológico.
+   Kit oficial: substituir por C:\Users\isaac\Meu Drive\Claude quando conectado.
+   ============================================================ */
+:root{
+  /* Marca */
+  --ip-brand:      #2563EB;   /* azul royal  */
+  --ip-brand-2:    #22D3EE;   /* ciano       */
+  --ip-vizio:      #7C3AED;   /* violeta (sub-marca VIZIO) */
+  --ip-grad:       linear-gradient(135deg, #2563EB 0%, #22D3EE 100%);
+  /* Superfícies */
+  --ip-bg:         #0A1428;
+  --ip-bg-2:       #0D1B33;
+  --ip-surface:    #111E38;
+  --ip-surface-2:  #16233F;
+  --ip-border:     #1E3052;
+  --ip-border-2:   #27406B;
+  /* Texto */
+  --ip-text:       #E8EEF9;
+  --ip-muted:      #93A4C3;
+  --ip-faint:      #5E7099;
+  /* Estado */
+  --ip-ok:    #22C55E;
+  --ip-warn:  #F59E0B;
+  --ip-danger:#EF4444;
+  --ip-info:  #38BDF8;
+  /* Forma */
+  --ip-radius:   16px;
+  --ip-radius-sm:10px;
+  --ip-shadow:   0 10px 30px rgba(0,0,0,.35);
+  --ip-font: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+  margin:0; font-family:var(--ip-font);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(37,99,235,.18), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(34,211,238,.12), transparent 60%),
+    var(--ip-bg);
+  color:var(--ip-text); -webkit-font-smoothing:antialiased;
+}
+a{color:var(--ip-brand-2); text-decoration:none}
+button{font-family:inherit}
+
+/* utilidades */
+.ip-grad-text{background:var(--ip-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ip-card{background:var(--ip-surface); border:1px solid var(--ip-border); border-radius:var(--ip-radius); box-shadow:var(--ip-shadow)}
+.ip-muted{color:var(--ip-muted)}
+.ip-faint{color:var(--ip-faint)}
+.ip-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--ip-border-2)}
+.ip-btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:11px 16px;border-radius:var(--ip-radius-sm);border:1px solid transparent;background:var(--ip-grad);color:#05101f;font-weight:700;cursor:pointer;transition:.15s transform,.15s filter}
+.ip-btn:hover{filter:brightness(1.06)}
+.ip-btn:active{transform:translateY(1px)}
+.ip-btn.ghost{background:transparent;border-color:var(--ip-border-2);color:var(--ip-text)}
+.ip-btn.ghost:hover{background:var(--ip-surface-2)}
+.ip-input{width:100%;padding:11px 13px;border-radius:var(--ip-radius-sm);background:var(--ip-bg-2);border:1px solid var(--ip-border-2);color:var(--ip-text);font-size:14px}
+.ip-input:focus{outline:none;border-color:var(--ip-brand);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.ip-label{font-size:12px;font-weight:600;color:var(--ip-muted);margin-bottom:6px;display:block}
+
+/* status helpers */
+.st-no_ar{color:var(--ip-ok)} .dot-no_ar{background:var(--ip-ok)}
+.st-desenvolvimento{color:var(--ip-info)} .dot-desenvolvimento{background:var(--ip-info)}
+.st-planejado{color:var(--ip-muted)} .dot-planejado{background:var(--ip-faint)}
+.st-manutencao{color:var(--ip-warn)} .dot-manutencao{background:var(--ip-warn)}
+
+/* ===== Layout app ===== */
+.ip-shell{display:grid;grid-template-columns:260px 1fr;min-height:100%}
+.ip-side{background:linear-gradient(180deg,var(--ip-bg-2),var(--ip-bg));border-right:1px solid var(--ip-border);padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.ip-side .brand{padding:6px 8px 16px}
+.ip-nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--ip-radius-sm);color:var(--ip-muted);font-weight:600;cursor:pointer;font-size:14px;border:1px solid transparent}
+.ip-nav:hover{background:var(--ip-surface);color:var(--ip-text)}
+.ip-nav.active{background:var(--ip-surface-2);color:var(--ip-text);border-color:var(--ip-border-2)}
+.ip-nav.soon{opacity:.5;cursor:not-allowed}
+.ip-nav .ic{width:22px;text-align:center}
+.ip-main{padding:26px 30px;max-width:1180px;width:100%}
+.ip-topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.ip-h1{font-size:24px;font-weight:800;margin:0}
+.ip-sub{color:var(--ip-muted);font-size:13px;margin-top:4px}
+
+.ip-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.ip-kpi{padding:18px}
+.ip-kpi .v{font-size:30px;font-weight:800;line-height:1}
+.ip-kpi .l{color:var(--ip-muted);font-size:12.5px;margin-top:8px;font-weight:600}
+
+.ip-grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.ip-syscard{padding:18px;cursor:pointer;transition:.15s transform,.15s border-color;display:flex;flex-direction:column;gap:10px;min-height:150px}
+.ip-syscard:hover{transform:translateY(-3px);border-color:var(--ip-border-2)}
+.ip-syscard .ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.ip-syscard .nome{font-weight:700;font-size:16px}
+.ip-syscard .desc{color:var(--ip-muted);font-size:13px;line-height:1.45;flex:1}
+
+.ip-list{display:flex;flex-direction:column;gap:10px}
+.ip-row{display:flex;gap:14px;align-items:flex-start;padding:14px 16px}
+.ip-row .when{min-width:96px;text-align:center}
+.ip-row .when .d{font-weight:800;font-size:15px}
+.ip-row .when .m{font-size:11px;color:var(--ip-muted);text-transform:uppercase;letter-spacing:.06em}
+.ip-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--ip-surface-2);border:1px solid var(--ip-border-2);color:var(--ip-muted)}
+.ip-venc-prox{border-left:3px solid var(--ip-warn)}
+.ip-venc-crit{border-left:3px solid var(--ip-danger)}
+
+.ip-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.ip-seg{display:flex;background:var(--ip-bg-2);border:1px solid var(--ip-border-2);border-radius:var(--ip-radius-sm);overflow:hidden}
+.ip-seg button{padding:8px 13px;background:transparent;border:0;color:var(--ip-muted);font-weight:600;cursor:pointer;font-size:13px}
+.ip-seg button.on{background:var(--ip-surface-2);color:var(--ip-text)}
+
+/* Auth */
+.ip-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.ip-auth .box{width:100%;max-width:400px;padding:30px}
+.ip-msg{padding:10px 12px;border-radius:var(--ip-radius-sm);font-size:13px;margin-top:12px}
+.ip-msg.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#FCA5A5}
+.ip-msg.ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:#86EFAC}
+
+.ip-modal-bg{position:fixed;inset:0;background:rgba(4,9,20,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.ip-modal{width:100%;max-width:460px;padding:24px}
+
+@media (max-width:880px){
+  .ip-shell{grid-template-columns:1fr}
+  .ip-side{position:fixed;left:-280px;transition:.2s;z-index:40}
+  .ip-side.open{left:0}
+  .ip-kpis{grid-template-columns:repeat(2,1fr)}
+}
+
+</style>
+<script>
+// Configuração de conexão — Sistema INPERSON
+// Backend compartilhado: Supabase "vizio-core" (Auth/DB/Storage/IA/publicar)
+// A chave publishable é pública por design (uso no navegador). RLS protege os dados.
+window.INPERSON_CONFIG = {
+  SUPABASE_URL: "https://emyjzjadmxgbtmxnzazu.supabase.co",
+  SUPABASE_KEY: "sb_publishable_PY2YDxUzGgaXRVtvCcasBA_Ml7YUBTC",
+  APP_NOME: "Sistema INPERSON",
+  APP_VERSAO: "0.1 (MVP)"
+};
+
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useCallback } = React;
+const CFG = window.INPERSON_CONFIG;
+const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
+
+/* ---------- helpers ---------- */
+const MES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+const hoje = () => new Date();
+const parseD = (s) => s ? new Date(s + "T00:00:00") : null;
+const diasAte = (s) => { const d = parseD(s); if(!d) return null; return Math.ceil((d - hoje())/(1000*60*60*24)); };
+const fmtData = (s) => { const d = parseD(s); return d ? `${String(d.getDate()).padStart(2,"0")}/${MES[d.getMonth()]}/${d.getFullYear()}` : "—"; };
+
+const CAT_COR = { token:"#F59E0B", contrato:"#7C3AED", dominio:"#22D3EE", licenca:"#38BDF8", prazo:"#EF4444", nota:"#93A4C3", credencial:"#F59E0B" };
+const STATUS_LABEL = { no_ar:"No ar", desenvolvimento:"Em desenvolvimento", planejado:"Planejado", manutencao:"Manutenção" };
+
+/* ============================================================ AUTH ============================================================ */
+function Auth({ onLogin }){
+  const [modo,setModo] = useState("login");
+  const [email,setEmail] = useState("");
+  const [senha,setSenha] = useState("");
+  const [nome,setNome] = useState("");
+  const [msg,setMsg] = useState(null);
+  const [busy,setBusy] = useState(false);
+
+  async function submit(e){
+    e.preventDefault(); setBusy(true); setMsg(null);
+    try{
+      if(modo==="login"){
+        const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+        if(error) throw error;
+        onLogin();
+      }else{
+        const { error } = await sb.auth.signUp({ email, password: senha, options:{ data:{ nome } } });
+        if(error) throw error;
+        setMsg({t:"ok", m:"Conta criada. Se a confirmação por e-mail estiver ativa, verifique sua caixa de entrada; senão, já pode entrar."});
+        setModo("login");
+      }
+    }catch(err){ setMsg({t:"err", m: traduzErro(err.message)}); }
+    finally{ setBusy(false); }
+  }
+  function traduzErro(m){
+    if(/Invalid login/i.test(m)) return "E-mail ou senha inválidos.";
+    if(/already registered/i.test(m)) return "Este e-mail já tem conta. Faça login.";
+    if(/at least 6/i.test(m)) return "A senha precisa ter ao menos 6 caracteres.";
+    return m;
+  }
+
+  return (
+    <div className="ip-auth">
+      <div className="ip-card box">
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjU2IiB2aWV3Qm94PSIwIDAgMjQwIDU2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04iPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJpcC1ncmFkIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzI1NjNFQiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDwhLS0gTW9ub2dyYW1hIC0tPgogIDxyZWN0IHg9IjIiIHk9IjYiIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCIgcng9IjEyIiBmaWxsPSJ1cmwoI2lwLWdyYWQpIi8+CiAgPHJlY3QgeD0iMTMiIHk9IjE2IiB3aWR0aD0iNiIgaGVpZ2h0PSIyNCIgcng9IjMiIGZpbGw9IiMwQTE0MjgiLz4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE4IiByPSIzLjQiIGZpbGw9IiMwQTE0MjgiLz4KICA8cGF0aCBkPSJNMjYgNDAgVjIwIGE4IDggMCAwIDEgMTMgNiB2MTQiIHN0cm9rZT0iIzBBMTQyOCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz4KICA8IS0tIFdvcmRtYXJrIC0tPgogIDx0ZXh0IHg9IjU4IiB5PSIzMCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLCBJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iODAwIiBsZXR0ZXItc3BhY2luZz0iMS41IiBmaWxsPSIjRThFRUY5Ij5JTlBFUlNPTjwvdGV4dD4KICA8dGV4dCB4PSI1OSIgeT0iNDYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSwgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iNTAwIiBsZXR0ZXItc3BhY2luZz0iMi42IiBmaWxsPSIjMjJEM0VFIj5TT0xVw4fDlUVTIEVNIFRFQ05PTE9HSUE8L3RleHQ+Cjwvc3ZnPgo=" alt="INPERSON" style={{height:48, marginBottom:8}}/>
+        <p className="ip-sub" style={{marginTop:0}}>O sistema operacional do seu negócio — Salvador/BA</p>
+        <form onSubmit={submit} style={{marginTop:18}}>
+          {modo==="signup" && (<>
+            <label className="ip-label">Nome</label>
+            <input className="ip-input" value={nome} onChange={e=>setNome(e.target.value)} placeholder="Seu nome" style={{marginBottom:12}}/>
+          </>)}
+          <label className="ip-label">E-mail</label>
+          <input className="ip-input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="voce@email.com" style={{marginBottom:12}}/>
+          <label className="ip-label">Senha</label>
+          <input className="ip-input" type="password" required value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"/>
+          {msg && <div className={"ip-msg "+(msg.t)}>{msg.m}</div>}
+          <button className="ip-btn" style={{width:"100%", marginTop:16}} disabled={busy}>
+            {busy ? "Aguarde…" : (modo==="login" ? "Entrar" : "Criar conta")}
+          </button>
+        </form>
+        <p className="ip-sub" style={{textAlign:"center", marginTop:16}}>
+          {modo==="login"
+            ? <>Não tem conta? <a href="#" onClick={e=>{e.preventDefault();setModo("signup");setMsg(null);}}>Criar conta</a></>
+            : <>Já tem conta? <a href="#" onClick={e=>{e.preventDefault();setModo("login");setMsg(null);}}>Entrar</a></>}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ DASHBOARD ============================================================ */
+function Dashboard({ registros, sistemas, perfil, go }){
+  const noAr = sistemas.filter(s=>s.status==="no_ar").length;
+  const abertos = registros.filter(r=>r.status!=="concluido" && r.status!=="arquivado").length;
+  const venc60 = registros.filter(r=>{const d=diasAte(r.vence_em); return d!==null && d<=60;});
+  const proximos = [...registros].filter(r=>r.vence_em).sort((a,b)=>parseD(a.vence_em)-parseD(b.vence_em)).slice(0,5);
+
+  return (<>
+    <div className="ip-topbar">
+      <div>
+        <h1 className="ip-h1">Olá, {(perfil?.nome||"").split(" ")[0] || "Isaac"} 👋</h1>
+        <div className="ip-sub">Visão geral do Sistema INPERSON — {new Date().toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long"})}</div>
+      </div>
+    </div>
+
+    <div className="ip-kpis">
+      <div className="ip-card ip-kpi"><div className="v ip-grad-text">{noAr}</div><div className="l">Sistemas no ar</div></div>
+      <div className="ip-card ip-kpi"><div className="v">{sistemas.length}</div><div className="l">Projetos & Softwares</div></div>
+      <div className="ip-card ip-kpi"><div className="v">{abertos}</div><div className="l">Registros ativos</div></div>
+      <div className="ip-card ip-kpi"><div className="v" style={{color: venc60.length? "var(--ip-warn)":"var(--ip-text)"}}>{venc60.length}</div><div className="l">Vencem em ≤ 60 dias</div></div>
+    </div>
+
+    <div style={{display:"grid", gridTemplateColumns:"1.3fr 1fr", gap:18}}>
+      <div className="ip-card" style={{padding:18}}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
+          <strong>⏰ Vence em breve</strong>
+          <a href="#" onClick={e=>{e.preventDefault();go("agenda");}}>Ver agenda →</a>
+        </div>
+        <div className="ip-list">
+          {proximos.length===0 && <p className="ip-muted">Nenhum vencimento cadastrado.</p>}
+          {proximos.map(r=>{
+            const d = diasAte(r.vence_em);
+            const cls = d!==null && d<=30 ? "ip-venc-crit" : (d!==null && d<=60 ? "ip-venc-prox" : "");
+            return (
+              <div key={r.id} className={"ip-card ip-row "+cls} style={{background:"var(--ip-surface-2)"}}>
+                <div className="when"><div className="d">{fmtData(r.vence_em).slice(0,2)}</div><div className="m">{fmtData(r.vence_em).slice(3,6)} {fmtData(r.vence_em).slice(7)}</div></div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700}}>{r.titulo}</div>
+                  <div className="ip-muted" style={{fontSize:13, marginTop:2}}>{r.projeto||"—"} · {d!==null ? (d<0? `vencido há ${-d} dia(s)` : `faltam ${d} dia(s)`) : ""}</div>
+                </div>
+                <span className="ip-tag" style={{color:CAT_COR[r.categoria]||"var(--ip-muted)"}}>{r.categoria}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="ip-card" style={{padding:18}}>
+        <strong>🚀 Atalhos</strong>
+        <div style={{display:"flex", flexDirection:"column", gap:10, marginTop:14}}>
+          <button className="ip-btn ghost" onClick={()=>go("projetos")}>🧩 Abrir Projetos & Softwares</button>
+          <button className="ip-btn ghost" onClick={()=>go("agenda")}>📅 Abrir Agenda de Registros</button>
+          <button className="ip-btn ghost" disabled style={{opacity:.5, cursor:"not-allowed"}}>💰 Financeiro (em breve)</button>
+          <button className="ip-btn ghost" disabled style={{opacity:.5, cursor:"not-allowed"}}>🤖 Assistente IA (em breve)</button>
+        </div>
+        <div className="ip-card" style={{background:"var(--ip-bg-2)", padding:14, marginTop:14}}>
+          <div className="ip-faint" style={{fontSize:12}}>INPERSON é a matriz. VIZIO Studio e os sistemas de clientes vivem dentro dela.</div>
+        </div>
+      </div>
+    </div>
+  </>);
+}
+
+/* ============================================================ AGENDA DE REGISTROS ============================================================ */
+function Agenda({ registros, reload, isAdmin }){
+  const [fcat,setFcat] = useState("todos");
+  const [fstatus,setFstatus] = useState("ativos");
+  const [novo,setNovo] = useState(false);
+
+  const cats = ["todos", ...Array.from(new Set(registros.map(r=>r.categoria))).filter(Boolean)];
+  const lista = registros
+    .filter(r=> fcat==="todos" || r.categoria===fcat)
+    .filter(r=> fstatus==="todos" || (fstatus==="ativos" ? (r.status!=="concluido"&&r.status!=="arquivado") : r.status===fstatus))
+    .sort((a,b)=>{
+      const da=a.vence_em?parseD(a.vence_em):null, db=b.vence_em?parseD(b.vence_em):null;
+      if(da&&db) return da-db; if(da) return -1; if(db) return 1; return 0;
+    });
+
+  async function concluir(r){
+    await sb.from("registros").update({ status: r.status==="concluido"?"aberto":"concluido" }).eq("id", r.id);
+    reload();
+  }
+
+  return (<>
+    <div className="ip-topbar">
+      <div><h1 className="ip-h1">📅 Agenda de Registros</h1>
+        <div className="ip-sub">Cofre operacional: tokens, contratos, domínios, licenças e prazos — com alerta de vencimento.</div></div>
+      <button className="ip-btn" onClick={()=>setNovo(true)}>+ Novo registro</button>
+    </div>
+
+    <div className="ip-toolbar">
+      <div className="ip-seg">
+        {["todos","ativos","aberto","em_andamento","concluido"].map(s=>
+          <button key={s} className={fstatus===s?"on":""} onClick={()=>setFstatus(s)}>{s.replace("_"," ")}</button>)}
+      </div>
+      <div className="ip-seg">
+        {cats.map(c=> <button key={c} className={fcat===c?"on":""} onClick={()=>setFcat(c)}>{c}</button>)}
+      </div>
+    </div>
+
+    <div className="ip-list">
+      {lista.length===0 && <div className="ip-card" style={{padding:20}}><p className="ip-muted">Nenhum registro com esses filtros.</p></div>}
+      {lista.map(r=>{
+        const d = diasAte(r.vence_em);
+        const cls = d!==null && d<=30 ? "ip-venc-crit" : (d!==null && d<=60 ? "ip-venc-prox" : "");
+        return (
+          <div key={r.id} className={"ip-card ip-row "+cls}>
+            <div className="when">
+              <div className="d">{r.vence_em? fmtData(r.vence_em).slice(0,2):"–"}</div>
+              <div className="m">{r.vence_em? fmtData(r.vence_em).slice(3):"sem prazo"}</div>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
+                <strong style={{textDecoration: r.status==="concluido"?"line-through":"none", opacity:r.status==="concluido"?.6:1}}>{r.titulo}</strong>
+                <span className="ip-tag" style={{color:CAT_COR[r.categoria]||"var(--ip-muted)"}}>{r.categoria}</span>
+                {r.prioridade==="critica" && <span className="ip-tag" style={{color:"var(--ip-danger)"}}>crítica</span>}
+              </div>
+              <div className="ip-muted" style={{fontSize:13, marginTop:4, lineHeight:1.45}}>{r.descricao}</div>
+              <div className="ip-faint" style={{fontSize:12, marginTop:6}}>
+                {r.projeto||"—"}{d!==null && <> · {d<0? `vencido há ${-d}d` : `faltam ${d}d`}{r.alerta_em && ` · alerta ${fmtData(r.alerta_em)}`}</>}
+              </div>
+            </div>
+            <button className="ip-btn ghost" style={{padding:"7px 11px"}} onClick={()=>concluir(r)}>
+              {r.status==="concluido"?"Reabrir":"Concluir"}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+
+    {novo && <NovoRegistro onClose={()=>setNovo(false)} onSaved={()=>{setNovo(false);reload();}} />}
+  </>);
+}
+
+function NovoRegistro({ onClose, onSaved }){
+  const [f,setF] = useState({ titulo:"", categoria:"prazo", projeto:"", descricao:"", vence_em:"", prioridade:"media" });
+  const [busy,setBusy] = useState(false); const [err,setErr] = useState(null);
+  const set = (k)=>(e)=>setF({...f,[k]:e.target.value});
+  async function salvar(e){
+    e.preventDefault(); setBusy(true); setErr(null);
+    const { data:{ user } } = await sb.auth.getUser();
+    const payload = { ...f, owner:user.id, status:"aberto", tipo:"nota",
+      alerta_em: f.vence_em ? new Date(parseD(f.vence_em).getTime()-60*86400000).toISOString().slice(0,10) : null };
+    if(!payload.vence_em) delete payload.vence_em;
+    const { error } = await sb.from("registros").insert(payload);
+    if(error){ setErr(error.message); setBusy(false); return; }
+    onSaved();
+  }
+  return (
+    <div className="ip-modal-bg" onClick={onClose}>
+      <form className="ip-card ip-modal" onClick={e=>e.stopPropagation()} onSubmit={salvar}>
+        <h2 style={{margin:"0 0 4px"}}>Novo registro</h2>
+        <p className="ip-sub" style={{marginTop:0}}>Adiciona ao cofre operacional com alerta automático.</p>
+        <label className="ip-label" style={{marginTop:12}}>Título</label>
+        <input className="ip-input" required value={f.titulo} onChange={set("titulo")} placeholder="Ex.: Renovação domínio inperson.com.br"/>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:12}}>
+          <div><label className="ip-label">Categoria</label>
+            <select className="ip-input" value={f.categoria} onChange={set("categoria")}>
+              {["token","contrato","dominio","licenca","prazo","credencial","nota"].map(c=><option key={c} value={c}>{c}</option>)}
+            </select></div>
+          <div><label className="ip-label">Prioridade</label>
+            <select className="ip-input" value={f.prioridade} onChange={set("prioridade")}>
+              {["baixa","media","alta","critica"].map(c=><option key={c} value={c}>{c}</option>)}
+            </select></div>
+        </div>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:12}}>
+          <div><label className="ip-label">Projeto</label><input className="ip-input" value={f.projeto} onChange={set("projeto")} placeholder="INPERSON / Cliente"/></div>
+          <div><label className="ip-label">Vence em</label><input className="ip-input" type="date" value={f.vence_em} onChange={set("vence_em")}/></div>
+        </div>
+        <label className="ip-label" style={{marginTop:12}}>Descrição</label>
+        <textarea className="ip-input" rows="3" value={f.descricao} onChange={set("descricao")} placeholder="Detalhes, ação necessária ao vencer…"></textarea>
+        {err && <div className="ip-msg err">{err}</div>}
+        <div style={{display:"flex", gap:10, marginTop:16, justifyContent:"flex-end"}}>
+          <button type="button" className="ip-btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="ip-btn" disabled={busy}>{busy?"Salvando…":"Salvar registro"}</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ============================================================ PROJETOS & SOFTWARES ============================================================ */
+function Projetos({ sistemas, isAdmin, reload }){
+  function abrir(s){
+    if(s.url){ window.open(s.url, "_blank"); }
+    else { alert(`"${s.nome}" ainda não tem URL configurada.\n\n${isAdmin? "Como admin, você pode editar o card e adicionar a URL no ar." : ""}`); }
+  }
+  const ordenado = [...sistemas].sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+  return (<>
+    <div className="ip-topbar">
+      <div><h1 className="ip-h1">🧩 Projetos & Softwares</h1>
+        <div className="ip-sub">Todos os sistemas da INPERSON. Clique num card para abrir o sistema/VIZIO Studio.</div></div>
+    </div>
+    <div className="ip-grid-cards">
+      {ordenado.map(s=>(
+        <div key={s.id} className="ip-card ip-syscard" onClick={()=>abrir(s)}>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
+            <div className="ico" style={{background:`${s.cor}22`, color:s.cor}}>{s.icone}</div>
+            {s.destaque && <span className="ip-pill" style={{color:s.cor, borderColor:s.cor+"55"}}>destaque</span>}
+          </div>
+          <div className="nome">{s.nome}</div>
+          <div className="desc">{s.descricao}</div>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+            <span className={"ip-pill st-"+s.status}>
+              <span style={{width:7,height:7,borderRadius:99, display:"inline-block"}} className={"dot-"+s.status}></span>
+              {STATUS_LABEL[s.status]||s.status}
+            </span>
+            <span className="ip-faint" style={{fontSize:12}}>{s.url? "abrir →" : "sem URL"}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+    {isAdmin && <p className="ip-faint" style={{fontSize:12, marginTop:18}}>Você é admin. Edição de cards (URL/status) e novos sistemas entram na v0.2.</p>}
+  </>);
+}
+
+/* ============================================================ APP SHELL ============================================================ */
+const MODULOS = [
+  { id:"dashboard", ic:"🏠", nome:"Início" },
+  { id:"agenda",    ic:"📅", nome:"Agenda de Registros" },
+  { id:"projetos",  ic:"🧩", nome:"Projetos & Softwares" },
+  { id:"financeiro",ic:"💰", nome:"Financeiro", soon:true },
+  { id:"crm",       ic:"👥", nome:"Clientes (CRM)", soon:true },
+  { id:"docs",      ic:"📁", nome:"Documentos", soon:true },
+  { id:"relatorios",ic:"📊", nome:"Relatórios", soon:true },
+  { id:"assistente",ic:"🤖", nome:"Assistente IA", soon:true },
+  { id:"config",    ic:"⚙️", nome:"Configurações", soon:true },
+];
+
+function App(){
+  const [sessao,setSessao] = useState(undefined); // undefined=carregando
+  const [view,setView] = useState("dashboard");
+  const [perfil,setPerfil] = useState(null);
+  const [registros,setRegistros] = useState([]);
+  const [sistemas,setSistemas] = useState([]);
+  const [menu,setMenu] = useState(false);
+
+  useEffect(()=>{
+    sb.auth.getSession().then(({data})=> setSessao(data.session));
+    const { data:sub } = sb.auth.onAuthStateChange((_e,s)=> setSessao(s));
+    return ()=> sub.subscription.unsubscribe();
+  },[]);
+
+  const carregar = useCallback(async ()=>{
+    const { data:{ user } } = await sb.auth.getUser();
+    if(!user) return;
+    const [p,r,s] = await Promise.all([
+      sb.from("perfis").select("*").eq("id", user.id).single(),
+      sb.from("registros").select("*").order("vence_em",{ascending:true, nullsFirst:false}),
+      sb.from("sistemas").select("*").order("ordem",{ascending:true}),
+    ]);
+    setPerfil(p.data); setRegistros(r.data||[]); setSistemas(s.data||[]);
+  },[]);
+
+  useEffect(()=>{ if(sessao) carregar(); },[sessao, carregar]);
+
+  if(sessao===undefined) return <div className="ip-auth"><div className="ip-muted">Carregando…</div></div>;
+  if(!sessao) return <Auth onLogin={()=>{}} />;
+
+  const isAdmin = perfil?.papel === "admin";
+
+  return (
+    <div className="ip-shell">
+      <aside className={"ip-side"+(menu?" open":"")}>
+        <div className="brand"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjU2IiB2aWV3Qm94PSIwIDAgMjQwIDU2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iSU5QRVJTT04iPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJpcC1ncmFkIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzI1NjNFQiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDwhLS0gTW9ub2dyYW1hIC0tPgogIDxyZWN0IHg9IjIiIHk9IjYiIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCIgcng9IjEyIiBmaWxsPSJ1cmwoI2lwLWdyYWQpIi8+CiAgPHJlY3QgeD0iMTMiIHk9IjE2IiB3aWR0aD0iNiIgaGVpZ2h0PSIyNCIgcng9IjMiIGZpbGw9IiMwQTE0MjgiLz4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE4IiByPSIzLjQiIGZpbGw9IiMwQTE0MjgiLz4KICA8cGF0aCBkPSJNMjYgNDAgVjIwIGE4IDggMCAwIDEgMTMgNiB2MTQiIHN0cm9rZT0iIzBBMTQyOCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz4KICA8IS0tIFdvcmRtYXJrIC0tPgogIDx0ZXh0IHg9IjU4IiB5PSIzMCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLCBJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iODAwIiBsZXR0ZXItc3BhY2luZz0iMS41IiBmaWxsPSIjRThFRUY5Ij5JTlBFUlNPTjwvdGV4dD4KICA8dGV4dCB4PSI1OSIgeT0iNDYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSwgSW50ZXIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iNTAwIiBsZXR0ZXItc3BhY2luZz0iMi42IiBmaWxsPSIjMjJEM0VFIj5TT0xVw4fDlUVTIEVNIFRFQ05PTE9HSUE8L3RleHQ+Cjwvc3ZnPgo=" alt="INPERSON" style={{height:40}}/></div>
+        {MODULOS.map(m=>(
+          <div key={m.id}
+            className={"ip-nav"+(view===m.id?" active":"")+(m.soon?" soon":"")}
+            onClick={()=>{ if(!m.soon){ setView(m.id); setMenu(false);} }}>
+            <span className="ic">{m.ic}</span><span>{m.nome}</span>
+            {m.soon && <span className="ip-faint" style={{marginLeft:"auto", fontSize:10}}>em breve</span>}
+          </div>
+        ))}
+        <div style={{marginTop:"auto", paddingTop:14, borderTop:"1px solid var(--ip-border)"}}>
+          <div style={{padding:"4px 8px"}}>
+            <div style={{fontWeight:700, fontSize:13}}>{perfil?.nome||"—"}</div>
+            <div className="ip-faint" style={{fontSize:11}}>{perfil?.role_label||perfil?.papel}</div>
+          </div>
+          <button className="ip-btn ghost" style={{width:"100%", marginTop:8}} onClick={()=>sb.auth.signOut()}>Sair</button>
+          <div className="ip-faint" style={{fontSize:10, textAlign:"center", marginTop:10}}>{CFG.APP_NOME} · {CFG.APP_VERSAO}</div>
+        </div>
+      </aside>
+
+      <main className="ip-main">
+        <button className="ip-btn ghost" style={{display:"none", marginBottom:12}} id="mbtn" onClick={()=>setMenu(!menu)}>☰ Menu</button>
+        {view==="dashboard" && <Dashboard registros={registros} sistemas={sistemas} perfil={perfil} go={setView} />}
+        {view==="agenda" && <Agenda registros={registros} reload={carregar} isAdmin={isAdmin} />}
+        {view==="projetos" && <Projetos sistemas={sistemas} isAdmin={isAdmin} reload={carregar} />}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
