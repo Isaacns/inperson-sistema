@@ -238,7 +238,7 @@ h1,h2,h3{font-weight:300}
 .bub{filter:blur(.3px)}
 
 /* ===== v0.7 — Matrix azul (fluxo de energia) + logo de fundo colorida e em movimento ===== */
-.ip-rain{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.62;mix-blend-mode:screen;pointer-events:none}
+.ip-rain{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.9;mix-blend-mode:screen;pointer-events:none}
 .ip-watermark{left:auto;right:4vw;top:50%;width:58vh;height:58vh;opacity:.22;transform:translateY(-50%);animation:ip-wm3 14s ease-in-out infinite;z-index:1}
 .ip-watermark img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 26px rgba(116,176,216,.6)) saturate(1.25) brightness(1.1)}
 @keyframes ip-wm3{0%{transform:translateY(-50%) translateX(0) scale(1) rotate(0deg);opacity:.20}25%{transform:translateY(-54%) translateX(-1vw) scale(1.05) rotate(2.5deg);opacity:.26}50%{transform:translateY(-50%) translateX(0) scale(1.08) rotate(0deg);opacity:.30}75%{transform:translateY(-46%) translateX(1vw) scale(1.05) rotate(-2.5deg);opacity:.26}100%{transform:translateY(-50%) translateX(0) scale(1) rotate(0deg);opacity:.20}}
@@ -324,7 +324,7 @@ window.IP_LOGOS={
     var img=new Image();
     function build(){
       var W=cv.width=window.innerWidth, H=cv.height=window.innerHeight;
-      var size=Math.min(H*0.72, W*0.52), ox=(W-size)/2, oy=(H-size)/2;
+      var size=Math.min(H*0.82, W*0.58), ox=(W-size)/2, oy=(H-size)/2;
       var S=150, oc=document.createElement("canvas"); oc.width=oc.height=S;
       var octx=oc.getContext("2d"); octx.clearRect(0,0,S,S); octx.drawImage(img,0,0,S,S);
       var d; try{ d=octx.getImageData(0,0,S,S).data; }catch(e){ return; }
@@ -332,22 +332,22 @@ window.IP_LOGOS={
       for(var y=0;y<S;y+=4){ for(var x=0;x<S;x+=4){ if(d[(y*S+x)*4+3]>70){ pts.push([ox+(x/S)*size, oy+(y/S)*size]); } } }
       for(var i=pts.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=pts[i]; pts[i]=pts[j]; pts[j]=tmp; }
       pts=pts.slice(0, Math.min(pts.length, 92));
-      parts=pts.map(function(tp,i){ return { w:WORDS[i%WORDS.length], tx:tp[0], ty:tp[1], x:Math.random()*W, y:H+30+Math.random()*H*0.8, locked:false, sz:11+Math.random()*5, vy:0, dx:0 }; });
+      parts=pts.map(function(tp,i){ return { w:WORDS[i%WORDS.length], tx:tp[0], ty:tp[1], x:Math.random()*W, y:H+30+Math.random()*H*0.8, locked:false, sz:13+Math.random()*7, vy:0, dx:0 }; });
       ready=true; phase="form"; pt=0;
     }
     img.onload=build; img.src=(window.IP_LOGOS&&window.IP_LOGOS.mark)||"";
     window.addEventListener("resize",function(){ if(img.complete && img.naturalWidth) build(); });
     function draw(){
       if(!cv.isConnected) return;
-      ctx.fillStyle="rgba(1,5,16,0.16)"; ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.fillStyle="rgba(1,5,16,0.09)"; ctx.fillRect(0,0,cv.width,cv.height);
       if(ready){
         ctx.textAlign="center"; var all=true;
         for(var i=0;i<parts.length;i++){ var q=parts[i];
           if(phase==="form"){ q.x+=(q.tx-q.x)*0.085; q.y+=(q.ty-q.y)*0.085; if(Math.abs(q.x-q.tx)<1.2 && Math.abs(q.y-q.ty)<1.2){ q.locked=true; } else { all=false; } }
           else { q.y+=q.vy; q.x+=q.dx; }
           ctx.font="600 "+q.sz+"px 'Segoe UI', Inter, sans-serif";
-          ctx.shadowColor="rgba(116,176,216,0.9)"; ctx.shadowBlur=q.locked?13:6;
-          ctx.fillStyle="rgba(116,176,216,"+(q.locked?0.95:0.55)+")";
+          ctx.shadowColor="rgba(116,176,216,0.9)"; ctx.shadowBlur=q.locked?16:9;
+          ctx.fillStyle="rgba(116,176,216,"+(q.locked?1:0.72)+")";
           ctx.fillText(q.w, q.x, q.y); ctx.shadowBlur=0;
         }
         if(phase==="form" && all){ pt++; if(pt>260){ phase="scatter"; pt=0; for(var a=0;a<parts.length;a++){ parts[a].locked=false; parts[a].vy=-(1.4+Math.random()*2.6); parts[a].dx=(Math.random()-0.5)*1.2; } } }
@@ -575,274 +575,4 @@ window.IP_LOGOS={
           campo("Valor (R$)", input({className:"ip-input",type:"number",step:"0.01",required:true,value:f.valor,onChange:set("valor"),placeholder:"0,00"}))),
         div({style:{marginTop:12}}, campo("Descrição", input({className:"ip-input",required:true,value:f.descricao,onChange:set("descricao"),placeholder:"Ex.: Contrato de suporte mensal"}))),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
-          campo("Categoria", input({className:"ip-input",value:f.categoria,onChange:set("categoria"),placeholder:"Suporte, Projeto, Infra…"})),
-          campo("Cliente", input({className:"ip-input",value:f.cliente,onChange:set("cliente"),placeholder:"opcional"}))),
-        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12,alignItems:"end"}},
-          campo("Data", input({className:"ip-input",type:"date",value:f.data_ref,onChange:set("data_ref")})),
-          label({style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--ip-muted)",paddingBottom:10}}, input({type:"checkbox",checked:f.recorrente,onChange:set("recorrente")}), "Recorrente (MRR)")),
-        err && div({className:"ip-msg err"},err),
-        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}},
-          button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
-          button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar"))));
-  }
-
-  /* ===================== DOCUMENTOS ===================== */
-  function Documentos(props){
-    var anexos=props.anexos, reload=props.reload;
-    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
-    function upload(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; setBusy(true); setErr(null);
-      sb.auth.getUser().then(function(res){ var uid=res.data.user.id; var path=uid+"/"+Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-        return sb.storage.from("anexos").upload(path,file).then(function(up){ if(up.error) throw up.error;
-          return sb.from("anexos").insert({owner:uid,nome:file.name,tipo:file.type,tamanho:file.size,path:path}); }); })
-        .then(function(r){ if(r&&r.error) throw r.error; setBusy(false); reload(); })
-        .catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
-    function abrir(at){ sb.storage.from("anexos").createSignedUrl(at.path,120).then(function(r){ if(r.data&&r.data.signedUrl) window.open(r.data.signedUrl,"_blank","noopener"); else alert("Não foi possível abrir o arquivo."); }); }
-    var ord=anexos.slice().sort(function(a,b){return (b.criado_em||"").localeCompare(a.criado_em||"");});
-    return div({className:"ip-view"},
-      topo("ARQUIVOS","Documentos","Contratos, propostas e arquivos no Storage seguro da INPERSON.",
-        h("label",{className:"ip-btn",style:{cursor:"pointer"}}, busy?"Enviando…":"⬆️ Enviar arquivo", input({type:"file",style:{display:"none"},onChange:upload,disabled:busy}))),
-      err && div({className:"ip-msg err",style:{marginBottom:14}},err),
-      div({className:"ip-list ip-stagger"},
-        ord.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum documento ainda. Envie o primeiro arquivo.")),
-        ord.map(function(at){ return div({key:at.id,className:"ip-card ip-row",style:{cursor:"pointer"},onClick:function(){abrir(at);}},
-          div({style:{fontSize:22}},"📄"),
-          div({style:{flex:1}}, div({style:{fontWeight:400}},at.nome),
-            div({className:"ip-faint",style:{fontSize:12,marginTop:3}},(at.tipo||"arquivo")+" · "+(at.tamanho?Math.round(at.tamanho/1024)+" KB":"")+" · "+fmtDia(at.criado_em)+"/"+fmtMesAno(at.criado_em))),
-          span({className:"ip-faint",style:{fontSize:11.5}},"abrir →")); })));
-  }
-
-  /* ===================== RELATÓRIOS ===================== */
-  function Relatorios(props){
-    var registros=props.registros, sistemas=props.sistemas, clientes=props.clientes, lancamentos=props.lancamentos;
-    var rec=lancamentos.filter(function(l){return l.tipo==="receita";}).reduce(function(s,l){return s+Number(l.valor||0);},0);
-    var desp=lancamentos.filter(function(l){return l.tipo==="despesa";}).reduce(function(s,l){return s+Number(l.valor||0);},0);
-    var venc60=registros.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d<=60;}).length;
-    var linha=function(k,v){ return div({className:"ip-row ip-card",style:{justifyContent:"space-between"}}, span({className:"ip-muted"},k), strong({style:{fontWeight:400}},v)); };
-    return div({className:"ip-view"},
-      topo("RELATÓRIOS","Relatórios","Resumo executivo do negócio.",
-        button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF")),
-      div({className:"ip-list ip-stagger"},
-        linha("Sistemas no ar", sistemas.filter(function(s){return s.status==="no_ar";}).length+" de "+sistemas.length),
-        linha("Clientes ativos", clientes.filter(function(c){return (c.status||"ativo")==="ativo";}).length),
-        linha("Registros ativos", registros.filter(function(r){return r.status!=="concluido"&&r.status!=="arquivado";}).length),
-        linha("Vencimentos em ≤60 dias", venc60),
-        linha("Receitas", money(rec)),
-        linha("Despesas", money(desp)),
-        linha("Saldo", money(rec-desp))));
-  }
-
-  /* ===================== ASSISTENTE IA ===================== */
-  function Assistente(props){
-    var s=useState([{role:"ia",txt:"Olá, Isaac. Sou o seu Assistente INPERSON. Posso analisar seus dados, priorizar o dia, sugerir crescimento e automações. O que você quer resolver agora?"}]),msgs=s[0],setMsgs=s[1];
-    var i=useState(""),inp=i[0],setInp=i[1]; var b=useState(false),busy=b[0],setBusy=b[1];
-    function contexto(){
-      var r=props.registros, sis=props.sistemas, cli=props.clientes, lan=props.lancamentos;
-      var venc=r.filter(function(x){var d=diasAte(x.vence_em);return d!==null&&d<=90;}).map(function(x){return x.titulo+" (vence "+(x.vence_em||"?")+")";});
-      var rec=lan.filter(function(l){return l.tipo==="receita";}).reduce(function(s,l){return s+Number(l.valor||0);},0);
-      return "Sistemas: "+sis.map(function(x){return x.nome+"["+x.status+"]";}).join(", ")+
-        "\nClientes: "+cli.map(function(x){return x.nome+(x.segmento?" ("+x.segmento+")":"");}).join(", ")+
-        "\nRegistros ativos: "+r.filter(function(x){return x.status!=="concluido";}).length+
-        "\nVencimentos próximos: "+(venc.join("; ")||"nenhum")+
-        "\nReceitas lançadas: "+money(rec);
-    }
-    function enviar(ev){ ev.preventDefault(); var q=inp.trim(); if(!q||busy) return;
-      var nv=msgs.concat([{role:"eu",txt:q}]); setMsgs(nv); setInp(""); setBusy(true);
-      sb.functions.invoke("assistente",{body:{pergunta:q,contexto:contexto()}}).then(function(r){
-        var txt=(r.data&&r.data.resposta)?r.data.resposta:((r.error?("Erro: "+r.error.message):"(sem resposta)"));
-        setMsgs(nv.concat([{role:"ia",txt:txt}])); setBusy(false);
-      }).catch(function(x){ setMsgs(nv.concat([{role:"ia",txt:"Erro ao falar com a IA: "+(x.message||x)}])); setBusy(false); }); }
-    return div({className:"ip-view"},
-      topo("IA · COPILOTO","Assistente INPERSON","Converse com a IA sobre os seus próprios dados e estratégia."),
-      div({className:"ip-card",style:{padding:18,display:"flex",flexDirection:"column",height:"min(64vh,560px)"}},
-        div({className:"ip-chat",style:{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12,paddingRight:6}},
-          msgs.map(function(m,idx){ return div({key:idx,className:"ip-bubble "+(m.role==="eu"?"eu":"ia")}, m.txt); }),
-          busy && div({className:"ip-bubble ia ip-muted"},"pensando…")),
-        form({onSubmit:enviar,style:{display:"flex",gap:10,marginTop:14}},
-          input({className:"ip-input",value:inp,onChange:function(e){setInp(e.target.value);},placeholder:"Pergunte algo… ex.: o que priorizar hoje?"}),
-          button({className:"ip-btn",disabled:busy,style:{whiteSpace:"nowrap"}},"Enviar"))));
-  }
-
-  /* ===================== CONFIGURAÇÕES ===================== */
-  function Configuracoes(props){
-    var perfil=props.perfil, isAdmin=props.isAdmin, sistemas=props.sistemas, reload=props.reload;
-    var n=useState(perfil?perfil.nome||"":""),nome=n[0],setNome=n[1]; var ms=useState(null),msg=ms[0],setMsg=ms[1];
-    function salvarPerfil(){ sb.from("perfis").update({nome:nome}).eq("id",perfil.id).then(function(r){ setMsg(r.error?{t:"err",m:r.error.message}:{t:"ok",m:"Perfil atualizado."}); reload(); }); }
-    return div({className:"ip-view"},
-      topo("AJUSTES","Configurações","Perfil, acessos aos sistemas e usuários."),
-      div({className:"ip-card",style:{padding:20,marginBottom:16}},
-        h3({style:{fontWeight:300,marginTop:0}},"👤 Meu perfil"),
-        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-          div(null,label({className:"ip-label"},"Nome"), input({className:"ip-input",value:nome,onChange:function(e){setNome(e.target.value);}})),
-          div(null,label({className:"ip-label"},"E-mail"), input({className:"ip-input",value:perfil?perfil.email:"",disabled:true}))),
-        div({style:{marginTop:8,fontSize:12,color:"var(--ip-muted)"}},"Papel: "+(perfil?(perfil.role_label||perfil.papel):"-")),
-        msg && div({className:"ip-msg "+msg.t},msg.m),
-        div({style:{marginTop:12}}, button({className:"ip-btn",onClick:salvarPerfil},"Salvar perfil"))),
-      isAdmin && SistemasEditor({sistemas:sistemas,reload:reload}),
-      isAdmin && UsuariosAdmin());
-  }
-  function SistemasEditor(props){
-    var sistemas=props.sistemas, reload=props.reload;
-    return div({className:"ip-card",style:{padding:20,marginBottom:16}},
-      h3({style:{fontWeight:300,marginTop:0}},"🧩 Acessos aos sistemas (URLs)"),
-      p({className:"ip-sub",style:{marginTop:0}},"Defina o link de cada sistema — os cards de Projetos passam a abri-los."),
-      div({className:"ip-list"}, sistemas.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);}).map(function(s){ return SistemaRow({key:s.id,s:s,reload:reload}); })));
-  }
-  function SistemaRow(props){
-    var s=props.s, reload=props.reload;
-    var u=useState(s.url||""),url=u[0],setUrl=u[1];
-    var st=useState(s.status||"no_ar"),status=st[0],setStatus=st[1];
-    var sv=useState(false),sav=sv[0],setSav=sv[1];
-    function salvar(){ setSav(true); sb.from("sistemas").update({url:url,status:status}).eq("id",s.id).then(function(){ setSav(false); reload(); }); }
-    return div({className:"ip-card ip-row",style:{alignItems:"center"}},
-      div({style:{minWidth:150,fontWeight:400}}, (s.icone||"")+" "+s.nome),
-      input({className:"ip-input",value:url,onChange:function(e){setUrl(e.target.value);},placeholder:"https://…",style:{flex:1}}),
-      select({className:"ip-input",value:status,onChange:function(e){setStatus(e.target.value);},style:{maxWidth:170}}, ["no_ar","desenvolvimento","planejado","manutencao"].map(function(o){return option({key:o,value:o},STATUS_LABEL[o]);})),
-      button({className:"ip-btn ghost",onClick:salvar,disabled:sav},sav?"…":"Salvar"));
-  }
-  function UsuariosAdmin(){
-    var l=useState([]),lista=l[0],setLista=l[1];
-    var f=useState({email:"",senha:"",nome:"",papel:"cliente"}),form2=f[0],setForm=f[1];
-    var b=useState(false),busy=b[0],setBusy=b[1]; var m=useState(null),msg=m[0],setMsg=m[1];
-    function carregar(){ sb.functions.invoke("admin-usuarios",{body:{action:"list"}}).then(function(r){ if(r.data&&r.data.usuarios) setLista(r.data.usuarios); }); }
-    useEffect(function(){ carregar(); },[]);
-    function set(k){ return function(e){ var n={}; n[k]=e.target.value; setForm(Object.assign({},form2,n)); }; }
-    function criar(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
-      sb.functions.invoke("admin-usuarios",{body:Object.assign({action:"create"},form2)}).then(function(r){
-        if(r.error||(r.data&&r.data.error)){ setMsg({t:"err",m:(r.data&&r.data.error)||r.error.message}); }
-        else { setMsg({t:"ok",m:"Usuário criado."}); setForm({email:"",senha:"",nome:"",papel:"cliente"}); carregar(); }
-        setBusy(false);
-      }).catch(function(x){ setMsg({t:"err",m:String(x)}); setBusy(false); }); }
-    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
-    return div({className:"ip-card",style:{padding:20}},
-      h3({style:{fontWeight:300,marginTop:0}},"👥 Usuários & permissões"),
-      div({className:"ip-list",style:{marginBottom:14}}, lista.map(function(u){ return div({key:u.id,className:"ip-card ip-row",style:{alignItems:"center"}},
-        div({style:{flex:1}}, div({style:{fontWeight:400}},u.nome||u.email), div({className:"ip-faint",style:{fontSize:12}},u.email)),
-        pill(u.papel==="admin"?"ativo":"prospect"), span({className:"ip-tag",style:{marginLeft:8}},u.role_label||u.papel)); })),
-      form({onSubmit:criar},
-        h3({style:{fontWeight:300,fontSize:14}},"Criar novo usuário"),
-        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-          campo("Nome", input({className:"ip-input",value:form2.nome,onChange:set("nome"),placeholder:"Nome"})),
-          campo("E-mail", input({className:"ip-input",type:"email",required:true,value:form2.email,onChange:set("email"),placeholder:"email@dominio.com"}))),
-        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
-          campo("Senha (mín. 6)", input({className:"ip-input",type:"text",required:true,value:form2.senha,onChange:set("senha"),placeholder:"senha inicial"})),
-          campo("Permissão", select({className:"ip-input",value:form2.papel,onChange:set("papel")}, [["cliente","Usuário (limitado)"],["admin","Administrador"]].map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
-        msg && div({className:"ip-msg "+msg.t},msg.m),
-        div({style:{marginTop:14}}, button({className:"ip-btn",disabled:busy},busy?"Criando…":"Criar usuário"))));
-  }
-
-  /* ===================== UPGRADE ===================== */
-  function UpgradeModal(props){
-    function lista(items){ return h("ul",null, items.map(function(t,i){return h("li",{key:i},t);})); }
-    return div({className:"ip-modal-bg",onClick:props.onClose},
-      div({className:"ip-card ip-upmodal",onClick:function(e){e.stopPropagation();}},
-        button({className:"ip-x",onClick:props.onClose},"✕"),
-        div({className:"ip-uphead"}, span({className:"orb"}),
-          div({className:"ip-rel"}, div({className:"ip-eyebrow",style:{textAlign:"center"}},"INPERSON · EVOLUÇÃO"),
-            h2({style:{fontWeight:200,fontSize:28,margin:"8px 0 4px"}},"Eleve o seu Sistema"),
-            p({className:"ip-muted",style:{margin:0,fontSize:13.5}},"Mais automação, inteligência e tempo livre."))),
-        div({className:"ip-upplans"},
-          div({className:"ip-plan"}, div({className:"ip-eyebrow"},"PRO"), strong({style:{fontWeight:300,fontSize:18}},"INPERSON PRO"),
-            div({className:"price"},"R$ —",span({className:"ip-faint",style:{fontSize:13}}," /mês")),
-            lista(["Relatórios PDF avançados","Multiusuário & permissões","Integrações externas","Backup e auditoria"])),
-          div({className:"ip-plan pro"}, span({className:"ip-pill",style:{position:"absolute",top:16,right:16,color:"var(--ip-accent)"}},"recomendado"),
-            div({className:"ip-eyebrow"},"IA"), strong({style:{fontWeight:300,fontSize:18}},"INPERSON IA+"),
-            div({className:"price"},"R$ —",span({className:"ip-faint",style:{fontSize:13}}," /mês")),
-            lista(["Assistente proativo 24/7","Briefing diário automático às 6h","Alertas inteligentes","Ações por linguagem natural"]))),
-        div({className:"ip-upfoot"}, button({className:"ip-btn",style:{padding:"12px 26px"},onClick:function(){ alert("Perfeito! Te aviso no lançamento. A base de cobrança (Stripe) já existe no vizio-core."); props.onClose(); }},"✨  Quero ser avisado"))));
-  }
-
-  /* ===================== SHELL ===================== */
-  var MODULOS=[
-    {id:"dashboard",ic:"🏠",nome:"Início"},
-    {id:"assistente",ic:"🤖",nome:"Assistente IA"},
-    {id:"agenda",ic:"📅",nome:"Agenda de Registros"},
-    {id:"projetos",ic:"🧩",nome:"Projetos & Softwares"},
-    {id:"clientes",ic:"👥",nome:"Clientes"},
-    {id:"financeiro",ic:"💰",nome:"Financeiro"},
-    {id:"docs",ic:"📁",nome:"Documentos"},
-    {id:"relatorios",ic:"📊",nome:"Relatórios"},
-    {id:"config",ic:"⚙️",nome:"Configurações"}
-  ];
-
-  function App(){
-    var s0=useState(undefined),sessao=s0[0],setSessao=s0[1];
-    var s1=useState("dashboard"),view=s1[0],setView=s1[1];
-    var s2=useState(null),perfil=s2[0],setPerfil=s2[1];
-    var s3=useState([]),registros=s3[0],setRegistros=s3[1];
-    var s4=useState([]),sistemas=s4[0],setSistemas=s4[1];
-    var s5=useState([]),clientes=s5[0],setClientes=s5[1];
-    var s8=useState([]),lancamentos=s8[0],setLancamentos=s8[1];
-    var s9=useState([]),anexos=s9[0],setAnexos=s9[1];
-    var s6=useState(false),menu=s6[0],setMenu=s6[1];
-    var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
-
-    useEffect(function(){
-      sb.auth.getSession().then(function(r){ setSessao(r.data.session); });
-      var sub=sb.auth.onAuthStateChange(function(_e,sess){ setSessao(sess); });
-      return function(){ sub.data.subscription.unsubscribe(); };
-    },[]);
-    var carregar=useCallback(function(){
-      sb.auth.getUser().then(function(res){ var user=res.data.user; if(!user) return;
-        return Promise.all([
-          sb.from("perfis").select("*").eq("id",user.id).single(),
-          sb.from("registros").select("*"),
-          sb.from("sistemas").select("*").order("ordem",{ascending:true}),
-          sb.from("clientes").select("*").order("ordem",{ascending:true}),
-          sb.from("lancamentos").select("*"),
-          sb.from("anexos").select("*")
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); });
-      });
-    },[]);
-    useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
-
-    if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
-    if(!sessao) return h(Auth);
-    var isAdmin = perfil && perfil.papel==="admin";
-    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var body;
-    if(view==="dashboard") body=Dashboard(P);
-    else if(view==="assistente") body=Assistente(P);
-    else if(view==="agenda") body=Agenda(P);
-    else if(view==="projetos") body=Projetos(P);
-    else if(view==="clientes") body=Clientes(P);
-    else if(view==="financeiro") body=Financeiro(P);
-    else if(view==="docs") body=Documentos(P);
-    else if(view==="relatorios") body=Relatorios(P);
-    else if(view==="config") body=Configuracoes(P);
-
-    return div(null, h(BgFx),
-      div({className:"ip-shell"},
-        h("aside",{className:"ip-side"+(menu?" open":"")},
-          div({className:"brand"}, Logo("hz","ip-brand-img")),
-          div({className:"ip-navwrap"}, MODULOS.map(function(m){
-            return div({key:m.id,className:"ip-nav"+(view===m.id?" active":""), onClick:function(){ setView(m.id); setMenu(false); }},
-              span({className:"ic"},m.ic), span(null,m.nome)); })),
-          div({style:{margin:"12px 4px 6px",display:"flex",flexDirection:"column",gap:8}},
-            button({className:"ip-upbtn",onClick:function(){setUpgrade(true);}}, span({className:"spark"},"✦"), "UPGRADE"),
-            button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
-          div({className:"ip-sidefoot"},
-            div({style:{padding:"4px 8px"}}, div({style:{fontSize:13}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
-            button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
-            div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))),
-        h("main",{className:"ip-main"},
-          button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
-          body)),
-      upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}));
-  }
-
-  function fatal(msg){ var r=document.getElementById("root"); if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar</h2><pre>'+String(msg).replace(/</g,"&lt;")+'</pre></div>'; }
-  function auraInit(){ if(document.querySelector(".ip-aura")) return; var el=document.createElement("div"); el.className="ip-aura"; document.body.appendChild(el); var raf=0,cx=innerWidth/2,cy=innerHeight*0.35; window.addEventListener("mousemove",function(e){ cx=e.clientX; cy=e.clientY; if(!raf){ raf=requestAnimationFrame(function(){ el.style.left=cx+"px"; el.style.top=cy+"px"; raf=0; }); } }); }
-  var deferredPrompt=null;
-  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferredPrompt=e; });
-  window.ipInstall=function(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; } else { alert("Para instalar como app: no Chrome/Edge do computador, clique no ícone de instalar na barra de endereço ou menu (⋮) → \"Instalar Sistema INPERSON\". No celular: menu → \"Adicionar à tela inicial\"."); } };
-  window.addEventListener("error",function(e){ if(!document.querySelector(".ip-shell, .ip-auth")) fatal(e.message||e.error||"erro"); });
-  try{
-    if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas não carregaram.");
-    ReactDOM.createRoot(document.getElementById("root")).render(h(App)); auraInit();
-    if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
-  }catch(err){ fatal(err.stack||err.message||err); }
-})();
-
-</script>
-</body>
-</html>
+          campo("Categor
