@@ -232,6 +232,16 @@ h1,h2,h3{font-weight:300}
 @keyframes ip-wm2{0%,100%{transform:translateY(-50%) scale(1) rotate(0deg);opacity:.06}50%{transform:translateY(-53%) scale(1.05) rotate(2deg);opacity:.11}}
 .bub{filter:blur(.3px)}
 
+/* ===== v0.7 — Matrix azul (fluxo de energia) + logo de fundo colorida e em movimento ===== */
+.ip-rain{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.5;mix-blend-mode:screen;pointer-events:none}
+.ip-watermark{left:auto;right:4vw;top:50%;width:58vh;height:58vh;opacity:.22;transform:translateY(-50%);animation:ip-wm3 14s ease-in-out infinite;z-index:1}
+.ip-watermark img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 26px rgba(116,176,216,.6)) saturate(1.25) brightness(1.1)}
+@keyframes ip-wm3{0%{transform:translateY(-50%) translateX(0) scale(1) rotate(0deg);opacity:.20}25%{transform:translateY(-54%) translateX(-1vw) scale(1.05) rotate(2.5deg);opacity:.26}50%{transform:translateY(-50%) translateX(0) scale(1.08) rotate(0deg);opacity:.30}75%{transform:translateY(-46%) translateX(1vw) scale(1.05) rotate(-2.5deg);opacity:.26}100%{transform:translateY(-50%) translateX(0) scale(1) rotate(0deg);opacity:.20}}
+
+/* ===== v0.7 — destaque da marca na Home (canto superior esquerdo) ===== */
+.ip-side .brand{padding:12px 8px 20px;display:flex;justify-content:center;border-bottom:1px solid var(--glass-brd);margin-bottom:6px}
+.ip-brand-img{width:228px;max-width:100%;height:auto;filter:drop-shadow(0 0 12px rgba(116,176,216,.5));animation:ip-breathe-soft 6s ease-in-out infinite, ip-glow 5s ease-in-out infinite;transform-origin:center}
+
 </style>
 <script>
 // Configuracao de conexao — Sistema INPERSON
@@ -240,7 +250,7 @@ window.INPERSON_CONFIG = {
   SUPABASE_URL: "https://emyjzjadmxgbtmxnzazu.supabase.co",
   SUPABASE_KEY: "sb_publishable_PY2YDxUzGgaXRVtvCcasBA_Ml7YUBTC",
   APP_NOME: "Sistema INPERSON",
-  APP_VERSAO: "AURA · v1.0",
+  APP_VERSAO: "v1.0",
   APP_URL: "https://isaacns.github.io/inperson-sistema/",
   LOGIN_SUGERIDO: "isaacnogueira.ti@gmail.com"
 };
@@ -288,15 +298,32 @@ window.IP_LOGOS={
   var STATUS_LABEL={no_ar:"No ar",desenvolvimento:"Em desenvolvimento",planejado:"Planejado",manutencao:"Manutenção",ativo:"Ativo",prospect:"Prospect",pausado:"Pausado"};
 
   function Logo(k,cls,style){ return img({src:L[k],alt:"INPERSON",className:cls,style:style,draggable:false}); }
+  function rainRef(cv){
+    if(!cv || cv._ip) return; cv._ip=true;
+    var ctx=cv.getContext("2d"), fs=15, cols, ys, sp;
+    var chars="01<>/[]{}=+*·アイウエオカキクケコナニヌネノINPERSO".split("");
+    function resize(){ cv.width=window.innerWidth; cv.height=window.innerHeight; cols=Math.ceil(cv.width/fs); ys=[]; sp=[]; for(var i=0;i<cols;i++){ ys[i]=Math.random()*cv.height; sp[i]=.5+Math.random()*.8; } }
+    resize(); window.addEventListener("resize",resize);
+    function draw(){
+      ctx.fillStyle="rgba(1,5,16,0.10)"; ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.font=fs+"px monospace"; ctx.textAlign="center";
+      for(var i=0;i<cols;i++){
+        var x=i*fs+fs/2, y=ys[i];
+        ctx.fillStyle="rgba(196,228,248,0.95)"; ctx.fillText(chars[(Math.random()*chars.length)|0],x,y);
+        ctx.fillStyle="rgba(116,176,216,0.40)"; ctx.fillText(chars[(Math.random()*chars.length)|0],x,y+fs);
+        ys[i]-=fs*sp[i];
+        if(ys[i]<-fs && Math.random()>0.965) { ys[i]=cv.height+Math.random()*260; sp[i]=.5+Math.random()*.9; }
+      }
+      if(cv.isConnected) requestAnimationFrame(draw);
+    }
+    draw();
+  }
   function BgFx(){
-    var bub=[]; for(var i=0;i<20;i++){ var sz=(3+Math.random()*8); bub.push(span({key:i,className:"bub",style:{
-      left:(Math.random()*100)+"%", width:sz+"px", height:sz+"px",
-      animationDuration:(10+Math.random()*10)+"s", animationDelay:(Math.random()*12)+"s", opacity:.12+Math.random()*.26}})); }
     return div({className:"ip-bgfx"},
       span({className:"ip-blob b1"}), span({className:"ip-blob b2"}), span({className:"ip-blob b3"}),
+      h("canvas",{className:"ip-rain",ref:rainRef}),
       div({className:"ip-beam"}),
       div({className:"ip-watermark"}, Logo("mark","",null)),
-      div({className:"ip-bubbles"}, bub),
       div({className:"ip-grain"}));
   }
   function pill(status){
@@ -325,7 +352,6 @@ window.IP_LOGOS={
     return div({className:"ip-auth"},
       h(BgFx),
       div({className:"ip-card box ip-rel"},
-        span({className:"ip-aura-chip",style:{position:"absolute",top:14,right:14}}, span({className:"s"},"✦"), " AURA"),
         div({className:"ip-auth-hero"}, Logo("hero","ip-logo-hero")),
         form({onSubmit:submit,style:{marginTop:6}},
           label({className:"ip-label"},"E-mail"),
@@ -616,7 +642,6 @@ window.IP_LOGOS={
               div({style:{fontSize:13}},perfil?perfil.nome:"—"),
               div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
             button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
-            div({style:{textAlign:"center",marginTop:12}}, span({className:"ip-aura-chip"}, span({className:"s"},"✦"), " AURA")),
             div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:8,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))
         ),
         h("main",{className:"ip-main"},
