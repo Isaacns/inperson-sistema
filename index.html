@@ -256,7 +256,7 @@ h1,h2,h3{font-weight:300}
 .ip-bubble{max-width:82%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;animation:ip-fadeup .3s ease both}
 .ip-bubble.eu{align-self:flex-end;background:linear-gradient(135deg,var(--ip-accent),var(--ip-accent-2));color:#03101c;border-bottom-right-radius:4px}
 .ip-bubble.ia{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--glass-brd);border-bottom-left-radius:4px}
-@media print{ .ip-side,.ip-bgfx,.ip-aura,.ip-mtoggle{display:none!important} .ip-main{max-width:100%} .ip-card{box-shadow:none;border-color:#ccc} body{background:#fff;color:#000} }
+@media print{ .ip-side,.ip-bgfx,.ip-aura,.ip-mtoggle,.ip-noprint{display:none!important} .ip-main{max-width:100%} .ip-card{box-shadow:none;border-color:#ccc} body{background:#fff;color:#000} }
 
 </style>
 <script>
@@ -928,6 +928,83 @@ window.IP_LOGOS={
         div({className:"ip-upfoot"}, button({className:"ip-btn",style:{padding:"12px 26px"},onClick:function(){ alert("Perfeito! Te aviso no lançamento. A base de cobrança (Stripe) já existe no vizio-core."); props.onClose(); }},"✨  Quero ser avisado"))));
   }
 
+  /* ===================== PLANOS & PROPOSTAS (INPERSON CARE) ===================== */
+  var CARE_PLANOS=[
+    {id:"essencial",nome:"INPERSON Care · Essencial",preco:890,cor:"#8FA3BE",resumo:"Cobertura essencial para manter tudo funcionando.",itens:["Suporte remoto em horário comercial","Monitoramento básico de disponibilidade","1 visita técnica preventiva/mês","SLA de resposta: 8h úteis","Verificação mensal de backup","Relatório mensal simplificado"]},
+    {id:"pro",nome:"INPERSON Care · Pro",preco:1990,cor:"#74B0D8",destaque:true,resumo:"Proatividade e segurança para operar sem sustos.",itens:["Suporte remoto + presencial","Monitoramento proativo 24/7","Até 2 visitas técnicas/mês","SLA de resposta: 4h úteis","Backup gerenciado e testado","Segurança: antivírus, patches e atualizações","Relatório mensal de saúde de TI"]},
+    {id:"gerenciado",nome:"INPERSON Care · Gerenciado",preco:3900,cor:"#5FBF8F",resumo:"TI totalmente gerenciada, como um departamento próprio.",itens:["Tudo do Pro, sem limite de chamados","Visitas conforme necessidade (atendimento prioritário)","SLA de resposta: 2h","Segurança avançada (firewall, políticas, hardening)","Continuidade e plano de recuperação (DR)","Gestão de fornecedores e licenças","Reunião estratégica trimestral (vCIO)"]}
+  ];
+  function Care(props){
+    var clientes=props.clientes, isAdmin=props.isAdmin;
+    var pr=useState(null),prop=pr[0],setProp=pr[1];
+    var nv=useState(false),nova=nv[0],setNova=nv[1];
+    if(prop) return h(PropostaView,{prop:prop,onVoltar:function(){setProp(null);}});
+    return div({className:"ip-view"},
+      topo("RECEITA RECORRENTE","Planos & Propostas — INPERSON Care","Transforme suporte e infraestrutura em receita mensal previsível (MRR).",
+        isAdmin?button({className:"ip-btn",onClick:function(){setNova(true);}},"📄 Gerar proposta"):null),
+      div({className:"ip-grid-cards ip-stagger",style:{gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))"}},
+        CARE_PLANOS.map(function(pl){ return div({key:pl.id,className:"ip-card",style:{padding:22,position:"relative",border:"1px solid "+(pl.destaque?"rgba(116,176,216,.5)":"var(--glass-brd)"),background:pl.destaque?"linear-gradient(160deg,rgba(116,176,216,.12),rgba(255,255,255,.02))":"var(--glass-bg)"}},
+          pl.destaque&&span({className:"ip-pill",style:{position:"absolute",top:16,right:16,color:"var(--ip-accent)"}},"mais vendido"),
+          div({className:"ip-eyebrow",style:{color:pl.cor}},"INPERSON CARE"),
+          strong({style:{fontWeight:300,fontSize:18,display:"block",marginTop:4}},pl.nome.replace("INPERSON Care · ","")),
+          div({style:{margin:"10px 0 4px"}}, span({style:{fontSize:28,fontWeight:200}},money(pl.preco)), span({className:"ip-faint",style:{fontSize:13}}," /mês")),
+          p({className:"ip-muted",style:{fontSize:12.5,marginTop:0}},pl.resumo),
+          h("ul",{style:{margin:"12px 0 0",paddingLeft:18,lineHeight:1.8,fontSize:13}}, pl.itens.map(function(it,i){return h("li",{key:i},it);})),
+          isAdmin&&button({className:"ip-btn ghost",style:{width:"100%",marginTop:16},onClick:function(){setNova(true);}},"Gerar proposta")); })),
+      div({className:"ip-card",style:{padding:18,marginTop:18}}, p({className:"ip-faint",style:{margin:0,fontSize:12.5}},"💡 Preços sugeridos — ajuste conforme seu posicionamento. A recorrência (MRR) é o ativo mais valioso de uma empresa de tecnologia: previsibilidade de caixa, maior valor por cliente e valuation mais alto.")),
+      nova && h(NovaProposta,{clientes:clientes,onClose:function(){setNova(false);},onGerar:function(p2){ setNova(false); setProp(p2); }}));
+  }
+  function NovaProposta(props){
+    var clientes=props.clientes||[];
+    var pid=useState(""),cli=pid[0],setCli=pid[1];
+    var pp=useState("pro"),plano=pp[0],setPlano=pp[1];
+    var pv=useState(""),preco=pv[0],setPreco=pv[1];
+    var pn=useState(""),obs=pn[0],setObs=pn[1];
+    var plObj=CARE_PLANOS.filter(function(x){return x.id===plano;})[0];
+    function gerar(ev){ ev.preventDefault(); var precoFinal=preco!==""?Number(preco):plObj.preco;
+      var c=clientes.filter(function(x){return x.id===cli;})[0];
+      props.onGerar({cliente:c?c.nome:"Cliente",segmento:c?c.segmento:"",plano:plObj,preco:precoFinal,obs:obs,data:new Date()}); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:gerar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}},"Gerar proposta — INPERSON Care"),
+        campo("Cliente", select({className:"ip-input",value:cli,onChange:function(e){setCli(e.target.value);},required:true},
+          [option({key:"_",value:""},"Selecione…")].concat(clientes.map(function(c){return option({key:c.id,value:c.id},c.nome);})))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Plano", select({className:"ip-input",value:plano,onChange:function(e){setPlano(e.target.value);}}, CARE_PLANOS.map(function(x){return option({key:x.id,value:x.id},x.nome.replace("INPERSON Care · ",""));}))),
+          campo("Preço mensal (R$)", input({className:"ip-input",type:"number",step:"0.01",value:preco,onChange:function(e){setPreco(e.target.value);},placeholder:String(plObj.preco)}))),
+        div({style:{marginTop:12}}, campo("Observações (opcional)", textarea({className:"ip-input",rows:2,value:obs,onChange:function(e){setObs(e.target.value);},placeholder:"Condições especiais, escopo extra…"}))),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}},
+          button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+          button({className:"ip-btn"},"Visualizar proposta"))));
+  }
+  function PropostaView(props){
+    var p2=props.prop; var pl=p2.plano; var hoje=p2.data; var val=new Date(hoje.getTime()+15*86400000);
+    function fmt(d){ return d.toLocaleDateString("pt-BR"); }
+    return div({className:"ip-view"},
+      div({className:"ip-noprint",style:{display:"flex",gap:10,marginBottom:16}},
+        button({className:"ip-btn ghost",onClick:props.onVoltar},"← Voltar"),
+        button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF / Imprimir")),
+      div({className:"ip-card",style:{padding:34,maxWidth:820,margin:"0 auto"}},
+        div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"1px solid var(--glass-brd)",paddingBottom:18,marginBottom:18}},
+          div(null, Logo("hz","",{height:34}), div({className:"ip-faint",style:{fontSize:11,marginTop:6,letterSpacing:".5px"}},"PERSONAL TECNOLÓGICO")),
+          div({style:{textAlign:"right"}}, div({style:{fontWeight:300,fontSize:18}},"Proposta Comercial"), div({className:"ip-faint",style:{fontSize:12,marginTop:4}},"Emitida em "+fmt(hoje)+" · válida até "+fmt(val)))),
+        div({style:{marginBottom:18}}, div({className:"ip-faint",style:{fontSize:11,letterSpacing:".5px"}},"PREPARADO PARA"), strong({style:{fontWeight:400,fontSize:16}},p2.cliente), p2.segmento&&span({className:"ip-muted",style:{fontSize:13}}," · "+p2.segmento)),
+        div({style:{padding:"18px 20px",borderRadius:14,border:"1px solid rgba(116,176,216,.35)",background:"linear-gradient(135deg,rgba(116,176,216,.10),rgba(255,255,255,.02))"}},
+          div({className:"ip-eyebrow",style:{color:pl.cor}},"PLANO RECOMENDADO"),
+          strong({style:{fontWeight:300,fontSize:20,display:"block",marginTop:4}},pl.nome),
+          p({className:"ip-muted",style:{fontSize:13,marginTop:6}},pl.resumo),
+          div({style:{margin:"10px 0"}}, span({style:{fontSize:30,fontWeight:200}},money(p2.preco)), span({className:"ip-faint"}," /mês"))),
+        h("h3",{style:{fontWeight:300,marginTop:22,marginBottom:8}},"O que está incluído"),
+        h("ul",{style:{paddingLeft:18,lineHeight:1.9,fontSize:13.5}}, pl.itens.map(function(it,i){return h("li",{key:i},it);})),
+        p2.obs&&div({style:{marginTop:16}}, div({className:"ip-faint",style:{fontSize:11,letterSpacing:".5px"}},"OBSERVAÇÕES"), p({style:{fontSize:13.5,marginTop:4,whiteSpace:"pre-wrap"}},p2.obs)),
+        div({style:{marginTop:22,paddingTop:16,borderTop:"1px solid var(--glass-brd)",fontSize:12,color:"var(--ip-muted)"}},
+          p({style:{margin:0}},"Contrato mínimo sugerido: 12 meses · reajuste anual (IPCA) · pagamento mensal. Valores podem variar conforme escopo e parque tecnológico."),
+          div({style:{marginTop:28,display:"flex",justifyContent:"space-between",gap:20}},
+            div({style:{flex:1,borderTop:"1px solid var(--ip-faint)",paddingTop:6,textAlign:"center"}},"INPERSON Soluções em Tecnologia"),
+            div({style:{flex:1,borderTop:"1px solid var(--ip-faint)",paddingTop:6,textAlign:"center"}},p2.cliente)))));
+  }
+
   /* ===================== SHELL ===================== */
   var MODULOS=[
     {id:"dashboard",ic:"🏠",nome:"Início"},
@@ -938,6 +1015,7 @@ window.IP_LOGOS={
     {id:"financeiro",ic:"💰",nome:"Financeiro"},
     {id:"docs",ic:"📁",nome:"Documentos"},
     {id:"relatorios",ic:"📊",nome:"Relatórios"},
+    {id:"care",ic:"📦",nome:"Planos & Propostas"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
 
@@ -978,7 +1056,7 @@ window.IP_LOGOS={
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,config:Configuracoes};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,config:Configuracoes};
     var body=h(VIEWS[view]||Dashboard, P);
 
     return div(null, h(BgFx),
