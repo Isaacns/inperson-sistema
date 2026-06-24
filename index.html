@@ -300,6 +300,7 @@ window.IP_LOGOS={
   var CFG = window.INPERSON_CONFIG || {};
   var L = window.IP_LOGOS || {};
   var sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
+  var IP_STANDALONE = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone===true;
 
   function E(t){ return function(p){ var c=[].slice.call(arguments,1); return h.apply(null,[t,p].concat(c)); }; }
   var div=E("div"), span=E("span"), p=E("p"), button=E("button"), a=E("a"), img=E("img"),
@@ -430,7 +431,7 @@ window.IP_LOGOS={
           msg && div({className:"ip-msg "+msg.t},msg.m),
           button({className:"ip-btn",style:{width:"100%",marginTop:18},disabled:busy}, busy?"Entrando…":"Entrar no Sistema")),
         p({className:"ip-faint",style:{textAlign:"center",marginTop:16,fontSize:11.5,letterSpacing:".5px"}},"🔒 Acesso Restrito"),
-        button({className:"ip-btn ghost",type:"button",style:{width:"100%",marginTop:14,fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app no dispositivo")));
+        (!IP_STANDALONE) && button({className:"ip-btn ghost",type:"button",style:{width:"100%",marginTop:14,fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app no dispositivo")));
   }
 
   /* ===================== DASHBOARD ===================== */
@@ -510,7 +511,7 @@ window.IP_LOGOS={
               r.descricao && div({className:"ip-muted",style:{fontSize:12.5,marginTop:4,lineHeight:1.5}},r.descricao),
               div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":"faltam "+d+"d")):""))),
             button({className:"ip-btn ghost",style:{padding:"7px 12px"},onClick:function(){concluir(r);}},r.status==="concluido"?"Reabrir":"Concluir")); })),
-      novo && NovoRegistro({onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
+      novo && h(NovoRegistro,{onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
   }
   function NovoRegistro(props){
     var s=useState({titulo:"",categoria:"prazo",projeto:"",descricao:"",vence_em:"",prioridade:"media"}),f=s[0],setF=s[1];
@@ -598,7 +599,7 @@ window.IP_LOGOS={
           div({style:{flex:1}}, div({style:{fontWeight:400}},l.descricao, l.recorrente&&span({className:"ip-tag",style:{marginLeft:8,color:"var(--ip-accent)"}},"recorrente")),
             div({className:"ip-faint",style:{fontSize:12,marginTop:3}},(l.categoria||"—")+(l.cliente?(" · "+l.cliente):""))),
           div({style:{fontWeight:400,color:l.tipo==="receita"?"var(--ip-ok)":"var(--ip-danger)"}},(l.tipo==="receita"?"+":"−")+" "+money(l.valor))); })),
-      novo && NovoLancamento({onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
+      novo && h(NovoLancamento,{onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
   }
   function NovoLancamento(props){
     var s=useState({tipo:"receita",descricao:"",categoria:"",valor:"",recorrente:false,cliente:"",data_ref:new Date().toISOString().slice(0,10)}),f=s[0],setF=s[1];
@@ -724,15 +725,15 @@ window.IP_LOGOS={
         div({style:{marginTop:8,fontSize:12,color:"var(--ip-muted)"}},"Papel: "+(perfil?(perfil.role_label||perfil.papel):"-")),
         msg && div({className:"ip-msg "+msg.t},msg.m),
         div({style:{marginTop:12}}, button({className:"ip-btn",onClick:salvarPerfil},"Salvar perfil"))),
-      isAdmin && SistemasEditor({sistemas:sistemas,reload:reload}),
-      isAdmin && UsuariosAdmin());
+      isAdmin && h(SistemasEditor,{sistemas:sistemas,reload:reload}),
+      isAdmin && h(UsuariosAdmin));
   }
   function SistemasEditor(props){
     var sistemas=props.sistemas, reload=props.reload;
     return div({className:"ip-card",style:{padding:20,marginBottom:16}},
       h3({style:{fontWeight:300,marginTop:0}},"🧩 Acessos aos sistemas (URLs)"),
       p({className:"ip-sub",style:{marginTop:0}},"Defina o link de cada sistema — os cards de Projetos passam a abri-los."),
-      div({className:"ip-list"}, sistemas.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);}).map(function(s){ return SistemaRow({key:s.id,s:s,reload:reload}); })));
+      div({className:"ip-list"}, sistemas.slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);}).map(function(s){ return h(SistemaRow,{key:s.id,s:s,reload:reload}); })));
   }
   function SistemaRow(props){
     var s=props.s, reload=props.reload;
@@ -848,16 +849,8 @@ window.IP_LOGOS={
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var body;
-    if(view==="dashboard") body=Dashboard(P);
-    else if(view==="assistente") body=Assistente(P);
-    else if(view==="agenda") body=Agenda(P);
-    else if(view==="projetos") body=Projetos(P);
-    else if(view==="clientes") body=Clientes(P);
-    else if(view==="financeiro") body=Financeiro(P);
-    else if(view==="docs") body=Documentos(P);
-    else if(view==="relatorios") body=Relatorios(P);
-    else if(view==="config") body=Configuracoes(P);
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,config:Configuracoes};
+    var body=h(VIEWS[view]||Dashboard, P);
 
     return div(null, h(BgFx),
       div({className:"ip-shell"},
@@ -868,7 +861,7 @@ window.IP_LOGOS={
               span({className:"ic"},m.ic), span(null,m.nome)); })),
           div({style:{margin:"12px 4px 6px",display:"flex",flexDirection:"column",gap:8}},
             button({className:"ip-upbtn",onClick:function(){setUpgrade(true);}}, span({className:"spark"},"✦"), "UPGRADE"),
-            button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
+            (!IP_STANDALONE) && button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
           div({className:"ip-sidefoot"},
             div({style:{padding:"4px 8px"}}, div({style:{fontSize:13}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
             button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
