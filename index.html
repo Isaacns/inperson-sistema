@@ -258,7 +258,17 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .ip-bubble{max-width:82%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;animation:ip-fadeup .3s ease both}
 .ip-bubble.eu{align-self:flex-end;background:linear-gradient(135deg,var(--ip-accent),var(--ip-accent-2));color:#03101c;border-bottom-right-radius:4px}
 .ip-bubble.ia{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--glass-brd);border-bottom-left-radius:4px}
-@media print{ .ip-side,.ip-bgfx,.ip-aura,.ip-mtoggle,.ip-noprint{display:none!important} .ip-main{max-width:100%} .ip-card{box-shadow:none;border-color:#ccc} body{background:#fff;color:#000} }
+@media print{
+  @page{ size:A4; margin:12mm }
+  .ip-side,.ip-bgfx,.ip-aura,.ip-mtoggle,.ip-noprint,.ip-toolbar,.ip-topbar .ip-eyebrow{display:none!important}
+  .ip-shell{display:block}
+  .ip-main{max-width:100%;padding:0}
+  .ip-card{box-shadow:none;border-color:#ccc}
+  body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ip-doc-print{box-shadow:none!important;border-radius:0!important;margin:0 auto!important;max-width:100%!important}
+  .ip-doc-print img{max-width:100%}
+  table{page-break-inside:auto} tr{page-break-inside:avoid}
+}
 
 /* ===== Relatórios/Documentos — IDENTIDADE CLARA (Padrão 2026) ===== */
 .ip-report{background:#FFFFFF;color:#14171F;max-width:840px;margin:0 auto;padding:44px 48px;position:relative;overflow:hidden;border:1px solid #E7EAF0;border-radius:16px;box-shadow:0 12px 44px rgba(20,30,60,.07)}
@@ -1460,6 +1470,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div(null, div({style:{fontSize:16,letterSpacing:"5px",color:ISO_NAVY,fontWeight:600}},"INPERSON"), div({style:{fontSize:9.5,letterSpacing:".6px",color:"#789",marginTop:4}},"DOCUMENTO CONTROLADO · "+(ISO_TIPO_LABEL[doc.tipo]||doc.tipo))),
           div({style:{textAlign:"right",fontSize:11.5,color:"#456"}}, div({style:{fontWeight:600,fontSize:13}},doc.codigo+" · rev "+(doc.revisao||"01")), div({style:{marginTop:3}},"Vigente desde "+(doc.vigente_desde||"—")))),
         h2({style:{fontWeight:600,fontSize:18,color:"#1a2233",marginTop:0}},doc.titulo),
+        doc.codigo==="DOC-TOP-001"?div({style:{margin:"14px 0"}},IsoTopologia()):null,
         div({style:{fontSize:13.5,lineHeight:1.7,whiteSpace:"pre-wrap",marginTop:8}},doc.conteudo||"(sem conteúdo — clique em Editar)"),
         div({style:{marginTop:22,paddingTop:10,borderTop:"1px solid #dde",fontSize:10.5,color:"#789",textAlign:"center"}},ISO_EMPRESA.nome+" | CNPJ "+ISO_EMPRESA.cnpj+" | "+ISO_EMPRESA.tel)));
   }
@@ -1529,6 +1540,32 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       div({style:{fontSize:12.5,letterSpacing:"3px",color:corTexto,opacity:.85,lineHeight:1.7}},"SOLUÇÕES TECNOLÓGICAS PERSONALIZADAS"),
       div({style:{fontSize:12.5,letterSpacing:"3px",color:corTexto,opacity:.85}},"PARA SUA ROTINA")); }
 
+  function IsoTopologia(){
+    var NV="#15233a", AZ=ISO_AZUL, GR="#5d6b7e", BD="#cfd9e6";
+    function box(x,y,w,hh,t,s,o){ o=o||{};
+      return h("g",null,
+        h("rect",{x:x,y:y,width:w,height:hh,rx:9,fill:o.fill||"#ffffff",stroke:o.stroke||NV,strokeWidth:o.sw||1.4}),
+        h("text",{x:x+w/2,y:y+(s?hh/2-2:hh/2+4),textAnchor:"middle",fontSize:o.fs||12.5,fontWeight:"600",fill:o.tc||NV},t),
+        s?h("text",{x:x+w/2,y:y+hh/2+13,textAnchor:"middle",fontSize:10,fill:GR},s):null); }
+    function line(x1,y1,x2,y2){ return h("path",{d:"M"+x1+" "+y1+" L"+x2+" "+y2,stroke:AZ,strokeWidth:1.6,fill:"none"}); }
+    return h("svg",{viewBox:"0 0 760 600",width:"100%",style:{maxWidth:760,display:"block",margin:"0 auto",background:"#fbfcfe",border:"1px solid "+BD,borderRadius:10},role:"img"},
+      h("title",null,"Topologia da rede — Avanço Odontologia"),
+      box(300,18,160,48,"Internet","2 links WAN (dual-WAN)",{stroke:AZ,tc:AZ}),
+      line(380,66,380,108),
+      box(290,108,180,56,"Gateway UCG-Max","failover · firewall · inter-VLAN"),
+      line(380,164,380,206),
+      box(285,206,190,52,"Switch PoE Gigabit","24 portas"),
+      line(380,258,380,290), line(120,290,640,290), line(120,290,120,318), line(380,290,380,318), line(640,290,640,318),
+      box(20,318,200,66,"Access Points UniFi","U6+ ×2 (interno) · U6 Mesh ×1"),
+      box(280,318,200,66,"CFTV — Intelbras","DVR + 13 câmeras (VLAN isolada)"),
+      box(540,318,200,66,"Estações / Pontos","Patch Panel Cat6 24p · 16 pontos"),
+      box(20,430,350,52,"No-break / UPS","protege o rack e os ativos críticos"),
+      box(390,430,350,52,"Rack de rede","abriga gateway, switch e patch panel"),
+      h("text",{x:20,y:524,fontSize:11,fontWeight:"600",fill:NV},"VLANs (DOC-IP-001):"),
+      h("text",{x:20,y:544,fontSize:10.5,fill:GR},"Administrativo  ·  Clínico/Estações  ·  CFTV (isolada)  ·  Wi-Fi Convidados (isolada)"),
+      h("text",{x:20,y:578,fontSize:9.5,fill:"#9aa6b4"},"Quantidades confirmadas; modelos, nº de série e IPs definitivos validados no levantamento técnico."));
+  }
+
   function IsoRelatorio(props){
     var cfg=props.cfg, docs=props.docs||[], regs=props.regs||[], ativos=props.ativos||[];
     function noPeriodo(c){ var s=String(c||""); if(cfg.tipo==="tudo") return true; if(cfg.tipo==="ano") return s.slice(0,4)===String(cfg.val); return s.slice(0,7)===cfg.val; }
@@ -1566,9 +1603,10 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         infoRow("Cliente",props.clienteNome||"—"), infoRow("Período",periodoLabel), infoRow("Emissão",emis), infoRow("Elaborado por",ISO_EMPRESA.elaborador)),
       div({style:{marginTop:30,textAlign:"center",fontSize:10.5,color:"#9aa6b4"}},ISO_EMPRESA.nome+" | CNPJ "+ISO_EMPRESA.cnpj+" | "+ISO_EMPRESA.tel));
     return div({className:"ip-view"},
-      div({className:"ip-noprint",style:{display:"flex",gap:10,marginBottom:16}},
+      div({className:"ip-noprint",style:{display:"flex",gap:10,marginBottom:16,alignItems:"center"}},
         button({className:"ip-btn ghost",onClick:props.onVoltar},"← Voltar"),
-        button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF / Imprimir")),
+        button({className:"ip-btn",onClick:function(){window.print();}},"📄 Baixar PDF"),
+        span({className:"ip-faint",style:{fontSize:11.5}},"na janela de impressão, escolha “Salvar como PDF”")),
       capa,
       intro,
       // 1. RESUMO
