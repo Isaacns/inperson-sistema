@@ -1411,7 +1411,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         button({className:"ip-btn",onClick:function(){window.print();}},"🖨️ Gerar PDF / Imprimir")),
       div({className:"ip-doc-print",style:{background:"#fff",color:"#1a2233",padding:38,maxWidth:820,margin:"0 auto",borderRadius:10}},
         div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid "+ISO_AZUL,paddingBottom:14,marginBottom:14}},
-          div({style:{display:"flex",alignItems:"center",gap:12}}, (BRAND.icon?img({src:BRAND.icon,alt:"INPERSON",style:{height:38,width:"auto",display:"block"}}):IsoMarca(32,ISO_AZUL)), div(null, div({style:{fontSize:11,letterSpacing:"3px",color:ISO_NAVY,fontWeight:500}},"INPERSON"), div({style:{fontSize:9.5,letterSpacing:".6px",color:"#789",marginTop:3}},"DOCUMENTO CONTROLADO · ISO 9001:2015"))),
+          div(null, div({style:{fontSize:16,letterSpacing:"5px",color:ISO_NAVY,fontWeight:600}},"INPERSON"), div({style:{fontSize:9.5,letterSpacing:".6px",color:"#789",marginTop:4}},"DOCUMENTO CONTROLADO · ISO 9001:2015")),
           div({style:{textAlign:"right",fontSize:11.5,color:"#456"}}, div({style:{fontWeight:600,fontSize:14,color:"#1a2233"}},doc.titulo), div({style:{marginTop:3}},"Emitido em "+fmt(emissao)))),
         h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:6}}, h("tbody",null,
           h("tr",null, meta.map(function(m){return h("td",{key:m[0],style:{padding:"4px 8px",width:"25%"}}, span({style:{fontSize:10,color:"#789",textTransform:"uppercase",letterSpacing:".4px",display:"block"}},m[0]), span({style:{fontWeight:600}},m[1]||"—"));})))),
@@ -1457,7 +1457,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           button({className:"ip-btn",disabled:busy,onClick:salvar},busy?"Salvando…":"Salvar nova revisão")))
       : div({className:"ip-doc-print",style:{background:"#fff",color:"#1a2233",padding:38,maxWidth:820,margin:"0 auto",borderRadius:10}},
         div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"2px solid "+ISO_AZUL,paddingBottom:14,marginBottom:16}},
-          div({style:{display:"flex",alignItems:"center",gap:12}}, (BRAND.icon?img({src:BRAND.icon,alt:"INPERSON",style:{height:38,width:"auto",display:"block"}}):IsoMarca(32,ISO_AZUL)), div(null, div({style:{fontSize:11,letterSpacing:"3px",color:ISO_NAVY,fontWeight:500}},"INPERSON"), div({style:{fontSize:9.5,letterSpacing:".6px",color:"#789",marginTop:3}},"DOCUMENTO CONTROLADO · "+(ISO_TIPO_LABEL[doc.tipo]||doc.tipo)))),
+          div(null, div({style:{fontSize:16,letterSpacing:"5px",color:ISO_NAVY,fontWeight:600}},"INPERSON"), div({style:{fontSize:9.5,letterSpacing:".6px",color:"#789",marginTop:4}},"DOCUMENTO CONTROLADO · "+(ISO_TIPO_LABEL[doc.tipo]||doc.tipo))),
           div({style:{textAlign:"right",fontSize:11.5,color:"#456"}}, div({style:{fontWeight:600,fontSize:13}},doc.codigo+" · rev "+(doc.revisao||"01")), div({style:{marginTop:3}},"Vigente desde "+(doc.vigente_desde||"—")))),
         h2({style:{fontWeight:600,fontSize:18,color:"#1a2233",marginTop:0}},doc.titulo),
         div({style:{fontSize:13.5,lineHeight:1.7,whiteSpace:"pre-wrap",marginTop:8}},doc.conteudo||"(sem conteúdo — clique em Editar)"),
@@ -1556,12 +1556,10 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var capa = capaSrc
       ? div({style:{maxWidth:760,margin:"0 auto",pageBreakAfter:"always"}}, img({src:capaSrc,style:{width:"100%",display:"block",borderRadius:10}}))
       : div({className:"ip-doc-print",style:{position:"relative",background:pal.bg,color:pal.txt,maxWidth:760,margin:"0 auto",borderRadius:10,padding:"74px 54px 58px",overflow:"hidden",pageBreakAfter:"always",minHeight:600}}, IsoCantos(pal.line), IsoCapaHeader(pal.logo,pal.txt,pal.tag));
-    var introLogo = BRAND.icon ? img({src:BRAND.icon,alt:"INPERSON",style:{width:78,height:"auto",display:"block",margin:"0 auto"}}) : div({style:{display:"flex",justifyContent:"center"}},IsoMarca(78,ISO_AZUL));
-    var intro = div({className:"ip-doc-print",style:{position:"relative",background:"#fff",color:ISO_NAVY,maxWidth:760,margin:"18px auto 0",borderRadius:10,padding:"54px 54px 46px",overflow:"hidden",pageBreakAfter:"always"}},
+    var intro = div({className:"ip-doc-print",style:{position:"relative",background:"#fff",color:ISO_NAVY,maxWidth:760,margin:"18px auto 0",borderRadius:10,padding:"72px 54px 50px",overflow:"hidden",pageBreakAfter:"always"}},
       IsoCantos(ISO_AZUL),
       div({style:{textAlign:"center"}},
-        introLogo,
-        div({style:{marginTop:30,fontSize:12,letterSpacing:"3px",color:ISO_AZUL,textTransform:"uppercase"}},"Relatório de Conformidade"),
+        div({style:{fontSize:12,letterSpacing:"3px",color:ISO_AZUL,textTransform:"uppercase"}},"Relatório de Conformidade"),
         h2({style:{fontWeight:300,fontSize:24,margin:"8px 0 0",color:ISO_NAVY}},"Infraestrutura Tecnológica"),
         div({style:{fontSize:12.5,color:"#5d6b7e",marginTop:6,letterSpacing:".5px"}},"ISO 9001:2015 · Documento controlado")),
       div({style:{margin:"34px auto 0",maxWidth:400,padding:"18px 22px",border:"1px solid #e3e9f2",borderRadius:12,background:"#fbfcfe"}},
