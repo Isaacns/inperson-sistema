@@ -486,59 +486,118 @@ window.IP_LOGOS={
     var registros=props.registros, reload=props.reload;
     var s1=useState("todos"),fcat=s1[0],setFcat=s1[1];
     var s2=useState("ativos"),fstatus=s2[0],setFstatus=s2[1];
-    var s3=useState(false),novo=s3[0],setNovo=s3[1];
+    var sB=useState(""),busca=sB[0],setBusca=sB[1];
+    var sV=useState("lista"),vista=sV[0],setVista=sV[1];
+    var s3=useState(null),edit=s3[0],setEdit=s3[1];
+    var now=new Date();
+    var sM=useState(now.getMonth()),mes=sM[0],setMes=sM[1];
+    var sY=useState(now.getFullYear()),ano=sY[0],setAno=sY[1];
+    var sD=useState(null),diaSel=sD[0],setDiaSel=sD[1];
     var cats=["todos"].concat(registros.map(function(r){return r.categoria;}).filter(function(v,i,arr){return v&&arr.indexOf(v)===i;}));
-    var lista=registros.filter(function(r){return fcat==="todos"||r.categoria===fcat;})
+    var termo=busca.trim().toLowerCase();
+    var base=registros.filter(function(r){return fcat==="todos"||r.categoria===fcat;})
       .filter(function(r){return fstatus==="todos"?true:(fstatus==="ativos"?(r.status!=="concluido"&&r.status!=="arquivado"):r.status===fstatus);})
-      .slice().sort(function(a,b){var da=a.vence_em?parseD(a.vence_em):null,db=b.vence_em?parseD(b.vence_em):null; if(da&&db)return da-db; if(da)return -1; if(db)return 1; return 0;});
+      .filter(function(r){ if(!termo) return true; return [r.titulo,r.descricao,r.projeto,r.categoria].join(" ").toLowerCase().indexOf(termo)>-1; });
+    var lista=base.slice().sort(function(a,b){var da=a.vence_em?parseD(a.vence_em):null,db=b.vence_em?parseD(b.vence_em):null; if(da&&db)return da-db; if(da)return -1; if(db)return 1; return 0;});
     function concluir(r){ sb.from("registros").update({status:r.status==="concluido"?"aberto":"concluido"}).eq("id",r.id).then(reload); }
+    var ativos=registros.filter(function(r){return r.status!=="concluido"&&r.status!=="arquivado";});
+    var nVenc=ativos.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d<0;}).length;
+    var n30=ativos.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d>=0&&d<=30;}).length;
+    var n60=ativos.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d>30&&d<=60;}).length;
+    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
+    function urg(r){ if(r.status==="concluido") return {k:"feito",label:"Concluídos",cor:"var(--ip-faint)"}; var d=diasAte(r.vence_em); if(d===null) return {k:"semprazo",label:"Sem prazo",cor:"var(--ip-muted)"}; if(d<0) return {k:"vencido",label:"🔴 Vencidos",cor:"var(--ip-danger)"}; if(d<=30) return {k:"d30",label:"⚠️ Vence em ≤30 dias",cor:"var(--ip-warn)"}; if(d<=60) return {k:"d60",label:"Vence em ≤60 dias",cor:"var(--ip-accent)"}; return {k:"emdia",label:"Em dia",cor:"var(--ip-ok)"}; }
+    var ORDER=["vencido","d30","d60","emdia","semprazo","feito"];
+    function itemRow(r){ var d=diasAte(r.vence_em); var u=urg(r);
+      return div({key:r.id,className:"ip-card ip-row",style:{borderLeft:"3px solid "+u.cor,borderRadius:10}},
+        div({className:"when"}, div({className:"d"},fmtDia(r.vence_em)), div({className:"m"},fmtMesAno(r.vence_em))),
+        div({style:{flex:1,cursor:"pointer"},onClick:function(){setEdit(r);}},
+          div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+            strong({style:{fontWeight:400,textDecoration:r.status==="concluido"?"line-through":"none",opacity:r.status==="concluido"?.6:1}},r.titulo),
+            span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria),
+            (r.prioridade==="critica"||r.prioridade==="alta") && span({className:"ip-tag",style:{color:r.prioridade==="critica"?"var(--ip-danger)":"var(--ip-warn)"}},r.prioridade)),
+          r.descricao && div({className:"ip-muted",style:{fontSize:12.5,marginTop:4,lineHeight:1.5}},r.descricao),
+          div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":d+" dias")):" · sem prazo"))),
+        div({style:{display:"flex",gap:8}},
+          button({className:"ip-btn ghost",style:{padding:"7px 11px"},onClick:function(){setEdit(r);}},"Editar"),
+          button({className:"ip-btn ghost",style:{padding:"7px 11px"},onClick:function(){concluir(r);}},r.status==="concluido"?"Reabrir":"Concluir"))); }
+    function listaAgrupada(){ var groups={}; lista.forEach(function(r){ var u=urg(r); (groups[u.k]=groups[u.k]||{label:u.label,cor:u.cor,items:[]}).items.push(r); });
+      var blocks=ORDER.filter(function(k){return groups[k];}).map(function(k){ var g=groups[k];
+        return div({key:k,style:{marginBottom:14}},
+          div({style:{display:"flex",alignItems:"center",gap:8,margin:"4px 2px 8px"}}, span({style:{color:g.cor,fontWeight:500,letterSpacing:".3px",fontSize:13}},g.label), span({className:"ip-faint",style:{fontSize:12}},g.items.length)),
+          div({className:"ip-list"}, g.items.map(itemRow))); });
+      return blocks.length?blocks:div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro com esses filtros.")); }
+    var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    function calendario(){
+      var first=new Date(ano,mes,1); var startDow=first.getDay(); var days=new Date(ano,mes+1,0).getDate();
+      var byDay={}; base.forEach(function(r){ if(!r.vence_em) return; var dt=parseD(r.vence_em); if(dt.getMonth()===mes&&dt.getFullYear()===ano){ var dd=dt.getDate(); (byDay[dd]=byDay[dd]||[]).push(r); } });
+      var cells=[]; var z; for(z=0;z<startDow;z++) cells.push(null); for(z=1;z<=days;z++) cells.push(z);
+      var dow=["D","S","T","Q","Q","S","S"]; var todayISO=new Date().toISOString().slice(0,10);
+      function cellColor(items){ var worst=999; items.forEach(function(r){ var d=diasAte(r.vence_em); if(d!==null&&d<worst) worst=d; }); if(worst<0) return "var(--ip-danger)"; if(worst<=30) return "var(--ip-warn)"; if(worst<=60) return "var(--ip-accent)"; return "var(--ip-ok)"; }
+      var selItems=diaSel?base.filter(function(r){return r.vence_em===diaSel;}):[];
+      return div(null,
+        div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}},
+          button({className:"ip-btn ghost",style:{padding:"6px 12px"},onClick:function(){ var m=mes-1,y=ano; if(m<0){m=11;y--;} setMes(m);setAno(y);setDiaSel(null); }},"‹"),
+          strong({style:{fontWeight:300,letterSpacing:".5px",fontSize:16}},MESES[mes]+" "+ano),
+          button({className:"ip-btn ghost",style:{padding:"6px 12px"},onClick:function(){ var m=mes+1,y=ano; if(m>11){m=0;y++;} setMes(m);setAno(y);setDiaSel(null); }},"›")),
+        div({style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
+          dow.map(function(dd,i){ return div({key:"h"+i,className:"ip-faint",style:{textAlign:"center",fontSize:11,padding:"4px 0"}},dd); }),
+          cells.map(function(c,i){ if(c===null) return div({key:"e"+i}); var items=byDay[c]||[]; var iso=ano+"-"+String(mes+1).padStart(2,"0")+"-"+String(c).padStart(2,"0"); var isToday=iso===todayISO; var sel=iso===diaSel;
+            return div({key:"c"+i,onClick:function(){ setDiaSel(items.length?iso:null); },
+              style:{minHeight:62,borderRadius:10,padding:"6px 8px",cursor:items.length?"pointer":"default",border:"1px solid "+(sel?"var(--ip-accent)":"var(--glass-brd)"),background:isToday?"rgba(116,176,216,.12)":"rgba(255,255,255,.02)"}},
+              div({style:{fontSize:12,color:isToday?"var(--ip-accent)":"var(--ip-text)",fontWeight:isToday?500:400}},c),
+              items.length?div({style:{marginTop:6,display:"flex",alignItems:"center",gap:5}}, span({style:{width:8,height:8,borderRadius:99,background:cellColor(items),display:"inline-block"}}), span({className:"ip-faint",style:{fontSize:11}},items.length)):null); })),
+        diaSel && div({style:{marginTop:16}}, div({className:"ip-faint",style:{fontSize:12,marginBottom:8}},"Itens de "+diaSel.split("-").reverse().join("/")), div({className:"ip-list"}, selItems.map(itemRow))));
+    }
     return div({className:"ip-view"},
-      topo("COFRE OPERACIONAL","Agenda de Registros","Tokens, contratos, domínios, licenças e prazos — com alerta de vencimento.",
-        button({className:"ip-btn",onClick:function(){setNovo(true);}},"+ Novo registro")),
-      div({className:"ip-toolbar"},
+      topo("COFRE OPERACIONAL","Agenda de Registros","Tokens, contratos, domínios, licenças e prazos — com alerta automático de vencimento.",
+        button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Novo registro")),
+      div({className:"ip-kpis ip-stagger"},
+        kpi(ativos.length,"Ativos",null),
+        kpi(nVenc,"Vencidos", nVenc?"var(--ip-danger)":null),
+        kpi(n30,"≤30 dias", n30?"var(--ip-warn)":null),
+        kpi(n60,"31–60 dias", n60?"var(--ip-accent)":null)),
+      div({className:"ip-toolbar",style:{flexWrap:"wrap"}},
+        div({className:"ip-seg"}, [["lista","Lista"],["calendario","Calendário"]].map(function(o){ return button({key:o[0],className:vista===o[0]?"on":"",onClick:function(){setVista(o[0]);}},o[1]); })),
+        input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar…",style:{maxWidth:240}}),
         div({className:"ip-seg"}, ["todos","ativos","aberto","concluido"].map(function(st){ return button({key:st,className:fstatus===st?"on":"",onClick:function(){setFstatus(st);}},st); })),
         div({className:"ip-seg"}, cats.map(function(c){ return button({key:c,className:fcat===c?"on":"",onClick:function(){setFcat(c);}},c); }))),
-      div({className:"ip-list ip-stagger"},
-        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro com esses filtros.")),
-        lista.map(function(r){ var d=diasAte(r.vence_em); var cls=d!==null&&d<=30?"ip-venc-crit":(d!==null&&d<=60?"ip-venc-prox":"");
-          return div({key:r.id,className:"ip-card ip-row "+cls},
-            div({className:"when"}, div({className:"d"},fmtDia(r.vence_em)), div({className:"m"},fmtMesAno(r.vence_em))),
-            div({style:{flex:1}},
-              div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
-                strong({style:{fontWeight:400,textDecoration:r.status==="concluido"?"line-through":"none",opacity:r.status==="concluido"?.6:1}},r.titulo),
-                span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria),
-                r.prioridade==="critica" && span({className:"ip-tag",style:{color:"var(--ip-danger)"}},"crítica")),
-              r.descricao && div({className:"ip-muted",style:{fontSize:12.5,marginTop:4,lineHeight:1.5}},r.descricao),
-              div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},(r.projeto||"—")+(d!==null?(" · "+(d<0?"vencido há "+(-d)+"d":"faltam "+d+"d")):""))),
-            button({className:"ip-btn ghost",style:{padding:"7px 12px"},onClick:function(){concluir(r);}},r.status==="concluido"?"Reabrir":"Concluir")); })),
-      novo && h(NovoRegistro,{onClose:function(){setNovo(false);},onSaved:function(){setNovo(false);reload();}}));
+      vista==="calendario" ? div({className:"ip-card",style:{padding:18}}, calendario())
+        : div({className:"ip-stagger"}, listaAgrupada()),
+      edit!==null && h(NovoRegistro,{registro:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
   }
   function NovoRegistro(props){
-    var s=useState({titulo:"",categoria:"prazo",projeto:"",descricao:"",vence_em:"",prioridade:"media"}),f=s[0],setF=s[1];
+    var r0=props.registro||{}; var editing=!!r0.id;
+    var s=useState({titulo:r0.titulo||"",categoria:r0.categoria||"prazo",projeto:r0.projeto||"",descricao:r0.descricao||"",vence_em:r0.vence_em||"",prioridade:r0.prioridade||"media"}),f=s[0],setF=s[1];
     var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
     function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
     function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
       sb.auth.getUser().then(function(res){ var user=res.data.user;
-        var payload=Object.assign({},f,{owner:user.id,status:"aberto",tipo:"nota", alerta_em: f.vence_em ? new Date(parseD(f.vence_em).getTime()-60*86400000).toISOString().slice(0,10) : null});
-        if(!payload.vence_em) delete payload.vence_em; return sb.from("registros").insert(payload);
+        var payload=Object.assign({},f,{tipo:"nota", alerta_em: f.vence_em ? new Date(parseD(f.vence_em).getTime()-60*86400000).toISOString().slice(0,10) : null});
+        payload.vence_em = f.vence_em ? f.vence_em : null;
+        if(editing){ return sb.from("registros").update(payload).eq("id",r0.id); }
+        payload.owner=user.id; payload.status="aberto"; return sb.from("registros").insert(payload);
       }).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function excluir(){ if(!editing) return; if(!window.confirm("Excluir o registro \""+(r0.titulo||"")+"\"? Esta ação não pode ser desfeita.")) return; setBusy(true); setErr(null);
+      sb.from("registros").delete().eq("id",r0.id).then(function(r){ if(r&&r.error){ setErr(r.error.message); setBusy(false); return; } props.onSaved(); }); }
     var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
     return div({className:"ip-modal-bg",onClick:props.onClose},
       form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
-        h2({style:{margin:"0 0 4px",fontWeight:300}},"Novo registro"),
-        p({className:"ip-sub",style:{marginTop:0}},"Adiciona ao cofre com alerta automático (60 dias antes)."),
+        h2({style:{margin:"0 0 4px",fontWeight:300}}, editing?"Editar registro":"Novo registro"),
+        p({className:"ip-sub",style:{marginTop:0}},"No cofre, com alerta automático 60 dias antes do vencimento."),
         div({style:{marginTop:12}}, campo("Título", input({className:"ip-input",required:true,value:f.titulo,onChange:set("titulo"),placeholder:"Ex.: Renovação domínio inperson.com.br"}))),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
           campo("Categoria", select({className:"ip-input",value:f.categoria,onChange:set("categoria")}, ["token","contrato","dominio","licenca","prazo","credencial","nota"].map(function(c){return option({key:c,value:c},c);}))),
           campo("Prioridade", select({className:"ip-input",value:f.prioridade,onChange:set("prioridade")}, ["baixa","media","alta","critica"].map(function(c){return option({key:c,value:c},c);})))),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
           campo("Projeto", input({className:"ip-input",value:f.projeto,onChange:set("projeto"),placeholder:"INPERSON / Cliente"})),
-          campo("Vence em", input({className:"ip-input",type:"date",value:f.vence_em,onChange:set("vence_em")}))),
+          campo("Vence em", input({className:"ip-input",type:"date",value:f.vence_em||"",onChange:set("vence_em")}))),
         div({style:{marginTop:12}}, campo("Descrição", textarea({className:"ip-input",rows:3,value:f.descricao,onChange:set("descricao")}))),
         err && div({className:"ip-msg err"},err),
-        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}},
-          button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
-          button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar registro"))));
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
+          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          div({style:{display:"flex",gap:10}},
+            button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+            button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar alterações":"Salvar registro"))))));
   }
 
   /* ===================== PROJETOS ===================== */
