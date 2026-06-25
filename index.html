@@ -304,7 +304,7 @@ window.INPERSON_CONFIG = {
   SUPABASE_KEY: "sb_publishable_PY2YDxUzGgaXRVtvCcasBA_Ml7YUBTC",
   APP_NOME: "Sistema INPERSON",
   APP_VERSAO: "v1.3 · IA+",
-  APP_URL: "https://inpersonaltec.com.br/",
+  APP_URL: "https://sistema.inpersonaltec.com.br/",
   LOGIN_SUGERIDO: "isaacnogueira.ti@gmail.com"
 };
 
@@ -1777,7 +1777,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"docs",ic:"📁",nome:"Documentos"},
     {id:"relatorios",ic:"📊",nome:"Relatórios"},
     {id:"care",ic:"📦",nome:"Planos & Propostas"},
-    {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true},
+    {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://isaacns.github.io/inperson-iso/"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
 
@@ -1843,7 +1843,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         h("aside",{className:"ip-side"+(menu?" open":"")},
           div({className:"brand"}, Logo("hz","ip-brand-img")),
           div({className:"ip-navwrap"}, modulosNav.map(function(m){
-            return div({key:m.id,className:"ip-nav"+(view===m.id?" active":""), onClick:function(){ setView(m.id); setMenu(false); }},
+            return div({key:m.id,className:"ip-nav"+(view===m.id?" active":""), onClick:function(){ if(m.url){ window.open(m.url,"_blank","noopener"); setMenu(false); return; } setView(m.id); setMenu(false); }},
               span({className:"ic"},m.ic), span(null,m.nome)); })),
           div({style:{margin:"12px 4px 6px",display:"flex",flexDirection:"column",gap:8}},
             button({className:"ip-upbtn",onClick:function(){setUpgrade(true);}}, span({className:"spark"},"✦"), "UPGRADE"),
@@ -1872,6 +1872,25 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   }catch(err){ fatal(err.stack||err.message||err); }
 })();
 
+</script>
+<!-- INPERSON cockpit · mobile enhance (iOS install hint + menu backdrop) -->
+<style>
+#ip-ioshint{position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#04101f;color:#FAFAFA;border:1px solid #74B0D8;border-radius:14px;padding:12px 14px;font:13px/1.45 system-ui,-apple-system,sans-serif;display:none;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#ip-ioshint b{color:#74B0D8}#ip-ioshint .x{float:right;cursor:pointer;opacity:.6;margin-left:10px}
+#ip-menuscrim{position:fixed;inset:0;background:rgba(1,5,16,.5);z-index:39;display:none;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+@media(max-width:880px){#ip-menuscrim.on{display:block}}
+</style>
+<div id="ip-ioshint"><span class="x">✕</span>📲 Instale como app: toque em <b>Compartilhar</b> e <b>"Adicionar à Tela de Início"</b>.</div>
+<div id="ip-menuscrim"></div>
+<script>
+(function(){
+  try{var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);var st=('standalone' in navigator)&&navigator.standalone;
+  if(ios&&!st&&localStorage.getItem('ip_ioshint_x')!=='1'){var el=document.getElementById('ip-ioshint');el.style.display='block';el.querySelector('.x').addEventListener('click',function(){el.remove();try{localStorage.setItem('ip_ioshint_x','1')}catch(e){}});}}catch(e){}
+  var scrim=document.getElementById('ip-menuscrim');
+  function sync(){var side=document.querySelector('.ip-side');if(!side)return;scrim.classList.toggle('on',side.classList.contains('open'));}
+  scrim.addEventListener('click',function(){var t=document.querySelector('.ip-mtoggle');if(t)t.click();});
+  new MutationObserver(sync).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:['class']});
+})();
 </script>
 </body>
 </html>
