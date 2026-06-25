@@ -1777,9 +1777,112 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"docs",ic:"📁",nome:"Documentos"},
     {id:"relatorios",ic:"📊",nome:"Relatórios"},
     {id:"care",ic:"📦",nome:"Planos & Propostas"},
+    {id:"prospeccao",ic:"🎯",nome:"Prospecção"},
     {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://isaacns.github.io/inperson-iso/"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
+
+  /* ===================== PROSPECÇÃO (CRM / PIPELINE) ===================== */
+  var PROSP_ESTAGIOS=["A contatar","Conversa","Proposta","Ganha","Perdida"];
+  var PROSP_TIERS=["—","Essencial","Pro","Gerenciado"];
+  function prospConverter(o,uid){
+    var clientePayload={nome:o.empresa,segmento:o.segmento||"",status:"ativo",contato:o.contato||"",obs:"Origem: "+(o.origem||"prospecção")};
+    return sb.from("clientes").insert(clientePayload).select().single().then(function(rc){
+      var cliId=(rc.data&&rc.data.id)||null;
+      var lanc={tipo:"receita",descricao:"INPERSON Care"+(o.tier&&o.tier!=="—"?(" "+o.tier):"")+" — "+o.empresa,categoria:"Care",valor:Number(o.valor||0),recorrente:true,cliente:o.empresa,data_ref:new Date().toISOString().slice(0,10),owner:uid};
+      return sb.from("lancamentos").insert(lanc).then(function(){
+        return sb.from("oportunidades").update({estagio:"Ganha",convertido:true,cliente_id:cliId,atualizado_em:new Date().toISOString()}).eq("id",o.id);
+      });
+    });
+  }
+  function Prospeccao(props){
+    var ops=props.oportunidades||[], reload=props.reload;
+    var q1=useState(""),busca=q1[0],setBusca=q1[1];
+    var q2=useState("todos"),fst=q2[0],setFst=q2[1];
+    var q3=useState(null),edit=q3[0],setEdit=q3[1];
+    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
+    var aberto=function(o){ return o.estagio!=="Ganha"&&o.estagio!=="Perdida"; };
+    var mrrPrev=ops.filter(aberto).reduce(function(s,o){return s+Number(o.valor||0);},0);
+    var mrrFech=ops.filter(function(o){return o.estagio==="Ganha";}).reduce(function(s,o){return s+Number(o.valor||0);},0);
+    var emNeg=ops.filter(function(o){return o.estagio==="Conversa"||o.estagio==="Proposta";}).length;
+    var decididos=ops.filter(function(o){return o.estagio==="Ganha"||o.estagio==="Perdida";}).length;
+    var ganhos=ops.filter(function(o){return o.estagio==="Ganha";}).length;
+    var conv=decididos?Math.round(ganhos/decididos*100):0;
+    var termo=busca.trim().toLowerCase();
+    var lista=ops.slice()
+      .filter(function(o){ return fst==="todos"||o.estagio===fst; })
+      .filter(function(o){ if(!termo) return true; return [o.empresa,o.segmento,o.contato,o.origem,o.tier,o.obs].join(" ").toLowerCase().indexOf(termo)>-1; })
+      .sort(function(a,b){ return PROSP_ESTAGIOS.indexOf(a.estagio)-PROSP_ESTAGIOS.indexOf(b.estagio) || (Number(b.valor||0))-(Number(a.valor||0)); });
+    function mover(o,novo){
+      if(novo===o.estagio) return;
+      if(novo==="Ganha"&&!o.convertido){
+        if(!window.confirm("Marcar \""+o.empresa+"\" como GANHA?\n\nIsso cria o cliente e lança a receita recorrente ("+money(o.valor||0)+"/mês) no Financeiro.")) return;
+        sb.auth.getUser().then(function(res){ return prospConverter(o,res.data.user.id); }).then(function(){ reload(); }).catch(function(x){ alert("Erro ao converter: "+(x.message||x)); });
+      } else {
+        sb.from("oportunidades").update({estagio:novo,atualizado_em:new Date().toISOString()}).eq("id",o.id).then(function(){ reload(); });
+      }
+    }
+    var corEst=function(e){ return e==="Ganha"?"var(--ip-ok)":e==="Perdida"?"var(--ip-danger)":"var(--ip-accent)"; };
+    return div({className:"ip-view"},
+      topo("CRESCIMENTO","Prospecção","Funil de oportunidades — base e novos clientes. Ganhou? Vira cliente e MRR no Financeiro, automático.",
+        button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Nova oportunidade")),
+      div({className:"ip-kpis ip-stagger"},
+        kpi(money(mrrPrev),"MRR no funil","var(--ip-accent)"),
+        kpi(money(mrrFech),"MRR ganho","var(--ip-ok)"),
+        kpi(String(emNeg),"Em negociação"),
+        kpi(decididos?conv+"%":"—","Taxa de fechamento")),
+      div({className:"ip-toolbar"},
+        input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar empresa, segmento, contato…",style:{maxWidth:340}}),
+        div({className:"ip-seg"}, ["todos"].concat(PROSP_ESTAGIOS).map(function(s){ return button({key:s,className:fst===s?"on":"",onClick:function(){setFst(s);}},s); }))),
+      div({className:"ip-list ip-stagger"},
+        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhuma oportunidade aqui. Clique em \"+ Nova oportunidade\".")),
+        lista.map(function(o){ return div({key:o.id,className:"ip-card ip-row"},
+          div({style:{flex:1,cursor:"pointer",minWidth:0},onClick:function(){setEdit(o);}},
+            div({style:{fontWeight:400}},o.empresa, o.tier&&o.tier!=="—"&&span({className:"ip-tag",style:{marginLeft:8,color:"var(--ip-accent)"}},"Care "+o.tier)),
+            div({className:"ip-faint",style:{fontSize:12,marginTop:3}},[o.segmento,o.origem,o.contato].filter(Boolean).join(" · ")||"—")),
+          div({style:{textAlign:"right",minWidth:90}},
+            div({style:{fontWeight:400,color:"var(--ip-accent)"}},money(o.valor||0)),
+            div({className:"ip-faint",style:{fontSize:11}},"/mês")),
+          select({className:"ip-input",value:o.estagio,onChange:function(e){mover(o,e.target.value);},style:{maxWidth:142,marginLeft:10,color:corEst(o.estagio)}},
+            PROSP_ESTAGIOS.map(function(e){return option({key:e,value:e},e);}))); })),
+      edit!==null && h(NovaOportunidade,{op:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
+  }
+  function NovaOportunidade(props){
+    var o0=props.op||{}; var editing=!!o0.id;
+    var s=useState({empresa:o0.empresa||"",contato:o0.contato||"",segmento:o0.segmento||"",origem:o0.origem||"",tier:o0.tier||"—",valor:(o0.valor!==undefined&&o0.valor!==null)?o0.valor:"",estagio:o0.estagio||"A contatar",obs:o0.obs||""}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
+      var payload=Object.assign({},f,{valor:Number(f.valor||0),atualizado_em:new Date().toISOString()});
+      var op = editing ? sb.from("oportunidades").update(payload).eq("id",o0.id)
+        : sb.auth.getUser().then(function(res){ return sb.from("oportunidades").insert(Object.assign({},payload,{owner:res.data.user.id})); });
+      Promise.resolve(op).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function excluir(){ if(!editing) return; if(!window.confirm("Excluir a oportunidade \""+(o0.empresa||"")+"\"?")) return; setBusy(true);
+      sb.from("oportunidades").delete().eq("id",o0.id).then(function(r){ if(r&&r.error){ setErr(r.error.message); setBusy(false); return; } props.onSaved(); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    var estOpts = o0.estagio==="Ganha" ? PROSP_ESTAGIOS : PROSP_ESTAGIOS.filter(function(e2){return e2!=="Ganha";});
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}}, editing?"Editar oportunidade":"Nova oportunidade"),
+        div({style:{marginTop:4}}, campo("Empresa / lead", input({className:"ip-input",required:true,value:f.empresa,onChange:set("empresa"),placeholder:"Nome da empresa ou contato"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Segmento", input({className:"ip-input",value:f.segmento,onChange:set("segmento"),placeholder:"Clínica, Condomínio…"})),
+          campo("Contato", input({className:"ip-input",value:f.contato,onChange:set("contato"),placeholder:"WhatsApp / e-mail"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Origem", input({className:"ip-input",value:f.origem,onChange:set("origem"),placeholder:"Indicação, Landing, Base…"})),
+          campo("Plano Care", select({className:"ip-input",value:f.tier,onChange:set("tier")}, PROSP_TIERS.map(function(t){return option({key:t,value:t},t);})))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Valor mensal (R$)", input({className:"ip-input",type:"number",step:"0.01",value:f.valor,onChange:set("valor"),placeholder:"0,00"})),
+          campo("Estágio", select({className:"ip-input",value:f.estagio,onChange:set("estagio")}, estOpts.map(function(e2){return option({key:e2,value:e2},e2);})))),
+        div({style:{marginTop:12}}, campo("Observações", textarea({className:"ip-input",rows:3,value:f.obs,onChange:set("obs"),placeholder:"Notas, próximos passos…"}))),
+        div({className:"ip-faint",style:{fontSize:11.5,marginTop:8}},"Para marcar como Ganha (e gerar cliente + MRR), use o seletor de estágio no card."),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
+          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          div({style:{display:"flex",gap:10}},
+            button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+            button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
+  }
 
   function App(){
     var s0=useState(undefined),sessao=s0[0],setSessao=s0[1];
@@ -1795,6 +1898,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var s13=useState([]),isoDocs=s13[0],setIsoDocs=s13[1];
     var s14=useState([]),isoRegs=s14[0],setIsoRegs=s14[1];
     var s15=useState([]),isoAtivos=s15[0],setIsoAtivos=s15[1];
+    var s16=useState([]),oportunidades=s16[0],setOportunidades=s16[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
 
@@ -1823,8 +1927,9 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           sb.from("notas").select("*").order("atualizado_em",{ascending:false}),
           sb.from("iso_documentos").select("*").order("ordem",{ascending:true}),
           sb.from("iso_registros").select("*"),
-          sb.from("iso_ativos").select("*").order("ordem",{ascending:true})
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); });
+          sb.from("iso_ativos").select("*").order("ordem",{ascending:true}),
+          sb.from("oportunidades").select("*").order("criado_em",{ascending:false})
+        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); });
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
@@ -1832,8 +1937,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
-    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,iso:Iso,config:Configuracoes};
+    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
