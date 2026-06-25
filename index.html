@@ -1786,12 +1786,17 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   var PROSP_ESTAGIOS=["A contatar","Conversa","Proposta","Ganha","Perdida"];
   var PROSP_TIERS=["—","Essencial","Pro","Gerenciado"];
   function prospConverter(o,uid){
-    var clientePayload={nome:o.empresa,segmento:o.segmento||"",status:"ativo",contato:o.contato||"",obs:"Origem: "+(o.origem||"prospecção")};
-    return sb.from("clientes").insert(clientePayload).select().single().then(function(rc){
-      var cliId=(rc.data&&rc.data.id)||null;
-      var lanc={tipo:"receita",descricao:"INPERSON Care"+(o.tier&&o.tier!=="—"?(" "+o.tier):"")+" — "+o.empresa,categoria:"Care",valor:Number(o.valor||0),recorrente:true,cliente:o.empresa,data_ref:new Date().toISOString().slice(0,10),owner:uid};
-      return sb.from("lancamentos").insert(lanc).then(function(){
-        return sb.from("oportunidades").update({estagio:"Ganha",convertido:true,cliente_id:cliId,atualizado_em:new Date().toISOString()}).eq("id",o.id);
+    // reaproveita cliente existente (dedupe por nome); só cria se for novo. Sempre lança o MRR.
+    return sb.from("clientes").select("id").ilike("nome",o.empresa).limit(1).then(function(rs){
+      var existId=(rs.data&&rs.data[0])?rs.data[0].id:null;
+      var ensure = existId ? Promise.resolve({data:{id:existId}})
+        : sb.from("clientes").insert({nome:o.empresa,segmento:o.segmento||"",status:"ativo",contato:o.contato||"",obs:"Origem: "+(o.origem||"prospecção")}).select().single();
+      return Promise.resolve(ensure).then(function(rc){
+        var cliId=(rc&&rc.data&&rc.data.id)||existId||null;
+        var lanc={tipo:"receita",descricao:"INPERSON Care"+(o.tier&&o.tier!=="—"?(" "+o.tier):"")+" — "+o.empresa,categoria:"Care",valor:Number(o.valor||0),recorrente:true,cliente:o.empresa,data_ref:new Date().toISOString().slice(0,10),owner:uid};
+        return sb.from("lancamentos").insert(lanc).then(function(){
+          return sb.from("oportunidades").update({estagio:"Ganha",convertido:true,cliente_id:cliId,atualizado_em:new Date().toISOString()}).eq("id",o.id);
+        });
       });
     });
   }
