@@ -315,6 +315,45 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .eco-halo{animation:eco-pulse 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 .eco-halo.down{animation-duration:1.05s}
 
+/* ===== Toggle iOS azul INPERSON (padrão de todos os on/off) ===== */
+.ip-sw{position:relative;display:inline-flex;align-items:center;cursor:pointer;flex:none;-webkit-tap-highlight-color:transparent}
+.ip-sw input{position:absolute;opacity:0;width:0;height:0;margin:0}
+.ip-sw .tr{width:44px;height:26px;border-radius:999px;background:var(--ip-border-2);transition:.22s;position:relative;display:inline-block}
+.ip-sw .tr::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .22s cubic-bezier(.3,1.5,.5,1);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.ip-sw input:checked + .tr{background:#74B0D8}
+.ip-sw input:checked + .tr::after{transform:translateX(18px)}
+.ip-sw input:focus-visible + .tr{box-shadow:0 0 0 3px var(--ip-accent-dim)}
+
+/* ===== Menu lateral agrupado (padrão Inovar) ===== */
+.ip-navgroup{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ip-faint);font-weight:600;margin:15px 12px 5px;user-select:none}
+.ip-navwrap > .ip-navgroup:first-child{margin-top:2px}
+
+/* ===== INPERSON Claro (tema padrão) ===== */
+[data-theme="claro"]{
+  --ip-bg:#EEF3F9; --ip-bg-2:#E4ECF5; --ip-surface:#FFFFFF; --ip-surface-2:#F5F8FC;
+  --ip-border:#DCE5F0; --ip-border-2:#C6D4E4;
+  --ip-accent:#3E7FB0; --ip-accent-2:#5B9BC4; --ip-accent-dim:rgba(62,127,176,.12);
+  --ip-text:#0C1B33; --ip-muted:#4A5B73; --ip-faint:#8394AB;
+  --ip-ok:#2E9E6B; --ip-warn:#C08A1E; --ip-danger:#C6483E;
+  --glass-bg:#FFFFFF; --glass-brd:#DCE5F0;
+  --glass-shadow:0 8px 24px rgba(12,27,51,.07), inset 0 1px 0 rgba(255,255,255,.6);
+}
+[data-theme="claro"] body{background:var(--ip-bg)}
+[data-theme="claro"] .ip-bgfx,[data-theme="claro"] .ip-aura{display:none}
+[data-theme="claro"] .ip-card,[data-theme="claro"] .ip-glass{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--glass-bg)}
+[data-theme="claro"] .ip-side{background:linear-gradient(180deg,#FFFFFF,#F5F8FC);backdrop-filter:none;-webkit-backdrop-filter:none;border-right:1px solid var(--ip-border)}
+[data-theme="claro"] .ip-input{background:#FFFFFF;backdrop-filter:none}
+[data-theme="claro"] .ip-btn{color:#FFFFFF}
+[data-theme="claro"] .ip-btn.ghost{background:#F0F5FA;color:var(--ip-text);backdrop-filter:none}
+[data-theme="claro"] .ip-btn.ghost:hover{background:var(--ip-accent-dim);border-color:var(--ip-accent)}
+[data-theme="claro"] .ip-seg{background:#F0F5FA;backdrop-filter:none}
+[data-theme="claro"] .ip-nav:hover{background:rgba(12,27,51,.05)}
+[data-theme="claro"] .ip-tag,[data-theme="claro"] .ip-pill{background:#EEF3F9}
+[data-theme="claro"] .ip-syscard .ico{background:#F0F5FA}
+[data-theme="claro"] .ip-plan{background:#FFFFFF}
+[data-theme="claro"] .ip-x{background:#F0F5FA;color:var(--ip-text)}
+[data-theme="claro"] .ip-sw .tr{background:#C6D4E4}
+
 </style>
 <script>
 // Configuracao de conexao — Sistema INPERSON
@@ -821,7 +860,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           campo("Cliente", input({className:"ip-input",value:f.cliente,onChange:set("cliente"),placeholder:"opcional"}))),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12,alignItems:"end"}},
           campo("Data", input({className:"ip-input",type:"date",value:f.data_ref,onChange:set("data_ref")})),
-          label({style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--ip-muted)",paddingBottom:10}}, input({type:"checkbox",checked:f.recorrente,onChange:set("recorrente")}), "Recorrente (MRR)")),
+          label({style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--ip-muted)",paddingBottom:10}}, h(Switch,{checked:f.recorrente,onChange:set("recorrente")}), "Recorrente (MRR)")),
         err && div({className:"ip-msg err"},err),
         div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}},
           button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
@@ -1283,7 +1322,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({style:{display:"flex",alignItems:"center",gap:10,marginTop:12,flexWrap:"wrap"}},
           span({className:"ip-faint",style:{fontSize:12}},"Cor:"),
           CORS.map(function(c){ return span({key:c[0],onClick:function(){set("cor",c[0]);},title:c[1],style:{width:22,height:22,borderRadius:99,background:swatch[c[0]],cursor:"pointer",display:"inline-block",border:f.cor===c[0]?"2px solid #FAFAFA":"2px solid transparent"}}); }),
-          label({style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",marginLeft:"auto",cursor:"pointer"}}, input({type:"checkbox",checked:f.fixado,onChange:function(e){set("fixado",e.target.checked);}}), "📌 Fixar")),
+          label({style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",marginLeft:"auto",cursor:"pointer"}}, h(Switch,{checked:f.fixado,onChange:function(e){set("fixado",e.target.checked);}}), "📌 Fixar")),
         err && div({className:"ip-msg err"},err),
         div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}},
           editing?div({style:{display:"flex",gap:8}},
@@ -1851,7 +1890,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({style:{marginTop:14}}, label({className:"ip-label"},"Estilo da capa"),
           div({className:"ip-seg",style:{marginTop:4,display:"inline-flex"}}, [["clara","◻ Clara"],["escura","◼ Escura"]].map(function(o){ return button({key:o[0],type:"button",className:repCfg.tema===o[0]?"on":"",onClick:function(){setC("tema",o[0]);}},o[1]); }))),
         div({style:{marginTop:14}}, label({className:"ip-label"},"Seções incluídas"),
-          div({style:{display:"flex",flexWrap:"wrap",gap:14,marginTop:6}}, secs.map(function(s){ return label({key:s[0],style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",cursor:"pointer"}}, input({type:"checkbox",checked:!!repCfg[s[0]],onChange:function(e){setC(s[0],e.target.checked);}}), s[1]); }))),
+          div({style:{display:"flex",flexWrap:"wrap",gap:14,marginTop:6}}, secs.map(function(s){ return label({key:s[0],style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",cursor:"pointer"}}, h(Switch,{checked:!!repCfg[s[0]],onChange:function(e){setC(s[0],e.target.checked);}}), s[1]); }))),
         div({style:{marginTop:20}}, button({className:"ip-btn",onClick:function(){ setAberto({tipo:"relatorio",cfg:Object.assign({},repCfg)}); }},"📄 Gerar relatório")));
     }
 
@@ -1866,24 +1905,31 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 
   /* ===================== SHELL ===================== */
   var MODULOS=[
-    {id:"dashboard",ic:"🏠",nome:"Início"},
-    {id:"assistente",ic:"🤖",nome:"Assistente IA"},
-    {id:"agenda",ic:"📅",nome:"Agenda de Registros"},
-    {id:"notas",ic:"📝",nome:"Notas"},
-    {id:"projetos",ic:"🧩",nome:"Projetos & Softwares"},
-    {id:"clientes",ic:"👥",nome:"Clientes"},
-    {id:"financeiro",ic:"💰",nome:"Financeiro"},
-    {id:"docs",ic:"📁",nome:"Documentos"},
-    {id:"relatorios",ic:"📊",nome:"Relatórios"},
-    {id:"care",ic:"📦",nome:"Planos & Propostas"},
-    {id:"prospeccao",ic:"🎯",nome:"Prospecção"},
-    {id:"acessos",ic:"🔐",nome:"Acessos",admin:true},
-    {id:"versoes",ic:"🕑",nome:"Versões"},
-    {id:"ecossistema",ic:"🌐",nome:"Ecossistema"},
-    {id:"bemestar",ic:"🌿",nome:"Bem-estar"},
-    {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/"},
-    {id:"config",ic:"⚙️",nome:"Configurações"}
+    {id:"dashboard",ic:"🏠",nome:"Início",grupo:"Principal"},
+    {id:"assistente",ic:"🤖",nome:"Assistente IA",grupo:"Principal"},
+    {id:"agenda",ic:"📅",nome:"Agenda de Registros",grupo:"Operação"},
+    {id:"notas",ic:"📝",nome:"Notas",grupo:"Operação"},
+    {id:"projetos",ic:"🧩",nome:"Projetos & Softwares",grupo:"Operação"},
+    {id:"clientes",ic:"👥",nome:"Clientes",grupo:"Operação"},
+    {id:"docs",ic:"📁",nome:"Documentos",grupo:"Operação"},
+    {id:"care",ic:"📦",nome:"Planos & Propostas",grupo:"Comercial"},
+    {id:"prospeccao",ic:"🎯",nome:"Prospecção",grupo:"Comercial"},
+    {id:"financeiro",ic:"💰",nome:"Financeiro",grupo:"Comercial"},
+    {id:"relatorios",ic:"📊",nome:"Relatórios",grupo:"Comercial"},
+    {id:"ecossistema",ic:"🌐",nome:"Ecossistema",grupo:"Monitoramento"},
+    {id:"bemestar",ic:"🌿",nome:"Bem-estar",grupo:"Monitoramento"},
+    {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/",grupo:"Monitoramento"},
+    {id:"acessos",ic:"🔐",nome:"Acessos",admin:true,grupo:"Administração"},
+    {id:"versoes",ic:"🕑",nome:"Versões",grupo:"Administração"},
+    {id:"config",ic:"⚙️",nome:"Configurações",grupo:"Administração"}
   ];
+  function Switch(props){ return h("label",{className:"ip-sw"+(props.className?(" "+props.className):"")}, input({type:"checkbox",checked:!!props.checked,onChange:props.onChange,disabled:props.disabled}), span({className:"tr"})); }
+  function ThemeToggle(){
+    var t=useState((typeof document!=="undefined" && document.documentElement.dataset.theme)||"claro"),theme=t[0],setTheme=t[1];
+    function set(v){ document.documentElement.dataset.theme=v; try{localStorage.setItem("ip_theme",v);}catch(e){} setTheme(v); }
+    return div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 8px",gap:8}},
+      span({className:"ip-faint",style:{fontSize:12,display:"flex",alignItems:"center",gap:6}}, span(null,theme==="escuro"?"🌙":"☀️"), theme==="escuro"?"Tema escuro":"Tema claro"),
+      h(Switch,{checked:theme==="escuro",onChange:function(e){ set(e.target.checked?"escuro":"claro"); }})); }
 
   /* ===================== PROSPECÇÃO (CRM / PIPELINE) ===================== */
   var PROSP_ESTAGIOS=["A contatar","Conversa","Proposta","Ganha","Perdida"];
@@ -2037,7 +2083,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     function fmtInt(m){ return m<60?("a cada "+m+" min"):("a cada "+(m/60)+"h"+(m%60?(" "+(m%60)+"min"):"")); }
     return div({className:"ip-view"},
       topo("SAÚDE & BEM-ESTAR","Bem-estar & Pausas","Lembretes amigáveis pra você cuidar de si durante o trabalho — discretos no canto, sem interromper.",
-        label({style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--ip-muted)"}}, input({type:"checkbox",checked:!!prefs.master,onChange:function(e){master(e.target.checked);}}), prefs.master?"Ativado":"Desativado")),
+        label({style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--ip-muted)"}}, h(Switch,{checked:!!prefs.master,onChange:function(e){master(e.target.checked);}}), prefs.master?"Ativado":"Desativado")),
       div({className:"ip-card",style:{padding:18}},
         strong({style:{fontWeight:400,fontSize:14}},"Tipos de lembrete & frequência"),
         BEM_ORD.map(function(k){ var t=BEM_TIPOS[k]; var pk=prefs.tipos[k]||{on:true,intervalo:t.intervalo};
@@ -2045,7 +2091,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             span({style:{width:40,height:40,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:t.cor+"22",flex:"none"}},t.emoji),
             div({style:{flex:1,minWidth:0}}, div({style:{fontWeight:400}},t.nome), div({className:"ip-faint",style:{fontSize:12,marginTop:2}},t.msgs[0])),
             select({className:"ip-input",value:String(pk.intervalo),onChange:function(e){setInt(k,e.target.value);},style:{maxWidth:150}}, INTS.map(function(m){return option({key:m,value:String(m)},fmtInt(m));})),
-            label({style:{display:"flex",alignItems:"center"}}, input({type:"checkbox",checked:!!pk.on,onChange:function(e){toggle(k,e.target.checked);}}))); }),
+            h(Switch,{checked:!!pk.on,onChange:function(e){toggle(k,e.target.checked);}})); }),
         div({style:{marginTop:14,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}},
           button({className:"ip-btn ghost",onClick:function(){ var ks=BEM_ORD.filter(function(k){return (prefs.tipos[k]||{}).on;}); bemToast(ks[Math.floor(Math.random()*ks.length)]||"agua"); }},"🔔 Testar um lembrete agora"),
           span({className:"ip-faint",style:{fontSize:12}},"Suas preferências ficam salvas neste aparelho."))));
@@ -2300,13 +2346,14 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       div({className:"ip-shell"},
         h("aside",{className:"ip-side"+(menu?" open":"")},
           div({className:"brand"}, Logo("hz","ip-brand-img")),
-          div({className:"ip-navwrap"}, modulosNav.map(function(m){
-            return div({key:m.id,className:"ip-nav"+(view===m.id?" active":""), onClick:function(){ if(m.url){ window.open(m.url,"_blank","noopener"); setMenu(false); return; } setView(m.id); setMenu(false); }},
-              span({className:"ic"},m.ic), span(null,m.nome)); })),
+          div({className:"ip-navwrap"}, (function(){ var out=[],seen={}; modulosNav.forEach(function(m){ var g=m.grupo||"Geral"; if(!seen[g]){ seen[g]=1; out.push(div({key:"g-"+g,className:"ip-navgroup"},g)); }
+            out.push(div({key:m.id,className:"ip-nav"+(view===m.id?" active":""), onClick:function(){ if(m.url){ window.open(m.url,"_blank","noopener"); setMenu(false); return; } setView(m.id); setMenu(false); }},
+              span({className:"ic"},m.ic), span(null,m.nome))); }); return out; })()),
           div({style:{margin:"12px 4px 6px",display:"flex",flexDirection:"column",gap:8}},
             button({className:"ip-upbtn",onClick:function(){setUpgrade(true);}}, span({className:"spark"},"✦"), "UPGRADE"),
             canInstall && button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
           div({className:"ip-sidefoot"},
+            h(ThemeToggle),
             div({style:{padding:"4px 8px"}}, div({style:{fontSize:13}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
             button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
             div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))),
@@ -2326,6 +2373,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   window.addEventListener("error",function(e){ if(!document.querySelector(".ip-shell, .ip-auth")) fatal(e.message||e.error||"erro"); });
   try{
     if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas não carregaram.");
+    try{ document.documentElement.dataset.theme=localStorage.getItem("ip_theme")||"claro"; }catch(e){ document.documentElement.dataset.theme="claro"; }
     ReactDOM.createRoot(document.getElementById("root")).render(h(App));
     if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
   }catch(err){ fatal(err.stack||err.message||err); }
