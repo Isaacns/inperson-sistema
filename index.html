@@ -984,27 +984,66 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 
   /* ===================== ASSISTENTE IA ===================== */
   function Assistente(props){
-    var s=useState([{role:"ia",txt:"Olá, Isaac. Sou o seu Assistente INPERSON. Posso analisar seus dados, priorizar o dia, sugerir crescimento e automações. O que você quer resolver agora?"}]),msgs=s[0],setMsgs=s[1];
+    var s=useState([{role:"ia",txt:"Olá, Isaac. Sou o seu Assistente INPERSON — agora agêntico: eu sugiro ações e, com o seu OK, executo (criar registro, oportunidade, lançamento, nota, cliente). O que vamos resolver?"}]),msgs=s[0],setMsgs=s[1];
     var i=useState(""),inp=i[0],setInp=i[1]; var b=useState(false),busy=b[0],setBusy=b[1];
     var _h=new Date().toISOString().slice(0,10); var brief=(props.briefing&&props.briefing.data===_h)?props.briefing:null;
+    var reload=props.reload;
     function contexto(){
       var r=props.registros, sis=props.sistemas, cli=props.clientes, lan=props.lancamentos;
       var venc=r.filter(function(x){var d=diasAte(x.vence_em);return d!==null&&d<=90;}).map(function(x){return x.titulo+" (vence "+(x.vence_em||"?")+")";});
       var rec=lan.filter(function(l){return l.tipo==="receita";}).reduce(function(s,l){return s+Number(l.valor||0);},0);
-      return "Sistemas: "+sis.map(function(x){return x.nome+"["+x.status+"]";}).join(", ")+
+      return "Hoje: "+_h+"\nSistemas: "+sis.map(function(x){return x.nome+"["+x.status+"]";}).join(", ")+
         "\nClientes: "+cli.map(function(x){return x.nome+(x.segmento?" ("+x.segmento+")":"");}).join(", ")+
         "\nRegistros ativos: "+r.filter(function(x){return x.status!=="concluido";}).length+
         "\nVencimentos próximos: "+(venc.join("; ")||"nenhum")+
         "\nReceitas lançadas: "+money(rec);
     }
+    function executarAcao(a){
+      return sb.auth.getUser().then(function(res){ var uid=res.data.user.id; var d=a.dados||{};
+        if(a.tipo==="criar_registro") return sb.from("registros").insert({titulo:d.titulo||"(sem título)",categoria:d.categoria||"prazo",prioridade:d.prioridade||"media",descricao:d.descricao||"",projeto:d.projeto||"",vence_em:d.vence_em||null,tipo:"nota",status:"aberto",owner:uid,ordem:0});
+        if(a.tipo==="criar_oportunidade") return sb.from("oportunidades").insert({empresa:d.empresa||"(lead)",contato:d.contato||"",segmento:d.segmento||"",origem:d.origem||"IA",tier:d.tier||"—",valor:Number(d.valor||0),estagio:d.estagio||"A contatar",obs:d.obs||"",owner:uid});
+        if(a.tipo==="criar_lancamento") return sb.from("lancamentos").insert({tipo:d.tipo||"receita",descricao:d.descricao||"",categoria:d.categoria||"",valor:Number(d.valor||0),recorrente:!!d.recorrente,cliente:d.cliente||"",data_ref:d.data_ref||_h,owner:uid});
+        if(a.tipo==="criar_nota") return sb.from("notas").insert({titulo:d.titulo||"",corpo:d.corpo||"",cor:d.cor||"azul"});
+        if(a.tipo==="criar_cliente") return sb.from("clientes").insert({nome:d.nome||"(cliente)",segmento:d.segmento||"",cidade:d.cidade||"",contato:d.contato||"",status:"ativo",obs:d.obs||""});
+        return Promise.reject(new Error("Ação desconhecida"));
+      });
+    }
+    function acaoInfo(a){ var d=a.dados||{};
+      if(a.tipo==="criar_registro") return {ic:"📌",t:"Criar registro na Agenda",s:(d.titulo||"")+(d.vence_em?(" · vence "+d.vence_em):"")};
+      if(a.tipo==="criar_oportunidade") return {ic:"🎯",t:"Nova oportunidade",s:(d.empresa||"")+(d.valor?(" · "+money(d.valor)+"/mês"):"")};
+      if(a.tipo==="criar_lancamento") return {ic:"💰",t:"Lançamento financeiro",s:(d.descricao||"")+" · "+money(d.valor||0)+(d.recorrente?" (recorrente)":"")};
+      if(a.tipo==="criar_nota") return {ic:"📝",t:"Criar nota",s:d.titulo||d.corpo||""};
+      if(a.tipo==="criar_cliente") return {ic:"👤",t:"Cadastrar cliente",s:d.nome||""};
+      return {ic:"⚙️",t:a.tipo||"ação",s:""};
+    }
+    function setAcaoStatus(mi,ai,st,extra){ setMsgs(function(cur){ var arr=cur.slice(); var m=Object.assign({},arr[mi]); var acs=(m.acoes||[]).slice(); acs[ai]=Object.assign({},acs[ai],{status:st},extra||{}); m.acoes=acs; arr[mi]=m; return arr; }); }
+    function confirmar(mi,ai,a){ setAcaoStatus(mi,ai,"executando"); executarAcao(a).then(function(r){ if(r&&r.error) throw r.error; setAcaoStatus(mi,ai,"feito"); reload&&reload(); }).catch(function(x){ setAcaoStatus(mi,ai,"erro",{erro:(x.message||String(x))}); }); }
     function enviar(ev){ ev.preventDefault(); var q=inp.trim(); if(!q||busy) return;
       var nv=msgs.concat([{role:"eu",txt:q}]); setMsgs(nv); setInp(""); setBusy(true);
       sb.functions.invoke("assistente",{body:{pergunta:q,contexto:contexto()}}).then(function(r){
-        var txt=(r.data&&r.data.resposta)?r.data.resposta:((r.error?("Erro: "+r.error.message):"(sem resposta)"));
-        setMsgs(nv.concat([{role:"ia",txt:txt}])); setBusy(false);
+        var raw=(r.data&&r.data.resposta)?r.data.resposta:((r.error?("Erro: "+r.error.message):"(sem resposta)"));
+        var acoes=[]; var shown=raw; var mm=raw.match(/<ACOES>([\s\S]*?)<\/ACOES>/i);
+        if(mm){ shown=raw.replace(mm[0],"").trim(); try{ var parsed=JSON.parse(mm[1].trim()); if(Array.isArray(parsed)) acoes=parsed.map(function(a){return Object.assign({},a,{status:"pendente"});}); }catch(e){} }
+        setMsgs(nv.concat([{role:"ia",txt:shown||"(pronto)",acoes:acoes}])); setBusy(false);
       }).catch(function(x){ setMsgs(nv.concat([{role:"ia",txt:"Erro ao falar com a IA: "+(x.message||x)}])); setBusy(false); }); }
+    function bolha(m,idx){
+      return div({key:idx,style:{display:"flex",flexDirection:"column",gap:8,alignItems:m.role==="eu"?"flex-end":"flex-start"}},
+        div({className:"ip-bubble "+(m.role==="eu"?"eu":"ia")}, m.txt),
+        (m.acoes&&m.acoes.length)?div({style:{display:"flex",flexDirection:"column",gap:8,width:"100%",maxWidth:"94%"}},
+          m.acoes.map(function(a,ai){ var info=acaoInfo(a);
+            return div({key:ai,className:"ip-card",style:{padding:"11px 13px",border:"1px solid rgba(116,176,216,.3)"}},
+              div({style:{display:"flex",alignItems:"center",gap:8}}, span({style:{fontSize:16}},info.ic),
+                div({style:{flex:1,minWidth:0}}, div({style:{fontSize:13,fontWeight:500}},info.t), info.s&&div({className:"ip-faint",style:{fontSize:12,marginTop:2}},info.s))),
+              a.status==="pendente"?div({style:{display:"flex",gap:8,marginTop:10}},
+                button({className:"ip-btn",style:{padding:"6px 14px",fontSize:12.5},onClick:function(){confirmar(idx,ai,a);}},"✓ Confirmar"),
+                button({className:"ip-btn ghost",style:{padding:"6px 14px",fontSize:12.5},onClick:function(){setAcaoStatus(idx,ai,"descartado");}},"Descartar")):
+              a.status==="executando"?div({className:"ip-faint",style:{fontSize:12,marginTop:8}},"executando…"):
+              a.status==="feito"?div({style:{fontSize:12,marginTop:8,color:"var(--ip-ok)"}},"✓ Feito e salvo"):
+              a.status==="erro"?div({style:{fontSize:12,marginTop:8,color:"var(--ip-danger)"}},"Erro: "+(a.erro||"")):
+              div({className:"ip-faint",style:{fontSize:12,marginTop:8}},"descartado")); })):null);
+    }
     return div({className:"ip-view"},
-      topo("IA · COPILOTO","Assistente INPERSON","Converse com a IA sobre os seus próprios dados e estratégia."),
+      topo("IA · COPILOTO AGÊNTICO","Assistente INPERSON","Peça e eu executo — com a sua confirmação. Ex.: crie um registro pra renovar o domínio dia 20."),
       brief&&div({className:"ip-card",style:{padding:"16px 18px",marginBottom:16,border:"1px solid rgba(116,176,216,.35)",background:"linear-gradient(135deg,rgba(116,176,216,.12),rgba(255,255,255,.02))"}},
         div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:10}},
           span({className:"ip-aura-chip"}, span({className:"s"},"✦")," BRIEFING DE HOJE"),
@@ -1012,10 +1051,10 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         p({style:{whiteSpace:"pre-wrap",lineHeight:1.6,margin:0,fontSize:13.8,color:"var(--ip-text)"}},brief.conteudo)),
       div({className:"ip-card",style:{padding:18,display:"flex",flexDirection:"column",height:"min(64vh,560px)"}},
         div({className:"ip-chat",style:{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12,paddingRight:6}},
-          msgs.map(function(m,idx){ return div({key:idx,className:"ip-bubble "+(m.role==="eu"?"eu":"ia")}, m.txt); }),
+          msgs.map(bolha),
           busy && div({className:"ip-bubble ia ip-muted"},"pensando…")),
         form({onSubmit:enviar,style:{display:"flex",gap:10,marginTop:14}},
-          input({className:"ip-input",value:inp,onChange:function(e){setInp(e.target.value);},placeholder:"Pergunte algo… ex.: o que priorizar hoje?"}),
+          input({className:"ip-input",value:inp,onChange:function(e){setInp(e.target.value);},placeholder:"Peça algo… ex.: crie a oportunidade da Clínica X, Care Pro"}),
           button({className:"ip-btn",disabled:busy,style:{whiteSpace:"nowrap"}},"Enviar"))));
   }
 
