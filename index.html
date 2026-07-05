@@ -2489,6 +2489,12 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var q=useState(""),busca=q[0],setBusca=q[1];
     var ed=useState(null),edit=ed[0],setEdit=ed[1];
     var rv=useState({}),rev=rv[0],setRev=rv[1];
+    var sistemas=props.sistemas||[], go=props.go;
+    var sd=useState({}),saude=sd[0],setSaude=sd[1];
+    useEffect(function(){ if(!isAdmin||!sistemas.length) return; sb.functions.invoke("saude",{body:{sistemas:sistemas.map(function(s){return {id:s.id,url:s.url};})}}).then(function(r){ var m={}; ((r.data&&r.data.resultados)||[]).forEach(function(x){ m[x.id]=x; }); setSaude(m); }).catch(function(){}); },[sistemas.length,isAdmin]);
+    function _host(u){ try{ return new URL(u).host.replace(/^www\./,""); }catch(e){ return ""; } }
+    function matchSis(a){ var hh=_host(a.url); var byH=hh?sistemas.filter(function(s){return _host(s.url)===hh;})[0]:null; if(byH) return byH; var n=(a.sistema||"").toLowerCase(); return sistemas.filter(function(s){ var sn=(s.nome||"").toLowerCase(); return sn&&n.indexOf(sn)>-1; })[0]||null; }
+    function estadoSis(s){ if(!s) return null; var r=saude[s.id]; if(!r) return {k:"unknown"}; if(!r.ok) return {k:"down",ms:r.ms}; if(Number(r.ms||0)>3500) return {k:"slow",ms:r.ms}; return {k:"ok",ms:r.ms}; }
     if(!isAdmin) return div({className:"ip-view"}, topo("COFRE DE ACESSO","Gerenciador de Acesso","Restrito a administradores."), div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Você não tem permissão para ver os acessos.")));
     var termo=busca.trim().toLowerCase();
     var lista=acessos.slice().filter(function(a){ if(!termo) return true; return [a.sistema,a.url,a.usuario,a.ambiente,a.notas].join(" ").toLowerCase().indexOf(termo)>-1; }).sort(function(a,b){return (a.sistema||"").localeCompare(b.sistema||"");});
@@ -2502,7 +2508,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         lista.map(function(a){ var shown=!!rev[a.id];
           return div({key:a.id,className:"ip-card",style:{padding:16}},
             div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}},
-              div(null, strong({style:{fontWeight:500,fontSize:14.5}},a.sistema||"(sem nome)"), a.ambiente&&span({className:"ip-tag",style:{marginLeft:8,color:"var(--ip-accent)"}},a.ambiente)),
+              div({style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}, strong({style:{fontWeight:500,fontSize:14.5}},a.sistema||"(sem nome)"), a.ambiente&&span({className:"ip-tag",style:{color:"var(--ip-accent)"}},a.ambiente),
+                (function(){ var sis=matchSis(a); var st=estadoSis(sis); if(!st) return null; return span({className:"ip-tag",title:sis?("Ver "+sis.nome+" no Ecossistema"):"",style:{color:ECO_COR[st.k]||"var(--ip-muted)",cursor:go?"pointer":"default"},onClick:go?function(){go("ecossistema");}:null}, "● "+(ECO_LABEL[st.k]||st.k)+(st.ms?(" · "+st.ms+"ms"):"")); })()),
               button({className:"ip-btn ghost",style:{padding:"5px 10px",fontSize:12},onClick:function(){setEdit(a);}},"Editar")),
             a.url&&div({className:"ip-faint",style:{fontSize:12,marginTop:4,wordBreak:"break-all"}}, a.url),
             div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:10}},
