@@ -305,6 +305,11 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .ip-aipanel-body .ip-view{padding:0}
 @media(max-width:560px){.ip-aipanel{right:10px;left:10px;width:auto;bottom:84px}.ip-aifab{right:16px;bottom:16px}}
 
+/* ===== Arrastar para reordenar ===== */
+.ip-drag-h{touch-action:none;cursor:grab}
+.ip-drag-h:active{cursor:grabbing}
+.ip-dragging{opacity:.55;outline:2px dashed var(--ip-accent);outline-offset:-2px}
+
 </style>
 <script>
 // Configuracao de conexao — Sistema INPERSON
@@ -1158,21 +1163,34 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var notas=props.notas, reload=props.reload;
     var q=useState(""),busca=q[0],setBusca=q[1];
     var ed=useState(null),edit=ed[0],setEdit=ed[1];
-    var termo=busca.trim().toLowerCase();
-    var lista=notas.slice()
-      .filter(function(n){ if(!termo) return true; return [n.titulo,n.corpo].join(" ").toLowerCase().indexOf(termo)>-1; })
-      .sort(function(a,b){ if((b.fixado?1:0)!==(a.fixado?1:0)) return (b.fixado?1:0)-(a.fixado?1:0); return (b.atualizado_em||"").localeCompare(a.atualizado_em||""); });
+    var byOrdem=function(a,b){ return (Number(a.ordem||0))-(Number(b.ordem||0)) || (b.atualizado_em||"").localeCompare(a.atualizado_em||""); };
+    var oi=useState([]),orderIds=oi[0],setOrderIds=oi[1];
+    var dr=useState(null),dragId=dr[0],setDragId=dr[1];
+    useEffect(function(){
+      var cur=notas.slice().sort(byOrdem).map(function(n){return n.id;});
+      var same=cur.length===orderIds.length && cur.every(function(id){return orderIds.indexOf(id)>-1;});
+      if(!same) setOrderIds(cur);
+    },[notas]);
+    var mapa={}; notas.forEach(function(n){mapa[n.id]=n;});
+    var termo=busca.trim().toLowerCase(), searching=!!termo;
+    var baseIds=orderIds.length?orderIds:notas.slice().sort(byOrdem).map(function(n){return n.id;});
+    var ordered=baseIds.map(function(id){return mapa[id];}).filter(Boolean);
+    var lista=searching?ordered.filter(function(n){return [n.titulo,n.corpo].join(" ").toLowerCase().indexOf(termo)>-1;}):ordered;
+    function persist(arr){ Promise.all(arr.map(function(id,i){return sb.from("notas").update({ordem:(i+1)*10}).eq("id",id);})).then(function(){reload&&reload();}); }
+    function onMove(e){ if(!dragId||searching) return; var el=document.elementFromPoint(e.clientX,e.clientY); var card=el&&el.closest?el.closest("[data-nid]"):null; if(!card) return; var overId=card.getAttribute("data-nid"); if(overId&&overId!==dragId){ setOrderIds(function(a){ var arr=a.slice(); var from=arr.indexOf(dragId),to=arr.indexOf(overId); if(from<0||to<0) return a; arr.splice(to,0,arr.splice(from,1)[0]); return arr; }); } }
+    function onUp(){ if(!dragId) return; setDragId(null); setOrderIds(function(a){ persist(a); return a; }); }
     return div({className:"ip-view"},
-      topo("BLOCO DE NOTAS","Notas","Anotações rápidas, ideias e lembretes — sempre à mão.",
+      topo("BLOCO DE NOTAS","Notas","Anotações rápidas — arraste pela alça ⠿ para reordenar.",
         button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Nova nota")),
       div({className:"ip-toolbar"}, input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar nas notas…",style:{maxWidth:320}})),
-      div({className:"ip-grid-cards ip-stagger",style:{gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))"}},
+      div({className:"ip-grid-cards ip-stagger",style:{gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",touchAction:dragId?"none":"auto"},onPointerMove:onMove,onPointerUp:onUp,onPointerLeave:onUp},
         lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhuma nota ainda. Clique em \"+ Nova nota\".")),
-        lista.map(function(n){ return div({key:n.id,className:"ip-card",style:{padding:16,minHeight:130,cursor:"pointer",background:NOTA_CORS[n.cor]||NOTA_CORS.azul,display:"flex",flexDirection:"column"},onClick:function(){setEdit(n);}},
+        lista.map(function(n){ return div({key:n.id,"data-nid":n.id,className:"ip-card"+(dragId===n.id?" ip-dragging":""),style:{padding:16,minHeight:130,background:NOTA_CORS[n.cor]||NOTA_CORS.azul,display:"flex",flexDirection:"column"}},
           div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}},
-            strong({style:{fontWeight:500,fontSize:14}},n.titulo||"(sem título)"),
-            n.fixado?span({title:"fixada"},"📌"):null),
-          div({className:"ip-muted",style:{fontSize:12.5,marginTop:8,whiteSpace:"pre-wrap",lineHeight:1.5,flex:1,overflow:"hidden"}}, (n.corpo||"").slice(0,240)),
+            strong({style:{fontWeight:500,fontSize:14,cursor:"pointer",flex:1},onClick:function(){setEdit(n);}},n.titulo||"(sem título)"),
+            div({style:{display:"flex",alignItems:"center",gap:6}}, n.fixado?span({title:"fixada"},"📌"):null,
+              span({className:"ip-drag-h",title:"Arraste para reordenar",onPointerDown:searching?null:function(e){e.preventDefault();setDragId(n.id);},style:{cursor:"grab",touchAction:"none",userSelect:"none",color:"var(--ip-faint)",fontSize:16,lineHeight:1}},"⠿"))),
+          div({className:"ip-muted",style:{fontSize:12.5,marginTop:8,whiteSpace:"pre-wrap",lineHeight:1.5,flex:1,overflow:"hidden",cursor:"pointer"},onClick:function(){setEdit(n);}}, (n.corpo||"").slice(0,240)),
           div({className:"ip-faint",style:{fontSize:10.5,marginTop:10}}, "atualizada "+(n.atualizado_em?new Date(n.atualizado_em).toLocaleDateString("pt-BR"):"agora"))); })),
       edit!==null && h(NotaEditor,{nota:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
   }
