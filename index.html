@@ -360,6 +360,21 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .eco-nd{transform-box:fill-box;transform-origin:center;animation:eco-brz 3.6s ease-in-out infinite;cursor:pointer}
 .eco-nd:hover circle{filter:brightness(1.16)}
 
+/* ===== Scroll invisível (mantém a rolagem, esconde a barra) ===== */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* ===== Barra do usuário (canto superior direito, padrão Inovar) ===== */
+.ip-usermenu{display:flex;align-items:center;gap:10px}
+.ip-iconbtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--glass-brd);background:rgba(255,255,255,.04);color:var(--ip-text);cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center;transition:.15s;flex:none}
+.ip-iconbtn:hover{background:rgba(116,176,216,.14);border-color:var(--ip-accent)}
+[data-theme="claro"] .ip-iconbtn{background:#F0F5FA}
+.ip-lock{position:fixed;inset:0;z-index:200;background:rgba(2,6,16,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;animation:ipfade .25s ease}
+@keyframes ipfade{from{opacity:0}to{opacity:1}}
+.ip-lock-card{width:min(340px,90vw);padding:30px 26px;border-radius:18px;text-align:center;display:flex;flex-direction:column;align-items:center;background:var(--glass-bg);border:1px solid var(--glass-brd);box-shadow:var(--glass-shadow);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+[data-theme="claro"] .ip-lock{background:rgba(210,225,240,.6)}
+[data-theme="claro"] .ip-lock-card{background:#fff}
+
 </style>
 <script>
 // Configuracao de conexao — Sistema INPERSON
@@ -2564,6 +2579,22 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({className:"ip-aipanel-body"}, h(Assistente, props.P))));
   }
 
+  function LockScreen(props){
+    var perfil=props.perfil||{};
+    var p=useState(""),pw=p[0],setPw=p[1]; var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function unlock(ev){ ev.preventDefault(); if(!pw||busy) return; setBusy(true); setErr(null);
+      sb.auth.signInWithPassword({email:perfil.email,password:pw}).then(function(r){ if(r.error){ setErr("Senha incorreta."); setBusy(false); } else { props.onUnlock(); } }).catch(function(){ setErr("Falha ao verificar."); setBusy(false); }); }
+    return div({className:"ip-lock"},
+      div({className:"ip-lock-card"},
+        ipAvatar(perfil,72),
+        div({style:{fontWeight:500,fontSize:16,marginTop:12}},perfil.nome||perfil.email||""),
+        div({className:"ip-faint",style:{fontSize:12,marginBottom:16}},"🔒 Sistema bloqueado"),
+        form({onSubmit:unlock,style:{display:"flex",flexDirection:"column",gap:10,width:"100%"}},
+          h(PasswordInput,{className:"ip-input",value:pw,onChange:function(e){setPw(e.target.value);},placeholder:"Sua senha para desbloquear"}),
+          err&&div({className:"ip-msg err"},err),
+          button({className:"ip-btn",disabled:busy},busy?"Verificando…":"🔓 Desbloquear")),
+        button({className:"ip-btn ghost",style:{marginTop:12,width:"100%"},onClick:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }},"Sair da conta")));
+  }
   function App(){
     var s0=useState(undefined),sessao=s0[0],setSessao=s0[1];
     var s1=useState("copiloto"),view=s1[0],setView=s1[1];
@@ -2584,6 +2615,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
     var s17=useState(false),aiOpen=s17[0],setAiOpen=s17[1];
+    var lk=useState(false),locked=lk[0],setLocked=lk[1];
 
     var canInstall=useCanInstall();
     useEffect(function(){
@@ -2641,13 +2673,19 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             canInstall && button({className:"ip-btn ghost",style:{fontSize:13},onClick:function(){window.ipInstall();}},"📲 Instalar app")),
           div({className:"ip-sidefoot"},
             h(ThemeToggle),
-            div({style:{padding:"4px 8px"}}, div({style:{fontSize:13}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
-            button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }},"Sair"),
             div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))),
         h("main",{className:"ip-main"},
-          button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
+          div({style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
+            button({className:"ip-btn ghost ip-mtoggle",style:{margin:0},onClick:function(){setMenu(!menu);}},"☰ Menu"),
+            div({className:"ip-usermenu",style:{marginLeft:"auto"}},
+              div({style:{textAlign:"right",lineHeight:1.25}}, div({style:{fontSize:13,fontWeight:500}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
+              ipAvatar(perfil,38),
+              button({className:"ip-iconbtn",title:"Alterar senha",onClick:function(){setView("config");}},"🔑"),
+              button({className:"ip-iconbtn",title:"Bloquear",onClick:function(){setLocked(true);}},"🔒"),
+              button({className:"ip-iconbtn",title:"Sair",onClick:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }},"⎋"))),
           body)),
       upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}),
+      locked && h(LockScreen,{perfil:perfil,onUnlock:function(){setLocked(false);}}),
       h(AiFab,{open:aiOpen,setOpen:setAiOpen,P:P}));
   }
 
