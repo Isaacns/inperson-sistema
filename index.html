@@ -339,7 +339,6 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
   --glass-shadow:0 8px 24px rgba(12,27,51,.07), inset 0 1px 0 rgba(255,255,255,.6);
 }
 [data-theme="claro"] body{background:var(--ip-bg)}
-[data-theme="claro"] .ip-bgfx,[data-theme="claro"] .ip-aura{display:none}
 [data-theme="claro"] .ip-card,[data-theme="claro"] .ip-glass{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--glass-bg)}
 [data-theme="claro"] .ip-side{background:linear-gradient(180deg,#FFFFFF,#F5F8FC);backdrop-filter:none;-webkit-backdrop-filter:none;border-right:1px solid var(--ip-border)}
 [data-theme="claro"] .ip-input{background:#FFFFFF;backdrop-filter:none}
@@ -649,7 +648,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     function listaR(arr,drag){ if(!arr.length) return div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nada por aqui. 🎉"));
       return div({className:"ip-list",style:{touchAction:dragId?"none":"auto"},onPointerMove:drag?onMoveR:null,onPointerUp:drag?onUpR:null,onPointerLeave:drag?onUpR:null}, arr.map(function(r){return row(r,drag);})); }
     function ordById(){ var mapa={}; registros.forEach(function(r){mapa[r.id]=r;}); var ids=orderIds.length?orderIds:registros.slice().sort(function(a,b){return (Number(a.ordem||0))-(Number(b.ordem||0));}).map(function(r){return r.id;}); return ids.map(function(id){return mapa[id];}).filter(Boolean); }
-    function meuDia(){ return ordById().filter(function(r){ return ativo(r)&&match(r); }).sort(function(a,b){ return (PRIO_ORD[a.prioridade]!=null?PRIO_ORD[a.prioridade]:2)-(PRIO_ORD[b.prioridade]!=null?PRIO_ORD[b.prioridade]:2); }); }
+    function meuDia(){ return ordById().filter(function(r){ return ativo(r)&&match(r); }); }
     function semanaArr(){ return registros.filter(function(r){ if(!ativo(r)||!match(r)) return false; var d=diasAte(r.vence_em); return d!==null&&d<=7; }).sort(function(a,b){ return (a.vence_em||"").localeCompare(b.vence_em||""); }); }
     function prioridadesBlocks(){ var by={}; registros.filter(function(r){return ativo(r)&&match(r);}).forEach(function(r){ var k=r.prioridade||"media"; (by[k]=by[k]||[]).push(r); });
       var bl=PRIO_LBL.filter(function(o){return by[o[0]];}).map(function(o){ return div({key:o[0],style:{marginBottom:14}},
@@ -1069,7 +1068,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     }
     function setAcaoStatus(mi,ai,st,extra){ setMsgs(function(cur){ var arr=cur.slice(); var m=Object.assign({},arr[mi]); var acs=(m.acoes||[]).slice(); acs[ai]=Object.assign({},acs[ai],{status:st},extra||{}); m.acoes=acs; arr[mi]=m; return arr; }); }
     function confirmar(mi,ai,a){ setAcaoStatus(mi,ai,"executando"); executarAcao(a).then(function(r){ if(r&&r.error) throw r.error; setAcaoStatus(mi,ai,"feito"); reload&&reload(); }).catch(function(x){ setAcaoStatus(mi,ai,"erro",{erro:(x.message||String(x))}); }); }
-    function enviar(ev){ ev.preventDefault(); var q=inp.trim(); if(!q||busy) return;
+    function perguntar(q){ q=(q||"").trim(); if(!q||busy) return;
       var nv=msgs.concat([{role:"eu",txt:q}]); setMsgs(nv); setInp(""); setBusy(true);
       sb.functions.invoke("assistente",{body:{pergunta:q,contexto:contexto()}}).then(function(r){
         var raw=(r.data&&r.data.resposta)?r.data.resposta:((r.error?("Erro: "+r.error.message):"(sem resposta)"));
@@ -1077,6 +1076,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         if(mm){ shown=raw.replace(mm[0],"").trim(); try{ var parsed=JSON.parse(mm[1].trim()); if(Array.isArray(parsed)) acoes=parsed.map(function(a){return Object.assign({},a,{status:"pendente"});}); }catch(e){} }
         setMsgs(nv.concat([{role:"ia",txt:shown||"(pronto)",acoes:acoes}])); setBusy(false);
       }).catch(function(x){ setMsgs(nv.concat([{role:"ia",txt:"Erro ao falar com a IA: "+(x.message||x)}])); setBusy(false); }); }
+    function enviar(ev){ ev.preventDefault(); perguntar(inp); }
+    useEffect(function(){ try{ if(window.__ipAsk){ var _q=window.__ipAsk; window.__ipAsk=null; perguntar(_q); } }catch(e){} },[]);
     function bolha(m,idx){
       return div({key:idx,style:{display:"flex",flexDirection:"column",gap:8,alignItems:m.role==="eu"?"flex-end":"flex-start"}},
         div({className:"ip-bubble "+(m.role==="eu"?"eu":"ia")}, m.txt),
@@ -1107,6 +1108,53 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         form({onSubmit:enviar,style:{display:"flex",gap:10,marginTop:14}},
           input({className:"ip-input",value:inp,onChange:function(e){setInp(e.target.value);},placeholder:"Peça algo… ex.: crie a oportunidade da Clínica X, Care Pro"}),
           button({className:"ip-btn",disabled:busy,style:{whiteSpace:"nowrap"}},"Enviar"))));
+  }
+
+  /* ===================== COPILOTO (home proativo) ===================== */
+  function Copiloto(props){
+    var registros=props.registros||[], oportunidades=props.oportunidades||[], sistemas=props.sistemas||[], brief=props.briefing, go=props.go;
+    var q=useState(""),cmd=q[0],setCmd=q[1];
+    function ask(t){ try{ window.__ipAsk=t; }catch(e){} go&&go("assistente"); }
+    function submit(e){ e.preventDefault(); var t=cmd.trim(); if(!t) return; ask(t); }
+    var hoje=new Date().toISOString().slice(0,10);
+    function ativo(r){ return r.status!=="concluido"&&r.status!=="arquivado"; }
+    var atrasadas=registros.filter(function(r){ return ativo(r)&&r.vence_em&&r.vence_em<hoje; });
+    var doDia=registros.filter(function(r){ return ativo(r)&&r.vence_em===hoje; });
+    var semana=registros.filter(function(r){ if(!ativo(r)||!r.vence_em) return false; var d=(new Date(r.vence_em)-new Date(hoje))/86400000; return d>=0&&d<=7; });
+    var opAberta=oportunidades.filter(function(o){ return o.estagio!=="Ganha"&&o.estagio!=="Perdida"; });
+    var opParada=opAberta.filter(function(o){ var t=o.atualizado_em||o.criado_em; if(!t) return false; return (Date.now()-new Date(t))/86400000>7; });
+    var plano=[];
+    if(atrasadas.length) plano.push({cor:"var(--ip-danger)",t:atrasadas.length+(atrasadas.length>1?" tarefas atrasadas":" tarefa atrasada"),s:"na Agenda — resolva antes que vire urgência",b:"Resolver",fn:function(){go("agenda");}});
+    if(doDia.length) plano.push({cor:"var(--ip-warn)",t:doDia.length+(doDia.length>1?" tarefas para hoje":" tarefa para hoje"),s:"vencem hoje",b:"Ver",fn:function(){go("agenda");}});
+    if(opParada.length) plano.push({cor:"var(--ip-accent)",t:opParada.length+(opParada.length>1?" oportunidades sem movimento":" oportunidade sem movimento"),s:"paradas há mais de 7 dias no funil",b:"Reengajar",fn:function(){go("prospeccao");}});
+    if(!plano.length) plano.push({cor:"var(--ip-ok)",t:"Tudo em dia por aqui",s:"nenhuma pendência crítica — ótimo momento para prospectar",b:"Prospecção",fn:function(){go("prospeccao");}});
+    var CHIPS=["Quanto entrou essa semana?","Quem está atrasado?","Cria a proposta do Cartório","Me dá o resumo do dia"];
+    var kpi=function(v,l,c){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:c?{color:c,WebkitTextFillColor:c}:null},String(v)), div({className:"l"},l)); };
+    return div({className:"ip-view"},
+      topo("MODO COPILOTO","Copiloto","Fale o que precisa — eu trago o plano e executo, com a sua confirmação."),
+      form({onSubmit:submit,className:"ip-card",style:{padding:"7px 8px 7px 16px",display:"flex",alignItems:"center",gap:10,marginBottom:12}},
+        span({style:{color:"var(--ip-accent)",fontSize:18,flex:"none"}},"✦"),
+        input({className:"ip-input",style:{border:"none",background:"transparent",flex:1,backdropFilter:"none"},value:cmd,onChange:function(e){setCmd(e.target.value);},placeholder:"O que você quer fazer? Ex.: quanto entrou essa semana?"}),
+        button({className:"ip-btn",style:{whiteSpace:"nowrap",flex:"none"}},"↑ Enviar")),
+      div({style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:18}}, CHIPS.map(function(c,i){ return button({key:i,className:"ip-btn ghost",style:{fontSize:12.5,padding:"7px 12px"},onClick:function(){ask(c);}},c+" ↗"); })),
+      div({className:"ip-kpis ip-stagger"},
+        kpi(doDia.length,"Hoje"),
+        kpi(atrasadas.length,"Atrasadas",atrasadas.length?"var(--ip-danger)":null),
+        kpi(semana.length,"Esta semana"),
+        kpi(opAberta.length,"Oportunidades")),
+      div({style:{margin:"18px 0 8px",display:"flex",alignItems:"baseline",gap:10}}, strong({style:{fontWeight:400,fontSize:16}},"O plano de hoje"), span({className:"ip-faint",style:{fontSize:12}},"gerado a partir dos seus dados")),
+      div({className:"ip-list ip-stagger"}, plano.map(function(a,i){
+        return div({key:i,className:"ip-card ip-row",style:{alignItems:"center",borderRadius:12}},
+          span({style:{width:9,height:9,borderRadius:99,background:a.cor,flex:"none"}}),
+          div({style:{flex:1,minWidth:0}}, div({style:{fontWeight:500}},a.t), div({className:"ip-faint",style:{fontSize:12.5,marginTop:2}},a.s)),
+          button({className:"ip-btn ghost",style:{whiteSpace:"nowrap",fontSize:12.5},onClick:a.fn},a.b)); })),
+      brief&&div({className:"ip-card",style:{padding:"15px 17px",marginTop:16,borderLeft:"3px solid var(--ip-accent)"}},
+        div({style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}}, span({style:{color:"var(--ip-accent)"}},"✦"), strong({style:{fontWeight:500,fontSize:13}},"Briefing de hoje")),
+        p({style:{whiteSpace:"pre-wrap",lineHeight:1.6,margin:0,fontSize:13.5,color:"var(--ip-text)"}},brief.conteudo)),
+      div({className:"ip-card ip-row",style:{alignItems:"center",borderRadius:12,marginTop:16}},
+        span({style:{fontSize:20}},"🌐"),
+        div({style:{flex:1}}, div({style:{fontWeight:500}},"Ecossistema vivo"), div({className:"ip-faint",style:{fontSize:12.5,marginTop:2}},sistemas.length+" sistemas monitorados — saúde em tempo real")),
+        button({className:"ip-btn ghost",style:{fontSize:12.5,whiteSpace:"nowrap"},onClick:function(){go("ecossistema");}},"Abrir ↗")));
   }
 
   /* ===================== CONFIGURAÇÕES ===================== */
@@ -2005,6 +2053,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 
   /* ===================== SHELL ===================== */
   var MODULOS=[
+    {id:"copiloto",ic:"✦",nome:"Copiloto",grupo:"Principal"},
     {id:"dashboard",ic:"🏠",nome:"Início",grupo:"Principal"},
     {id:"assistente",ic:"🤖",nome:"Assistente IA",grupo:"Principal"},
     {id:"agenda",ic:"📅",nome:"Agenda de Registros",grupo:"Operação"},
@@ -2025,7 +2074,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   ];
   function Switch(props){ return h("label",{className:"ip-sw"+(props.className?(" "+props.className):"")}, input({type:"checkbox",checked:!!props.checked,onChange:props.onChange,disabled:props.disabled}), span({className:"tr"})); }
   function ThemeToggle(){
-    var t=useState((typeof document!=="undefined" && document.documentElement.dataset.theme)||"claro"),theme=t[0],setTheme=t[1];
+    var t=useState((typeof document!=="undefined" && document.documentElement.dataset.theme)||"escuro"),theme=t[0],setTheme=t[1];
     function set(v){ document.documentElement.dataset.theme=v; try{localStorage.setItem("ip_theme",v);}catch(e){} setTheme(v); }
     return div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 8px",gap:8}},
       span({className:"ip-faint",style:{fontSize:12,display:"flex",alignItems:"center",gap:6}}, span(null,theme==="escuro"?"🌙":"☀️"), theme==="escuro"?"Tema escuro":"Tema claro"),
@@ -2413,7 +2462,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 
   function App(){
     var s0=useState(undefined),sessao=s0[0],setSessao=s0[1];
-    var s1=useState("dashboard"),view=s1[0],setView=s1[1];
+    var s1=useState("copiloto"),view=s1[0],setView=s1[1];
     var s2=useState(null),perfil=s2[0],setPerfil=s2[1];
     var s3=useState([]),registros=s3[0],setRegistros=s3[1];
     var s4=useState([]),sistemas=s4[0],setSistemas=s4[1];
@@ -2471,7 +2520,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
+    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
@@ -2507,7 +2556,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   window.addEventListener("error",function(e){ if(!document.querySelector(".ip-shell, .ip-auth")) fatal(e.message||e.error||"erro"); });
   try{
     if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas não carregaram.");
-    try{ document.documentElement.dataset.theme=localStorage.getItem("ip_theme")||"claro"; }catch(e){ document.documentElement.dataset.theme="claro"; }
+    try{ document.documentElement.dataset.theme=localStorage.getItem("ip_theme")||"escuro"; }catch(e){ document.documentElement.dataset.theme="escuro"; }
     ReactDOM.createRoot(document.getElementById("root")).render(h(App));
     if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
   }catch(err){ fatal(err.stack||err.message||err); }
