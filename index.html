@@ -1834,6 +1834,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"care",ic:"📦",nome:"Planos & Propostas"},
     {id:"prospeccao",ic:"🎯",nome:"Prospecção"},
     {id:"acessos",ic:"🔐",nome:"Acessos",admin:true},
+    {id:"versoes",ic:"🕑",nome:"Versões"},
     {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
@@ -1945,6 +1946,55 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
   }
 
+  /* ===================== CONTROLE DE VERSÃO ===================== */
+  var VERSAO_TIPO={feature:{l:"Novidade",c:"var(--ip-accent)"},fix:{l:"Correção",c:"var(--ip-warn)"},infra:{l:"Infra",c:"var(--ip-ok)"},security:{l:"Segurança",c:"var(--ip-danger)"}};
+  function Versoes(props){
+    var versoes=props.versoes||[], reload=props.reload, isAdmin=props.isAdmin;
+    var ed=useState(null),edit=ed[0],setEdit=ed[1];
+    var lista=versoes.slice().sort(function(a,b){ return (b.data_ref||"").localeCompare(a.data_ref||"") || (b.criado_em||"").localeCompare(a.criado_em||""); });
+    return div({className:"ip-view"},
+      topo("EVOLUÇÃO","Controle de Versão","Histórico de versões e mudanças do Sistema INPERSON.",
+        isAdmin?button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Nova versão"):null),
+      div({className:"ip-list ip-stagger"},
+        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhuma versão registrada.")),
+        lista.map(function(v){ var t=VERSAO_TIPO[v.tipo]||VERSAO_TIPO.feature;
+          return div({key:v.id,className:"ip-card ip-row",style:{borderLeft:"3px solid "+t.c,borderRadius:10}},
+            div({style:{minWidth:64}}, strong({style:{fontWeight:500,color:"var(--ip-accent)"}},v.versao), div({className:"ip-faint",style:{fontSize:11,marginTop:2}},v.data_ref?v.data_ref.split("-").reverse().join("/"):"")),
+            div({style:{flex:1,cursor:isAdmin?"pointer":"default"},onClick:isAdmin?function(){setEdit(v);}:null},
+              div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}, strong({style:{fontWeight:400}},v.titulo||"—"), span({className:"ip-tag",style:{color:t.c}},t.l)),
+              v.descricao&&div({className:"ip-muted",style:{fontSize:12.5,marginTop:4,lineHeight:1.5,whiteSpace:"pre-wrap"}},v.descricao))); })),
+      edit!==null && h(NovaVersao,{versao:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
+  }
+  function NovaVersao(props){
+    var v0=props.versao||{}; var editing=!!v0.id;
+    var s=useState({versao:v0.versao||"",tipo:v0.tipo||"feature",titulo:v0.titulo||"",descricao:v0.descricao||"",data_ref:v0.data_ref||new Date().toISOString().slice(0,10)}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
+      var op = editing ? sb.from("versoes").update(f).eq("id",v0.id)
+        : sb.auth.getUser().then(function(res){ return sb.from("versoes").insert(Object.assign({},f,{owner:res.data.user.id})); });
+      Promise.resolve(op).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function excluir(){ if(!editing) return; if(!window.confirm("Excluir a versão \""+(v0.versao||"")+"\"?")) return; setBusy(true);
+      sb.from("versoes").delete().eq("id",v0.id).then(function(r){ if(r&&r.error){ setErr(r.error.message); setBusy(false); return; } props.onSaved(); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}}, editing?"Editar versão":"Nova versão"),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          campo("Versão", input({className:"ip-input",required:true,value:f.versao,onChange:set("versao"),placeholder:"v1.9"})),
+          campo("Tipo", select({className:"ip-input",value:f.tipo,onChange:set("tipo")}, [["feature","Novidade"],["fix","Correção"],["infra","Infra"],["security","Segurança"]].map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
+        div({style:{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,marginTop:12}},
+          campo("Título", input({className:"ip-input",value:f.titulo,onChange:set("titulo"),placeholder:"Resumo da mudança"})),
+          campo("Data", input({className:"ip-input",type:"date",value:f.data_ref,onChange:set("data_ref")}))),
+        div({style:{marginTop:12}}, campo("Descrição", textarea({className:"ip-input",rows:4,value:f.descricao,onChange:set("descricao"),placeholder:"O que mudou nesta versão…"}))),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
+          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          div({style:{display:"flex",gap:10}},
+            button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+            button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
+  }
+
   /* ===================== GERENCIADOR DE ACESSO (COFRE) ===================== */
   function Acessos(props){
     var acessos=props.acessos||[], reload=props.reload, isAdmin=props.isAdmin;
@@ -2035,6 +2085,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var s15=useState([]),isoAtivos=s15[0],setIsoAtivos=s15[1];
     var s16=useState([]),oportunidades=s16[0],setOportunidades=s16[1];
     var s18=useState([]),acessos=s18[0],setAcessos=s18[1];
+    var s19=useState([]),versoes=s19[0],setVersoes=s19[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
     var s17=useState(false),aiOpen=s17[0],setAiOpen=s17[1];
@@ -2066,8 +2117,9 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           sb.from("iso_registros").select("*"),
           sb.from("iso_ativos").select("*").order("ordem",{ascending:true}),
           sb.from("oportunidades").select("*").order("criado_em",{ascending:false}),
-          sb.from("acessos").select("*")
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); setAcessos(o[12].data||[]); });
+          sb.from("acessos").select("*"),
+          sb.from("versoes").select("*")
+        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); setAcessos(o[12].data||[]); setVersoes(o[13].data||[]); });
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
@@ -2075,8 +2127,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
-    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,iso:Iso,config:Configuracoes};
+    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
