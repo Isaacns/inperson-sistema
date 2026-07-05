@@ -310,6 +310,11 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .ip-drag-h:active{cursor:grabbing}
 .ip-dragging{opacity:.55;outline:2px dashed var(--ip-accent);outline-offset:-2px}
 
+/* ===== Ecossistema · organismo vivo ===== */
+@keyframes eco-pulse{0%,100%{opacity:.13;transform:scale(1)}50%{opacity:.4;transform:scale(1.35)}}
+.eco-halo{animation:eco-pulse 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.eco-halo.down{animation-duration:1.05s}
+
 </style>
 <script>
 // Configuracao de conexao — Sistema INPERSON
@@ -1874,6 +1879,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"prospeccao",ic:"🎯",nome:"Prospecção"},
     {id:"acessos",ic:"🔐",nome:"Acessos",admin:true},
     {id:"versoes",ic:"🕑",nome:"Versões"},
+    {id:"ecossistema",ic:"🌐",nome:"Ecossistema"},
     {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
@@ -1983,6 +1989,63 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({style:{display:"flex",gap:10}},
             button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
             button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
+  }
+
+  /* ===================== ECOSSISTEMA (ORGANISMO VIVO) ===================== */
+  var ECO_COR={ok:"var(--ip-ok)",slow:"var(--ip-warn)",down:"var(--ip-danger)",unknown:"var(--ip-muted)"};
+  var ECO_LABEL={ok:"No ar",slow:"Lento",down:"Fora do ar",unknown:"—"};
+  function Ecossistema(props){
+    var sistemas=(props.sistemas||[]).slice().sort(function(a,b){return (Number(a.ordem||0))-(Number(b.ordem||0));});
+    var sm=useState({}),saude=sm[0],setSaude=sm[1];
+    var ld=useState(false),load=ld[0],setLoad=ld[1];
+    var ck=useState(null),checado=ck[0],setChecado=ck[1];
+    var sl=useState(null),sel=sl[0],setSel=sl[1];
+    function verificar(){ if(!sistemas.length) return; setLoad(true);
+      sb.functions.invoke("saude",{body:{sistemas:sistemas.map(function(s){return {id:s.id,url:s.url};})}}).then(function(r){
+        var m={}; var res=(r.data&&r.data.resultados)||[]; res.forEach(function(x){ m[x.id]=x; });
+        setSaude(m); setChecado((r.data&&r.data.checado_em)||new Date().toISOString()); setLoad(false);
+      }).catch(function(){ setLoad(false); }); }
+    useEffect(function(){ verificar(); },[sistemas.length]);
+    function estado(s){ var r=saude[s.id]; if(!r) return "unknown"; if(!r.ok) return "down"; if(Number(r.ms||0)>3500) return "slow"; return "ok"; }
+    var nAr=sistemas.filter(function(s){var e=estado(s);return e==="ok"||e==="slow";}).length;
+    var nDown=sistemas.filter(function(s){return estado(s)==="down";}).length;
+    var lats=sistemas.map(function(s){return saude[s.id]&&saude[s.id].ms;}).filter(function(v){return v;});
+    var latMed=lats.length?Math.round(lats.reduce(function(a,b){return a+b;},0)/lats.length):0;
+    var W=640,H=520,cx=320,cy=250,R=sistemas.length>6?185:150;
+    var nodes=sistemas.map(function(s,i){ var ang=(-90+i/Math.max(1,sistemas.length)*360)*Math.PI/180; return {s:s,x:cx+R*Math.cos(ang),y:cy+R*Math.sin(ang),st:estado(s)}; });
+    var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
+    var selObj=sel?sistemas.filter(function(s){return s.id===sel;})[0]:null; var selR=selObj?saude[selObj.id]:null;
+    return div({className:"ip-view"},
+      topo("ORGANISMO VIVO","Ecossistema","Mapa de saúde em tempo real dos sistemas INPERSON · VIZIO.",
+        button({className:"ip-btn ghost",onClick:verificar,disabled:load},load?"Verificando…":"↻ Verificar agora")),
+      nDown>0 && div({className:"ip-card",style:{padding:"12px 16px",marginBottom:14,border:"1px solid rgba(217,101,91,.5)",background:"rgba(217,101,91,.08)"}},
+        span({style:{color:"var(--ip-danger)",fontWeight:500}},"⚠ "+nDown+" fora do ar: "),
+        span(null, sistemas.filter(function(s){return estado(s)==="down";}).map(function(s){return s.nome;}).join(", "))),
+      div({className:"ip-kpis ip-stagger"},
+        kpi(String(nAr)+"/"+sistemas.length,"No ar","var(--ip-ok)"),
+        kpi(String(nDown),"Alertas", nDown?"var(--ip-danger)":null),
+        kpi(latMed?latMed+" ms":"—","Latência média"),
+        kpi(checado?new Date(checado).toLocaleTimeString("pt-BR").slice(0,5):"—","Última checagem")),
+      div({className:"ip-card",style:{padding:10,marginTop:4,overflow:"hidden"}},
+        h("svg",{viewBox:"0 0 "+W+" "+H,style:{width:"100%",height:"auto",display:"block"}},
+          nodes.map(function(n,i){ return h("line",{key:"l"+i,x1:cx,y1:cy,x2:n.x,y2:n.y,stroke:ECO_COR[n.st],strokeWidth:1.4,strokeOpacity:0.35}); }),
+          h("circle",{cx:cx,cy:cy,r:40,fill:"rgba(116,176,216,.10)",stroke:"var(--ip-accent)",strokeWidth:1.5}),
+          h("text",{x:cx,y:cy+2,textAnchor:"middle",fontSize:20,fontWeight:300,fill:"var(--ip-accent)"},"iP"),
+          h("text",{x:cx,y:cy+22,textAnchor:"middle",fontSize:9,fill:"var(--ip-faint)",letterSpacing:"2"},"INPERSON"),
+          nodes.map(function(n,i){ var sc=ECO_COR[n.st];
+            return h("g",{key:"n"+i,style:{cursor:"pointer"},onClick:function(){setSel(n.s.id===sel?null:n.s.id);}},
+              h("circle",{className:"eco-halo"+(n.st==="down"?" down":""),cx:n.x,cy:n.y,r:24,fill:sc,style:{transformBox:"fill-box",transformOrigin:"center"}}),
+              h("circle",{cx:n.x,cy:n.y,r:22,fill:"#0b1626",stroke:sc,strokeWidth:sel===n.s.id?2.5:1.6}),
+              h("text",{x:n.x,y:n.y+6,textAnchor:"middle",fontSize:18},n.s.icone||"▪"),
+              h("text",{x:n.x,y:n.y+40,textAnchor:"middle",fontSize:10.5,fill:"var(--ip-text)"},(n.s.nome||"").slice(0,16))); }))),
+      selObj && div({className:"ip-card",style:{padding:16,marginTop:12}},
+        div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}},
+          div(null, strong({style:{fontWeight:500,fontSize:15}},(selObj.icone||"")+" "+selObj.nome),
+            div({className:"ip-faint",style:{fontSize:12,marginTop:3,wordBreak:"break-all"}},selObj.url||"—")),
+          div({style:{display:"flex",gap:8,alignItems:"center"}},
+            span({className:"ip-tag",style:{color:ECO_COR[estado(selObj)]}},ECO_LABEL[estado(selObj)]+(selR&&selR.status?(" · HTTP "+selR.status):"")+(selR&&selR.ms?(" · "+selR.ms+"ms"):"")),
+            selObj.url&&button({className:"ip-btn ghost",style:{padding:"6px 12px",fontSize:12.5},onClick:function(){window.open(selObj.url,"_blank","noopener");}},"abrir ↗"))),
+        selObj.descricao&&div({className:"ip-muted",style:{fontSize:12.5,marginTop:10,lineHeight:1.5}},selObj.descricao)));
   }
 
   /* ===================== CONTROLE DE VERSÃO ===================== */
@@ -2167,7 +2230,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,iso:Iso,config:Configuracoes};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
