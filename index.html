@@ -563,6 +563,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var sM=useState(now.getMonth()),mes=sM[0],setMes=sM[1];
     var sY=useState(now.getFullYear()),ano=sY[0],setAno=sY[1];
     var sD=useState(null),diaSel=sD[0],setDiaSel=sD[1];
+    var oiA=useState([]),orderIds=oiA[0],setOrderIds=oiA[1];
+    var drA=useState(null),dragId=drA[0],setDragId=drA[1];
     var cats=["todos"].concat(registros.map(function(r){return r.categoria;}).filter(function(v,i,arr){return v&&arr.indexOf(v)===i;}));
     var termo=busca.trim().toLowerCase();
     var base=registros.filter(function(r){return fcat==="todos"||r.categoria===fcat;})
@@ -596,6 +598,24 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({style:{display:"flex",alignItems:"center",gap:8,margin:"4px 2px 8px"}}, span({style:{color:g.cor,fontWeight:500,letterSpacing:".3px",fontSize:13}},g.label), span({className:"ip-faint",style:{fontSize:12}},g.items.length)),
           div({className:"ip-list"}, g.items.map(itemRow))); });
       return blocks.length?blocks:div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro com esses filtros.")); }
+    useEffect(function(){ var cur=registros.slice().sort(function(a,b){return (Number(a.ordem||0))-(Number(b.ordem||0));}).map(function(r){return r.id;}); var same=cur.length===orderIds.length&&cur.every(function(id){return orderIds.indexOf(id)>-1;}); if(!same) setOrderIds(cur); },[registros]);
+    function persistOrdem(arr){ Promise.all(arr.map(function(id,i){return sb.from("registros").update({ordem:(i+1)*10}).eq("id",id);})).then(function(){reload&&reload();}); }
+    function onMoveR(e){ if(!dragId) return; var el=document.elementFromPoint(e.clientX,e.clientY); var row=el&&el.closest?el.closest("[data-rid]"):null; if(!row) return; var overId=row.getAttribute("data-rid"); if(overId&&overId!==dragId){ setOrderIds(function(a){ var arr=a.slice(); var from=arr.indexOf(dragId),to=arr.indexOf(overId); if(from<0||to<0) return a; arr.splice(to,0,arr.splice(from,1)[0]); return arr; }); } }
+    function onUpR(){ if(!dragId) return; setDragId(null); setOrderIds(function(a){ persistOrdem(a); return a; }); }
+    function ordemManual(){ var mapa={}; registros.forEach(function(r){mapa[r.id]=r;});
+      var ids=orderIds.length?orderIds:registros.slice().sort(function(a,b){return (Number(a.ordem||0))-(Number(b.ordem||0));}).map(function(r){return r.id;});
+      var items=ids.map(function(id){return mapa[id];}).filter(Boolean).filter(function(r){ return (fcat==="todos"||r.categoria===fcat) && (fstatus==="todos"?true:(fstatus==="ativos"?(r.status!=="concluido"&&r.status!=="arquivado"):r.status===fstatus)) && (!termo||[r.titulo,r.descricao,r.projeto,r.categoria].join(" ").toLowerCase().indexOf(termo)>-1); });
+      if(!items.length) return div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum registro com esses filtros."));
+      return div({className:"ip-list",style:{touchAction:dragId?"none":"auto"},onPointerMove:onMoveR,onPointerUp:onUpR,onPointerLeave:onUpR},
+        items.map(function(r){ var u=urg(r);
+          return div({key:r.id,"data-rid":r.id,className:"ip-card ip-row"+(dragId===r.id?" ip-dragging":""),style:{borderLeft:"3px solid "+u.cor,borderRadius:10,alignItems:"center"}},
+            span({className:"ip-drag-h",title:"Arraste para reordenar",onPointerDown:function(e){e.preventDefault();setDragId(r.id);},style:{cursor:"grab",touchAction:"none",userSelect:"none",color:"var(--ip-faint)",fontSize:18,paddingRight:8}},"⠿"),
+            div({style:{flex:1,cursor:"pointer"},onClick:function(){setEdit(r);}},
+              strong({style:{fontWeight:400,textDecoration:r.status==="concluido"?"line-through":"none",opacity:r.status==="concluido"?.6:1}},r.titulo),
+              r.descricao&&div({className:"ip-muted",style:{fontSize:12.5,marginTop:3,lineHeight:1.5}},r.descricao),
+              div({className:"ip-faint",style:{fontSize:11.5,marginTop:5}},(r.categoria||"—")+" · "+(r.projeto||"—"))),
+            button({className:"ip-btn ghost",style:{padding:"7px 11px"},onClick:function(){concluir(r);}},r.status==="concluido"?"Reabrir":"Concluir")); }));
+    }
     var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
     function calendario(){
       var first=new Date(ano,mes,1); var startDow=first.getDay(); var days=new Date(ano,mes+1,0).getDate();
@@ -627,11 +647,12 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         kpi(n30,"≤30 dias", n30?"var(--ip-warn)":null),
         kpi(n60,"31–60 dias", n60?"var(--ip-accent)":null)),
       div({className:"ip-toolbar",style:{flexWrap:"wrap"}},
-        div({className:"ip-seg"}, [["lista","Lista"],["calendario","Calendário"]].map(function(o){ return button({key:o[0],className:vista===o[0]?"on":"",onClick:function(){setVista(o[0]);}},o[1]); })),
+        div({className:"ip-seg"}, [["lista","Lista"],["ordem","Ordem manual"],["calendario","Calendário"]].map(function(o){ return button({key:o[0],className:vista===o[0]?"on":"",onClick:function(){setVista(o[0]);}},o[1]); })),
         input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar…",style:{maxWidth:240}}),
         div({className:"ip-seg"}, ["todos","ativos","aberto","concluido"].map(function(st){ return button({key:st,className:fstatus===st?"on":"",onClick:function(){setFstatus(st);}},st); })),
         div({className:"ip-seg"}, cats.map(function(c){ return button({key:c,className:fcat===c?"on":"",onClick:function(){setFcat(c);}},c); }))),
       vista==="calendario" ? div({className:"ip-card",style:{padding:18}}, calendario())
+        : vista==="ordem" ? div({className:"ip-stagger"}, div({className:"ip-faint",style:{fontSize:12,margin:"0 2px 10px"}},"Arraste pela alça ⠿ para definir a ordem manual (salva automaticamente)."), ordemManual())
         : div({className:"ip-stagger"}, listaAgrupada()),
       edit!==null && h(NovoRegistro,{registro:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
   }
