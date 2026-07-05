@@ -1833,6 +1833,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"relatorios",ic:"📊",nome:"Relatórios"},
     {id:"care",ic:"📦",nome:"Planos & Propostas"},
     {id:"prospeccao",ic:"🎯",nome:"Prospecção"},
+    {id:"acessos",ic:"🔐",nome:"Acessos",admin:true},
     {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
@@ -1944,6 +1945,70 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
   }
 
+  /* ===================== GERENCIADOR DE ACESSO (COFRE) ===================== */
+  function Acessos(props){
+    var acessos=props.acessos||[], reload=props.reload, isAdmin=props.isAdmin;
+    var q=useState(""),busca=q[0],setBusca=q[1];
+    var ed=useState(null),edit=ed[0],setEdit=ed[1];
+    var rv=useState({}),rev=rv[0],setRev=rv[1];
+    if(!isAdmin) return div({className:"ip-view"}, topo("COFRE DE ACESSO","Gerenciador de Acesso","Restrito a administradores."), div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Você não tem permissão para ver os acessos.")));
+    var termo=busca.trim().toLowerCase();
+    var lista=acessos.slice().filter(function(a){ if(!termo) return true; return [a.sistema,a.url,a.usuario,a.ambiente,a.notas].join(" ").toLowerCase().indexOf(termo)>-1; }).sort(function(a,b){return (a.sistema||"").localeCompare(b.sistema||"");});
+    function copiar(t){ try{ if(navigator.clipboard) navigator.clipboard.writeText(t); }catch(e){} }
+    return div({className:"ip-view"},
+      topo("COFRE DE ACESSO","Gerenciador de Acesso","Logins e senhas de todos os sistemas, num só lugar. Restrito a admin.",
+        button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Novo acesso")),
+      div({className:"ip-toolbar"}, input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar sistema, usuário…",style:{maxWidth:320}})),
+      div({className:"ip-list ip-stagger"},
+        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum acesso cadastrado. Clique em \"+ Novo acesso\".")),
+        lista.map(function(a){ var shown=!!rev[a.id];
+          return div({key:a.id,className:"ip-card",style:{padding:16}},
+            div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}},
+              div(null, strong({style:{fontWeight:500,fontSize:14.5}},a.sistema||"(sem nome)"), a.ambiente&&span({className:"ip-tag",style:{marginLeft:8,color:"var(--ip-accent)"}},a.ambiente)),
+              button({className:"ip-btn ghost",style:{padding:"5px 10px",fontSize:12},onClick:function(){setEdit(a);}},"Editar")),
+            a.url&&div({className:"ip-faint",style:{fontSize:12,marginTop:4,wordBreak:"break-all"}}, a.url),
+            div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:10}},
+              div(null, div({className:"ip-faint",style:{fontSize:10.5,letterSpacing:".5px"}},"USUÁRIO"),
+                div({style:{fontSize:13.5,display:"flex",gap:6,alignItems:"center",marginTop:2}}, span({style:{fontFamily:"monospace",wordBreak:"break-all"}},a.usuario||"—"), a.usuario&&span({title:"copiar",style:{cursor:"pointer",opacity:.6},onClick:function(){copiar(a.usuario);}},"⧉"))),
+              div(null, div({className:"ip-faint",style:{fontSize:10.5,letterSpacing:".5px"}},"SENHA"),
+                div({style:{fontSize:13.5,display:"flex",gap:6,alignItems:"center",marginTop:2}}, span({style:{fontFamily:"monospace",wordBreak:"break-all"}}, shown?(a.senha||"—"):"••••••••"),
+                  a.senha&&span({title:shown?"ocultar":"exibir",style:{cursor:"pointer",opacity:.75},onClick:function(){ setRev(function(o){var n=Object.assign({},o); n[a.id]=!o[a.id]; return n;}); }}, shown?"🙈":"👁️"),
+                  a.senha&&span({title:"copiar",style:{cursor:"pointer",opacity:.6},onClick:function(){copiar(a.senha);}},"⧉")))),
+            a.notas&&div({className:"ip-muted",style:{fontSize:12,marginTop:10,whiteSpace:"pre-wrap"}},a.notas)); })),
+      edit!==null && h(NovoAcesso,{acesso:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
+  }
+  function NovoAcesso(props){
+    var a0=props.acesso||{}; var editing=!!a0.id;
+    var s=useState({sistema:a0.sistema||"",url:a0.url||"",ambiente:a0.ambiente||"",usuario:a0.usuario||"",senha:a0.senha||"",notas:a0.notas||""}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
+      var payload=Object.assign({},f,{atualizado_em:new Date().toISOString()});
+      var op = editing ? sb.from("acessos").update(payload).eq("id",a0.id)
+        : sb.auth.getUser().then(function(res){ return sb.from("acessos").insert(Object.assign({},payload,{owner:res.data.user.id})); });
+      Promise.resolve(op).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    function excluir(){ if(!editing) return; if(!window.confirm("Excluir o acesso \""+(a0.sistema||"")+"\"?")) return; setBusy(true);
+      sb.from("acessos").delete().eq("id",a0.id).then(function(r){ if(r&&r.error){ setErr(r.error.message); setBusy(false); return; } props.onSaved(); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}}, editing?"Editar acesso":"Novo acesso"),
+        div({style:{marginTop:4}}, campo("Sistema", input({className:"ip-input",required:true,value:f.sistema,onChange:set("sistema"),placeholder:"Ex.: Supabase vizio-core"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("URL", input({className:"ip-input",value:f.url,onChange:set("url"),placeholder:"https://…"})),
+          campo("Ambiente", input({className:"ip-input",value:f.ambiente,onChange:set("ambiente"),placeholder:"produção, painel admin…"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Usuário / login", input({className:"ip-input",value:f.usuario,onChange:set("usuario"),placeholder:"e-mail / usuário",autoComplete:"off"})),
+          campo("Senha", h(PasswordInput,{className:"ip-input",value:f.senha,onChange:set("senha"),placeholder:"senha",autoComplete:"new-password"}))),
+        div({style:{marginTop:12}}, campo("Notas", textarea({className:"ip-input",rows:3,value:f.notas,onChange:set("notas"),placeholder:"2FA, chave de recuperação, observações…"}))),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
+          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          div({style:{display:"flex",gap:10}},
+            button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+            button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
+  }
+
   /* ===================== FAB · ASSISTENTE IA FLUTUANTE ===================== */
   function AiFab(props){
     var open=props.open, setOpen=props.setOpen;
@@ -1969,6 +2034,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var s14=useState([]),isoRegs=s14[0],setIsoRegs=s14[1];
     var s15=useState([]),isoAtivos=s15[0],setIsoAtivos=s15[1];
     var s16=useState([]),oportunidades=s16[0],setOportunidades=s16[1];
+    var s18=useState([]),acessos=s18[0],setAcessos=s18[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
     var s17=useState(false),aiOpen=s17[0],setAiOpen=s17[1];
@@ -1999,8 +2065,9 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           sb.from("iso_documentos").select("*").order("ordem",{ascending:true}),
           sb.from("iso_registros").select("*"),
           sb.from("iso_ativos").select("*").order("ordem",{ascending:true}),
-          sb.from("oportunidades").select("*").order("criado_em",{ascending:false})
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); });
+          sb.from("oportunidades").select("*").order("criado_em",{ascending:false}),
+          sb.from("acessos").select("*")
+        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); setAcessos(o[12].data||[]); });
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
@@ -2008,8 +2075,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
-    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,iso:Iso,config:Configuracoes};
+    var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
