@@ -157,7 +157,7 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .ip-modal{position:relative;width:100%;max-width:480px;max-height:calc(100vh - 40px);overflow-y:auto;padding:28px;border-radius:20px;margin:auto;animation:ip-fadeup .35s cubic-bezier(.2,.8,.2,1) both}
 
 /* ---------- UPGRADE ---------- */
-.ip-upbtn{display:flex;width:100%;justify-content:center;position:relative;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;border:1px solid rgba(180,210,235,.4);color:#eaf4fb;font-weight:600;letter-spacing:.6px;font-size:13px;cursor:pointer;overflow:hidden;background:linear-gradient(110deg,#0d2c45,#175a86,#33b6d8,#175a86,#0d2c45);background-size:220% auto;animation:ip-shimmer 5s linear infinite;box-shadow:0 6px 22px rgba(51,182,216,.3)}
+.ip-upbtn{position:relative;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;padding:10px 18px;border-radius:999px;border:1px solid rgba(180,210,235,.4);color:#eaf4fb;font-weight:600;letter-spacing:.6px;font-size:13px;cursor:pointer;overflow:hidden;background:linear-gradient(110deg,#0d2c45,#175a86,#33b6d8,#175a86,#0d2c45);background-size:220% auto;animation:ip-shimmer 5s linear infinite;box-shadow:0 6px 22px rgba(51,182,216,.3)}
 .ip-upbtn:hover{transform:translateY(-1px) scale(1.03);box-shadow:0 10px 30px rgba(51,182,216,.5)}
 .ip-upbtn .spark{animation:ip-breathe-soft 2.2s ease-in-out infinite}
 .ip-upbtn::after{content:"";position:absolute;inset:0;border-radius:999px;box-shadow:0 0 0 0 rgba(51,182,216,.5);animation:ip-pulse-ring 2.6s ease-out infinite}
@@ -294,6 +294,16 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .ip-rep-row{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid #EEF1F6;font-size:13.5px;color:#14171F}
 @media print{ body{background:#fff!important} .ip-report{border:0;box-shadow:none;max-width:100%;border-radius:0;padding:0 8px} }
 @media(max-width:760px){ .ip-rep-kpis{grid-template-columns:repeat(2,1fr)} }
+
+/* ===== FAB · Assistente IA flutuante ===== */
+.ip-aifab{position:fixed;right:22px;bottom:22px;z-index:70;width:56px;height:56px;border-radius:50%;border:1px solid rgba(116,176,216,.5);background:linear-gradient(135deg,#74B0D8,#5B9BC4);color:#04101f;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 10px 28px rgba(116,176,216,.35);display:flex;align-items:center;justify-content:center;transition:transform .2s,background .2s}
+.ip-aifab:hover{transform:translateY(-2px) scale(1.04)}
+.ip-aifab.on{background:#0b1626;color:var(--ip-accent)}
+.ip-aipanel{position:fixed;right:22px;bottom:88px;z-index:70;width:min(430px,92vw);max-height:min(80vh,660px);overflow:auto;background:rgba(6,13,26,.96);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--glass-brd);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.5);padding:18px;animation:ip-fadeup .25s ease both}
+.ip-aipanel-x{position:absolute;top:12px;right:12px;z-index:2;width:30px;height:30px;border-radius:50%;border:1px solid var(--glass-brd);background:rgba(255,255,255,.05);color:var(--ip-muted);cursor:pointer;font-size:13px}
+.ip-aipanel-x:hover{color:var(--ip-accent);border-color:var(--ip-accent)}
+.ip-aipanel-body .ip-view{padding:0}
+@media(max-width:560px){.ip-aipanel{right:10px;left:10px;width:auto;bottom:84px}.ip-aifab{right:16px;bottom:16px}}
 
 </style>
 <script>
@@ -1889,6 +1899,16 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
   }
 
+  /* ===================== FAB · ASSISTENTE IA FLUTUANTE ===================== */
+  function AiFab(props){
+    var open=props.open, setOpen=props.setOpen;
+    return div(null,
+      button({className:"ip-aifab"+(open?" on":""),"aria-label":"Assistente IA",title:"Assistente IA",onClick:function(){setOpen(!open);}}, open?"✕":"✦"),
+      open && div({className:"ip-aipanel"},
+        button({className:"ip-aipanel-x","aria-label":"Fechar",onClick:function(){setOpen(false);}},"✕"),
+        div({className:"ip-aipanel-body"}, h(Assistente, props.P))));
+  }
+
   function App(){
     var s0=useState(undefined),sessao=s0[0],setSessao=s0[1];
     var s1=useState("dashboard"),view=s1[0],setView=s1[1];
@@ -1906,6 +1926,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var s16=useState([]),oportunidades=s16[0],setOportunidades=s16[1];
     var s6=useState(false),menu=s6[0],setMenu=s6[1];
     var s7=useState(false),upgrade=s7[0],setUpgrade=s7[1];
+    var s17=useState(false),aiOpen=s17[0],setAiOpen=s17[1];
 
     var canInstall=useCanInstall();
     useEffect(function(){
@@ -1965,7 +1986,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         h("main",{className:"ip-main"},
           button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
           body)),
-      upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}));
+      upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}),
+      h(AiFab,{open:aiOpen,setOpen:setAiOpen,P:P}));
   }
 
   function fatal(msg){ var r=document.getElementById("root"); if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar</h2><pre>'+String(msg).replace(/</g,"&lt;")+'</pre></div>'; }
@@ -1989,7 +2011,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 #ip-ioshint b{color:#74B0D8}#ip-ioshint .x{float:right;cursor:pointer;opacity:.6;margin-left:10px}
 #ip-menuscrim{position:fixed;inset:0;background:rgba(1,5,16,.5);z-index:39;display:none;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 @media(max-width:880px){#ip-menuscrim.on{display:block}}
-.ip-upbtn{display:flex!important;width:100%!important;align-items:center!important;justify-content:center!important}/*__UPBTN_CENTER__*/</style>
+</style>
 <div id="ip-ioshint"><span class="x">✕</span>📲 Instale como app: toque em <b>Compartilhar</b> e <b>"Adicionar à Tela de Início"</b>.</div>
 <div id="ip-menuscrim"></div>
 <script>
