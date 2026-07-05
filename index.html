@@ -1187,6 +1187,9 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       op.then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
     function excluir(){ if(!editing) return; if(!window.confirm("Excluir esta nota?")) return; setBusy(true); setErr(null);
       sb.from("notas").delete().eq("id",n0.id).then(function(r){ if(r&&r.error){ setErr(r.error.message); setBusy(false); return; } props.onSaved(); }); }
+    function virarRegistro(){ if(!editing) return; if(!window.confirm("Criar um registro na Agenda a partir desta nota?")) return; setBusy(true); setErr(null);
+      sb.auth.getUser().then(function(res){ return sb.from("registros").insert({titulo:f.titulo||"(nota)",descricao:f.corpo||"",categoria:"nota",prioridade:"media",tipo:"nota",status:"aberto",owner:res.data.user.id,ordem:0}); })
+        .then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
     var CORS=[["azul","Azul"],["verde","Verde"],["amber","Âmbar"],["roxo","Roxo"],["neutro","Neutro"]];
     var swatch={azul:"#74B0D8",verde:"#5FBF8F",amber:"#D9A441",roxo:"#9B8CFF",neutro:"#8FA3BE"};
     return div({className:"ip-modal-bg",onClick:props.onClose},
@@ -1199,8 +1202,11 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           CORS.map(function(c){ return span({key:c[0],onClick:function(){set("cor",c[0]);},title:c[1],style:{width:22,height:22,borderRadius:99,background:swatch[c[0]],cursor:"pointer",display:"inline-block",border:f.cor===c[0]?"2px solid #FAFAFA":"2px solid transparent"}}); }),
           label({style:{display:"flex",alignItems:"center",gap:6,fontSize:13,color:"var(--ip-muted)",marginLeft:"auto",cursor:"pointer"}}, input({type:"checkbox",checked:f.fixado,onChange:function(e){set("fixado",e.target.checked);}}), "📌 Fixar")),
         err && div({className:"ip-msg err"},err),
-        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
-          editing?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+        div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}},
+          editing?div({style:{display:"flex",gap:8}},
+            button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"),
+            button({type:"button",className:"ip-btn ghost",onClick:virarRegistro,disabled:busy,title:"Criar registro na Agenda"},"→ Agenda")
+          ):span(null),
           div({style:{display:"flex",gap:10}},
             button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
             button({className:"ip-btn",disabled:busy},busy?"Salvando…":"Salvar nota")))));
