@@ -1175,8 +1175,6 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       h(AlterarSenha),
       isAdmin && h(EmpresaCard),
       isAdmin && h(SistemasEditor,{sistemas:sistemas,reload:reload}),
-      isAdmin && h(RegistroAcessos),
-      isAdmin && h(UsuariosAdminV2),
       isAdmin && h(BackupCard,{registros:props.registros,clientes:props.clientes,lancamentos:props.lancamentos,sistemas:sistemas}));
   }
   function AlterarSenha(){
@@ -1388,6 +1386,97 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           button({className:"ip-btn",disabled:busy},busy?"Salvando…":(selId?"Salvar alterações":"Criar usuário")))));
   }
 
+  /* ===================== USUÁRIOS & ACESSOS (padrão Inovar) ===================== */
+  function UsuariosView(){
+    var l=useState([]),lista=l[0],setLista=l[1];
+    var ed=useState(null),edit=ed[0],setEdit=ed[1];
+    function carregar(){ sb.functions.invoke("admin-usuarios",{body:{action:"list"}}).then(function(r){ if(r.data&&r.data.usuarios) setLista(r.data.usuarios); }); }
+    useEffect(function(){ carregar(); },[]);
+    function toggleAtivo(u){ sb.functions.invoke("admin-usuarios",{body:{action:"update",id:u.id,ativo:u.ativo===false}}).then(function(){ carregar(); }); }
+    function excluir(u){ if(!window.confirm("Excluir o usuário \""+(u.nome||u.email)+"\"? Esta ação não pode ser desfeita.")) return; sb.functions.invoke("admin-usuarios",{body:{action:"delete",id:u.id}}).then(function(){ carregar(); }); }
+    var total=lista.length, ativos=lista.filter(function(u){return u.ativo!==false;}).length, admins=lista.filter(function(u){return (u.nivel||0)>=100||u.papel==="admin";}).length;
+    var kpi=function(v,l,s){ return div({className:"ip-card ip-kpi"}, div({className:"v"},String(v)), div({className:"l"},l), s?div({className:"ip-faint",style:{fontSize:11,marginTop:3}},s):null); };
+    return div({className:"ip-view"},
+      topo("CONTROLE DE ACESSO","Usuários & Acessos","Edite dados e permissões, troque a foto ou desative o acesso. Desativar bloqueia o login sem apagar o usuário.",
+        button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Novo usuário")),
+      div({className:"ip-kpis ip-stagger"}, kpi(total,"Usuários","cadastrados"), kpi(ativos,"Ativos","com acesso"), kpi(admins,"Administradores","acesso total")),
+      div({className:"ip-list ip-stagger",style:{marginTop:14}}, lista.map(function(u){ var adm=(u.nivel||0)>=100||u.papel==="admin"; var inativo=u.ativo===false;
+        return div({key:u.id,className:"ip-card ip-row",style:{alignItems:"center",gap:12,opacity:inativo?0.6:1}},
+          ipAvatar(u,46),
+          div({style:{flex:1,minWidth:0}}, div({style:{fontWeight:500}},u.nome||u.email), div({className:"ip-faint",style:{fontSize:12}},u.email),
+            div({style:{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}, span({className:"ip-tag",style:{color:adm?"var(--ip-accent)":"var(--ip-muted)"}},adm?"Administrador · N100":("Personalizado · N"+(u.nivel||30))), span({className:"ip-tag",style:{color:inativo?"var(--ip-danger)":"var(--ip-ok)"}},inativo?"Inativo":"Ativo"))),
+          div({style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
+            button({className:"ip-btn ghost",style:{padding:"6px 11px",fontSize:12.5},onClick:function(){setEdit(u);}},"✎ Editar"),
+            button({className:"ip-btn ghost",style:{padding:"6px 11px",fontSize:12.5},onClick:function(){toggleAtivo(u);}},inativo?"▷ Ativar":"⏸ Desativar"),
+            button({className:"ip-btn ghost",style:{padding:"6px 10px",fontSize:12.5,color:"var(--ip-danger)"},title:"Excluir",onClick:function(){excluir(u);}},"🗑"))); })),
+      edit!==null && h(UsuarioEditor,{usuario:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);carregar();}}));
+  }
+  function UsuarioEditor(props){
+    var u0=props.usuario||{}; var editing=!!u0.id;
+    var s=useState({email:u0.email||"",senha:"",nome:u0.nome||"",nivel:u0.nivel||(u0.papel==="admin"?100:30),ativo:u0.ativo!==false,foto:u0.foto||""}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var m=useState(null),msg=m[0],setMsg=m[1]; var up=useState(false),upo=up[0],setUpo=up[1];
+    function set(k){ return function(e){ var n={}; n[k]=e.target.value; setF(Object.assign({},f,n)); }; }
+    function foto(e){ var file=e.target.files&&e.target.files[0]; if(!file) return; setUpo(true); setMsg(null);
+      var ext=(file.name.split(".").pop()||"png").toLowerCase(); var path=(u0.id||"novo")+"-"+Date.now()+"."+ext;
+      sb.storage.from("avatares").upload(path,file,{upsert:true,contentType:file.type}).then(function(r){ if(r.error) throw r.error; var url=sb.storage.from("avatares").getPublicUrl(path).data.publicUrl; setF(function(cur){return Object.assign({},cur,{foto:url});}); setUpo(false); }).catch(function(x){ setMsg({t:"err",m:"Falha no upload: "+(x.message||x)}); setUpo(false); }); }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
+      var body=editing?{action:"update",id:u0.id,nome:f.nome,nivel:Number(f.nivel),ativo:f.ativo,foto:f.foto,senha:f.senha}:{action:"create",email:f.email,senha:f.senha,nome:f.nome,nivel:Number(f.nivel),foto:f.foto};
+      sb.functions.invoke("admin-usuarios",{body:body}).then(function(r){ if(r.error||(r.data&&r.data.error)){ setMsg({t:"err",m:(r.data&&r.data.error)||r.error.message}); setBusy(false); } else { props.onSaved(); } }).catch(function(x){ setMsg({t:"err",m:String(x)}); setBusy(false); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 14px",fontWeight:300}}, editing?"Editar usuário":"Novo usuário"),
+        div({style:{display:"flex",alignItems:"center",gap:14,marginBottom:14}}, ipAvatar(f,64),
+          div(null, label({className:"ip-btn ghost",style:{cursor:"pointer",display:"inline-flex",fontSize:13}}, upo?"Enviando…":"📷 Trocar foto", input({type:"file",accept:"image/*",onChange:foto,style:{display:"none"}})),
+            f.foto?button({type:"button",className:"ip-btn ghost",style:{marginLeft:8,fontSize:12.5,padding:"8px 10px"},onClick:function(){setF(Object.assign({},f,{foto:""}));}},"Remover"):null)),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          campo("Nome", input({className:"ip-input",value:f.nome,onChange:set("nome"),placeholder:"Nome"})),
+          campo("E-mail", input({className:"ip-input",type:"email",required:!editing,value:f.email,onChange:set("email"),disabled:editing,placeholder:"email@dominio.com"}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo(editing?"Nova senha (opcional)":"Senha (mín. 6)", h(PasswordInput,{className:"ip-input",required:!editing,value:f.senha,onChange:set("senha"),placeholder:editing?"deixe vazio para manter":"senha inicial"})),
+          campo("Nível de acesso", select({className:"ip-input",value:String(f.nivel),onChange:set("nivel")}, NIVEIS.map(function(o){return option({key:o[0],value:String(o[0])},o[1]);})))),
+        div({style:{display:"flex",alignItems:"center",gap:10,marginTop:14}}, h(Switch,{checked:!!f.ativo,onChange:function(e){setF(Object.assign({},f,{ativo:e.target.checked}));}}), span({className:"ip-muted",style:{fontSize:13}},f.ativo?"Ativo (pode acessar)":"Desativado (login bloqueado)")),
+        div({style:{fontSize:11.5,color:"var(--ip-faint)",marginTop:8,lineHeight:1.5}},"N100 Administrador: acesso total. N30 Personalizado: acesso limitado de usuário."),
+        msg && div({className:"ip-msg "+msg.t},msg.m),
+        div({style:{display:"flex",gap:10,marginTop:18,justifyContent:"flex-end"}},
+          button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+          button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar usuário")))));
+  }
+  /* ===================== REGISTRO DE ACESSOS (view, padrão Inovar) ===================== */
+  function RegistroAcessosView(){
+    var l=useState([]),log=l[0],setLog=l[1]; var ld=useState(true),load=ld[0],setLoad=ld[1];
+    useEffect(function(){ sb.from("acessos_log").select("*").order("criado_em",{ascending:false}).limit(500).then(function(r){ setLog(r.data||[]); setLoad(false); }); },[]);
+    var EVT={login:{l:"Entrou",c:"var(--ip-ok)"},saida:{l:"Saiu",c:"var(--ip-muted)"},inatividade:{l:"Inatividade",c:"var(--ip-warn)"}};
+    var hoje=new Date().toISOString().slice(0,10);
+    var doDia=log.filter(function(x){return (x.criado_em||"").slice(0,10)===hoje;});
+    var byU={}; doDia.forEach(function(x){ var k=x.email||x.user_id||"?"; if(!byU[k]) byU[k]={nome:x.nome||x.email||"—",min:x.criado_em,max:x.criado_em,n:0}; var g=byU[k]; g.n++; if(x.criado_em<g.min)g.min=x.criado_em; if(x.criado_em>g.max)g.max=x.criado_em; });
+    var resumo=Object.keys(byU).map(function(k){return byU[k];});
+    var entradasHoje=doDia.filter(function(x){return x.evento==="login";}).length;
+    var pessoasHoje=Object.keys(byU).length;
+    var inatividade=log.filter(function(x){return x.evento==="inatividade";}).length;
+    var hm=function(t){ return t?new Date(t).toLocaleTimeString("pt-BR").slice(0,5):"—"; };
+    var dtf=function(t){ if(!t) return "—"; var d=new Date(t); return d.toLocaleDateString("pt-BR").slice(0,5)+", "+d.toLocaleTimeString("pt-BR").slice(0,5); };
+    function relatorio(){ var rows=[["Data/Hora","Colaborador","E-mail","Evento"]].concat(log.map(function(x){return [new Date(x.criado_em).toLocaleString("pt-BR"),x.nome||"",x.email||"",(EVT[x.evento]||{l:x.evento}).l];})); var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n"); var blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"}); var u=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=u; a.download="registro-acessos.csv"; a.click(); setTimeout(function(){URL.revokeObjectURL(u);},1500); }
+    var kpi=function(v,l,s,c){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:c?{color:c,WebkitTextFillColor:c}:null},String(v)), div({className:"l"},l), s?div({className:"ip-faint",style:{fontSize:11,marginTop:3}},s):null); };
+    var th=function(cols){ return div({style:{display:"flex",padding:"9px 14px",borderBottom:"1px solid var(--glass-brd)",fontSize:10.5,letterSpacing:".5px",color:"var(--ip-faint)",textTransform:"uppercase"}}, cols.map(function(c,i){return div({key:i,style:{flex:c.f,textAlign:c.a||"left"}},c.t);})); };
+    var tr=function(cells,i){ return div({key:i,style:{display:"flex",padding:"11px 14px",borderTop:"1px solid rgba(150,190,225,.06)",fontSize:13,alignItems:"center"}}, cells.map(function(c,j){return div({key:j,style:{flex:c.f,textAlign:c.a||"left",color:c.color||"var(--ip-text)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}},c.t);})); };
+    return div({className:"ip-view"},
+      topo("AUDITORIA · ADMIN","Registro de Acessos","Login, logout e encerramento por inatividade — visível apenas ao administrador.",
+        button({className:"ip-btn ghost",onClick:relatorio},"⭳ Relatório")),
+      div({className:"ip-kpis ip-stagger"},
+        kpi(log.length,"Registros (total)","últimos 500"),
+        kpi(entradasHoje,"Entradas hoje",pessoasHoje+" pessoa(s)","var(--ip-ok)"),
+        kpi(inatividade,"Saídas por inatividade","no histórico","var(--ip-warn)")),
+      div({className:"ip-card",style:{padding:0,marginTop:14,overflow:"hidden"}},
+        div({style:{padding:"14px 16px 6px"}}, strong({style:{fontWeight:500}},"Resumo de hoje"), div({className:"ip-faint",style:{fontSize:12,marginTop:2}},"Primeira entrada e última atividade de cada colaborador — apoio ao Controle de Ponto.")),
+        th([{t:"Colaborador",f:3},{t:"1ª entrada",f:1.3,a:"right"},{t:"Última atividade",f:1.5,a:"right"},{t:"Eventos",f:1,a:"right"}]),
+        resumo.length?resumo.map(function(g,i){ return tr([{t:g.nome,f:3},{t:hm(g.min),f:1.3,a:"right",color:"var(--ip-ok)"},{t:hm(g.max),f:1.5,a:"right"},{t:String(g.n),f:1,a:"right"}],i); }):div({className:"ip-faint",style:{padding:"14px 16px",fontSize:13}},load?"Carregando…":"Nenhum acesso hoje.")),
+      div({className:"ip-card",style:{padding:0,marginTop:14,overflow:"hidden"}},
+        div({style:{padding:"14px 16px 6px"}}, strong({style:{fontWeight:500}},"Histórico de acessos")),
+        th([{t:"Data/Hora",f:1.4},{t:"Colaborador",f:1.6},{t:"E-mail",f:2.4},{t:"Evento",f:1.1,a:"right"}]),
+        log.length?log.slice(0,120).map(function(x,i){ var e=EVT[x.evento]||{l:x.evento,c:"var(--ip-muted)"}; return tr([{t:dtf(x.criado_em),f:1.4},{t:x.nome||"—",f:1.6},{t:x.email||"—",f:2.4,color:"var(--ip-muted)"},{t:h("span",{className:"ip-tag",style:{color:e.c}},e.l),f:1.1,a:"right"}],i); }):div({className:"ip-faint",style:{padding:"14px 16px",fontSize:13}},load?"Carregando…":"Sem registros.")));
+  }
+
   /* ===================== UPGRADE ===================== */
   function UpgradeModal(props){
     function lista(items){ return h("ul",null, items.map(function(t,i){return h("li",{key:i},t);})); }
@@ -1415,6 +1504,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var notas=props.notas, reload=props.reload;
     var q=useState(""),busca=q[0],setBusca=q[1];
     var ed=useState(null),edit=ed[0],setEdit=ed[1];
+    var fc=useState("todos"),fcor=fc[0],setFcor=fc[1];
+    var SW={azul:"#74B0D8",verde:"#5FBF8F",amber:"#D9A441",roxo:"#9B8CFF",neutro:"#8FA3BE"};
     var byOrdem=function(a,b){ return (Number(a.ordem||0))-(Number(b.ordem||0)) || (b.atualizado_em||"").localeCompare(a.atualizado_em||""); };
     var oi=useState([]),orderIds=oi[0],setOrderIds=oi[1];
     var dr=useState(null),dragId=dr[0],setDragId=dr[1];
@@ -1427,21 +1518,25 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var termo=busca.trim().toLowerCase(), searching=!!termo;
     var baseIds=orderIds.length?orderIds:notas.slice().sort(byOrdem).map(function(n){return n.id;});
     var ordered=baseIds.map(function(id){return mapa[id];}).filter(Boolean);
-    var lista=searching?ordered.filter(function(n){return [n.titulo,n.corpo].join(" ").toLowerCase().indexOf(termo)>-1;}):ordered;
+    var visiveis=ordered.filter(function(n){ return (fcor==="todos"||(n.cor||"azul")===fcor) && (!searching || [n.titulo,n.corpo].join(" ").toLowerCase().indexOf(termo)>-1); });
+    var lista=visiveis.slice().sort(function(a,b){ return (b.fixado?1:0)-(a.fixado?1:0); });
     function persist(arr){ Promise.all(arr.map(function(id,i){return sb.from("notas").update({ordem:(i+1)*10}).eq("id",id);})).then(function(){reload&&reload();}); }
-    function onMove(e){ if(!dragId||searching) return; var el=document.elementFromPoint(e.clientX,e.clientY); var card=el&&el.closest?el.closest("[data-nid]"):null; if(!card) return; var overId=card.getAttribute("data-nid"); if(overId&&overId!==dragId){ setOrderIds(function(a){ var arr=a.slice(); var from=arr.indexOf(dragId),to=arr.indexOf(overId); if(from<0||to<0) return a; arr.splice(to,0,arr.splice(from,1)[0]); return arr; }); } }
+    function onMove(e){ if(!dragId||searching||fcor!=="todos") return; var el=document.elementFromPoint(e.clientX,e.clientY); var card=el&&el.closest?el.closest("[data-nid]"):null; if(!card) return; var overId=card.getAttribute("data-nid"); if(overId&&overId!==dragId){ setOrderIds(function(a){ var arr=a.slice(); var from=arr.indexOf(dragId),to=arr.indexOf(overId); if(from<0||to<0) return a; arr.splice(to,0,arr.splice(from,1)[0]); return arr; }); } }
     function onUp(){ if(!dragId) return; setDragId(null); setOrderIds(function(a){ persist(a); return a; }); }
     return div({className:"ip-view"},
       topo("BLOCO DE NOTAS","Notas","Anotações rápidas — arraste pela alça ⠿ para reordenar.",
         button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Nova nota")),
-      div({className:"ip-toolbar"}, input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar nas notas…",style:{maxWidth:320}})),
+      div({className:"ip-toolbar",style:{flexWrap:"wrap",gap:8,alignItems:"center"}},
+        input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar nas notas…",style:{maxWidth:260}}),
+        div({className:"ip-seg"}, [["todos","Todas"],["azul","Azul"],["verde","Verde"],["amber","Âmbar"],["roxo","Roxo"],["neutro","Neutro"]].map(function(o){ return button({key:o[0],className:fcor===o[0]?"on":"",onClick:function(){setFcor(o[0]);}}, o[0]==="todos"?o[1]:h("span",{style:{display:"inline-flex",alignItems:"center",gap:5}}, h("span",{style:{width:9,height:9,borderRadius:99,background:SW[o[0]],display:"inline-block"}}), o[1])); })),
+        span({className:"ip-faint",style:{fontSize:12,marginLeft:"auto"}},lista.length+(lista.length===1?" nota":" notas")+(searching||fcor!=="todos"?" (filtrado)":""))),
       div({className:"ip-grid-cards ip-stagger",style:{gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",touchAction:dragId?"none":"auto"},onPointerMove:onMove,onPointerUp:onUp,onPointerLeave:onUp},
         lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhuma nota ainda. Clique em \"+ Nova nota\".")),
         lista.map(function(n){ return div({key:n.id,"data-nid":n.id,className:"ip-card"+(dragId===n.id?" ip-dragging":""),style:{padding:16,minHeight:130,background:NOTA_CORS[n.cor]||NOTA_CORS.azul,display:"flex",flexDirection:"column"}},
           div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}},
             strong({style:{fontWeight:500,fontSize:14,cursor:"pointer",flex:1},onClick:function(){setEdit(n);}},n.titulo||"(sem título)"),
             div({style:{display:"flex",alignItems:"center",gap:6}}, n.fixado?span({title:"fixada"},"📌"):null,
-              span({className:"ip-drag-h",title:"Arraste para reordenar",onPointerDown:searching?null:function(e){e.preventDefault();setDragId(n.id);},style:{cursor:"grab",touchAction:"none",userSelect:"none",color:"var(--ip-faint)",fontSize:16,lineHeight:1}},"⠿"))),
+              span({className:"ip-drag-h",title:(searching||fcor!=="todos")?"Limpe o filtro para reordenar":"Arraste para reordenar",onPointerDown:(searching||fcor!=="todos")?null:function(e){e.preventDefault();setDragId(n.id);},style:{cursor:(searching||fcor!=="todos")?"not-allowed":"grab",touchAction:"none",userSelect:"none",color:"var(--ip-faint)",fontSize:16,lineHeight:1,opacity:(searching||fcor!=="todos")?0.4:1}},"⠿"))),
           div({className:"ip-muted",style:{fontSize:12.5,marginTop:8,whiteSpace:"pre-wrap",lineHeight:1.5,flex:1,overflow:"hidden",cursor:"pointer"},onClick:function(){setEdit(n);}}, (n.corpo||"").slice(0,240)),
           div({className:"ip-faint",style:{fontSize:10.5,marginTop:10}}, "atualizada "+(n.atualizado_em?new Date(n.atualizado_em).toLocaleDateString("pt-BR"):"agora"))); })),
       edit!==null && h(NotaEditor,{nota:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
@@ -2068,7 +2163,9 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"ecossistema",ic:"🌐",nome:"Ecossistema",grupo:"Monitoramento"},
     {id:"bemestar",ic:"🌿",nome:"Bem-estar",grupo:"Monitoramento"},
     {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/",grupo:"Monitoramento"},
-    {id:"acessos",ic:"🔐",nome:"Acessos",admin:true,grupo:"Administração"},
+    {id:"usuarios",ic:"👥",nome:"Usuários & Acessos",admin:true,grupo:"Administração"},
+    {id:"logacessos",ic:"🛡️",nome:"Registro de Acessos",admin:true,grupo:"Administração"},
+    {id:"acessos",ic:"🔐",nome:"Cofre de Senhas",admin:true,grupo:"Administração"},
     {id:"versoes",ic:"🕑",nome:"Versões",grupo:"Administração"},
     {id:"config",ic:"⚙️",nome:"Configurações",grupo:"Administração"}
   ];
@@ -2520,7 +2617,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
+    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,usuarios:UsuariosView,logacessos:RegistroAcessosView,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
