@@ -1127,7 +1127,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       h(AlterarSenha),
       isAdmin && h(EmpresaCard),
       isAdmin && h(SistemasEditor,{sistemas:sistemas,reload:reload}),
-      isAdmin && h(UsuariosAdmin),
+      isAdmin && h(RegistroAcessos),
+      isAdmin && h(UsuariosAdminV2),
       isAdmin && h(BackupCard,{registros:props.registros,clientes:props.clientes,lancamentos:props.lancamentos,sistemas:sistemas}));
   }
   function AlterarSenha(){
@@ -1241,6 +1242,98 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
           campo(selId?"Nova senha (opcional)":"Senha (mín. 6)", h(PasswordInput,{className:"ip-input",required:!selId,value:form2.senha,onChange:set("senha"),placeholder:selId?"deixe vazio para manter":"senha inicial"})),
           campo("Permissão", select({className:"ip-input",value:form2.papel,onChange:set("papel")}, [["cliente","Usuário (limitado)"],["admin","Administrador"]].map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
+        msg && div({className:"ip-msg "+msg.t},msg.m),
+        div({style:{marginTop:14,display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}},
+          selId?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
+          button({className:"ip-btn",disabled:busy},busy?"Salvando…":(selId?"Salvar alterações":"Criar usuário")))));
+  }
+
+  var NIVEIS=[[100,"Administrador · N100"],[30,"Personalizado · N30"]];
+  function ipAvatar(u,size){ var s=size||40; if(u&&u.foto) return h("img",{src:u.foto,alt:"",style:{width:s,height:s,borderRadius:"50%",objectFit:"cover",flex:"none"}});
+    var ch=(((u&&(u.nome||u.email))||"?").trim()[0]||"?").toUpperCase();
+    return div({style:{width:s,height:s,borderRadius:"50%",background:"var(--ip-accent-dim)",color:"var(--ip-accent)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:500,fontSize:Math.round(s*0.4),flex:"none"}},ch); }
+  function logAcesso(evento){ try{ sb.auth.getUser().then(function(res){ var u=res.data&&res.data.user; if(!u) return; sb.from("acessos_log").insert({user_id:u.id,email:u.email,nome:(u.user_metadata&&u.user_metadata.nome)||u.email,evento:evento}).then(function(){},function(){}); },function(){}); }catch(e){} }
+  function RegistroAcessos(){
+    var l=useState([]),log=l[0],setLog=l[1]; var ld=useState(true),load=ld[0],setLoad=ld[1];
+    useEffect(function(){ sb.from("acessos_log").select("*").order("criado_em",{ascending:false}).limit(300).then(function(r){ setLog(r.data||[]); setLoad(false); }); },[]);
+    var EVT={login:{l:"Entrada",c:"var(--ip-ok)"},saida:{l:"Saída",c:"var(--ip-muted)"},inatividade:{l:"Inatividade",c:"var(--ip-warn)"}};
+    var hoje=new Date().toISOString().slice(0,10);
+    var doDia=log.filter(function(x){return (x.criado_em||"").slice(0,10)===hoje;});
+    var byU={}; doDia.forEach(function(x){ var k=x.email||x.user_id||"?"; if(!byU[k]) byU[k]={nome:x.nome||x.email||"—",min:x.criado_em,max:x.criado_em,n:0}; var g=byU[k]; g.n++; if(x.criado_em<g.min)g.min=x.criado_em; if(x.criado_em>g.max)g.max=x.criado_em; });
+    var hm=function(t){ return t?new Date(t).toLocaleTimeString("pt-BR").slice(0,5):"—"; };
+    var dtf=function(t){ if(!t) return "—"; var d=new Date(t); return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR").slice(0,5); };
+    var resumo=Object.keys(byU).map(function(k){return byU[k];});
+    return div({className:"ip-card",style:{padding:20,marginBottom:16}},
+      h3({style:{fontWeight:300,marginTop:0}},"🕘 Registro de Acessos"),
+      p({className:"ip-sub",style:{marginTop:0}},"Entradas, saídas e inatividade — apoio ao controle de ponto. Visível apenas para administradores."),
+      div({style:{fontSize:11,letterSpacing:".5px",textTransform:"uppercase",color:"var(--ip-faint)",margin:"8px 0 8px"}},"Resumo de hoje"),
+      resumo.length? div({style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10,marginBottom:16}}, resumo.map(function(g,i){ return div({key:i,className:"ip-card",style:{padding:"12px 14px",borderRadius:10}},
+        div({style:{fontWeight:500}},g.nome),
+        div({className:"ip-faint",style:{fontSize:12,marginTop:6,display:"flex",justifyContent:"space-between"}}, span(null,"1ª entrada"), span({style:{color:"var(--ip-ok)"}},hm(g.min))),
+        div({className:"ip-faint",style:{fontSize:12,marginTop:3,display:"flex",justifyContent:"space-between"}}, span(null,"Última atividade"), span({style:{color:"var(--ip-text)"}},hm(g.max))),
+        div({className:"ip-faint",style:{fontSize:12,marginTop:3,display:"flex",justifyContent:"space-between"}}, span(null,"Eventos"), span(null,String(g.n)))); })) : div({className:"ip-faint",style:{fontSize:13,marginBottom:14}},load?"Carregando…":"Nenhum acesso hoje."),
+      div({style:{fontSize:11,letterSpacing:".5px",textTransform:"uppercase",color:"var(--ip-faint)",margin:"8px 0 8px"}},"Histórico recente"),
+      div({className:"ip-list"}, log.slice(0,80).map(function(x){ var e=EVT[x.evento]||{l:x.evento,c:"var(--ip-muted)"};
+        return div({key:x.id,className:"ip-card ip-row",style:{alignItems:"center",borderRadius:10}},
+          span({style:{width:8,height:8,borderRadius:99,background:e.c,flex:"none"}}),
+          div({style:{flex:1,minWidth:0}}, div({style:{fontSize:13.5}},x.nome||x.email||"—"), div({className:"ip-faint",style:{fontSize:11.5}},dtf(x.criado_em))),
+          span({className:"ip-tag",style:{color:e.c}},e.l)); })));
+  }
+  function UsuariosAdminV2(){
+    var l=useState([]),lista=l[0],setLista=l[1];
+    var sel=useState(null),selId=sel[0],setSelId=sel[1];
+    var f=useState({email:"",senha:"",nome:"",nivel:30,ativo:true,foto:""}),form2=f[0],setForm=f[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var m=useState(null),msg=m[0],setMsg=m[1]; var up=useState(false),upo=up[0],setUpo=up[1];
+    function carregar(){ sb.functions.invoke("admin-usuarios",{body:{action:"list"}}).then(function(r){ if(r.data&&r.data.usuarios) setLista(r.data.usuarios); }); }
+    useEffect(function(){ carregar(); },[]);
+    function set(k){ return function(e){ var n={}; n[k]=e.target.value; setForm(Object.assign({},form2,n)); }; }
+    function novo(){ setSelId(null); setForm({email:"",senha:"",nome:"",nivel:30,ativo:true,foto:""}); setMsg(null); }
+    function selecionar(u){ setSelId(u.id); setForm({email:u.email||"",senha:"",nome:u.nome||"",nivel:u.nivel||(u.papel==="admin"?100:30),ativo:u.ativo!==false,foto:u.foto||""}); setMsg(null); }
+    function toggleAtivo(u,v){ sb.functions.invoke("admin-usuarios",{body:{action:"update",id:u.id,ativo:v}}).then(function(){ carregar(); }); }
+    function foto(e){ var file=e.target.files&&e.target.files[0]; if(!file) return; setUpo(true); setMsg(null);
+      var ext=(file.name.split(".").pop()||"png").toLowerCase(); var path=(selId||"novo")+"-"+Date.now()+"."+ext;
+      sb.storage.from("avatares").upload(path,file,{upsert:true,contentType:file.type}).then(function(r){ if(r.error) throw r.error; var url=sb.storage.from("avatares").getPublicUrl(path).data.publicUrl; setForm(Object.assign({},form2,{foto:url})); setUpo(false); }).catch(function(x){ setMsg({t:"err",m:"Falha no upload: "+(x.message||x)}); setUpo(false); }); }
+    function salvar(ev){ ev.preventDefault(); setBusy(true); setMsg(null);
+      var body=selId?{action:"update",id:selId,nome:form2.nome,nivel:Number(form2.nivel),ativo:form2.ativo,foto:form2.foto,senha:form2.senha}:{action:"create",email:form2.email,senha:form2.senha,nome:form2.nome,nivel:Number(form2.nivel),foto:form2.foto};
+      sb.functions.invoke("admin-usuarios",{body:body}).then(function(r){
+        if(r.error||(r.data&&r.data.error)){ setMsg({t:"err",m:(r.data&&r.data.error)||r.error.message}); }
+        else { setMsg({t:"ok",m:selId?"Usuário atualizado.":"Usuário criado."}); novo(); carregar(); }
+        setBusy(false);
+      }).catch(function(x){ setMsg({t:"err",m:String(x)}); setBusy(false); }); }
+    function excluir(){ if(!selId) return; var u=lista.filter(function(x){return x.id===selId;})[0];
+      if(!window.confirm("Excluir o usuário \""+((u&&(u.nome||u.email))||"")+"\"? Esta ação não pode ser desfeita.")) return;
+      setBusy(true); setMsg(null);
+      sb.functions.invoke("admin-usuarios",{body:{action:"delete",id:selId}}).then(function(r){
+        if(r.error||(r.data&&r.data.error)){ setMsg({t:"err",m:(r.data&&r.data.error)||r.error.message}); }
+        else { setMsg({t:"ok",m:"Usuário excluído."}); novo(); carregar(); }
+        setBusy(false);
+      }).catch(function(x){ setMsg({t:"err",m:String(x)}); setBusy(false); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    return div({className:"ip-card",style:{padding:20}},
+      h3({style:{fontWeight:300,marginTop:0}},"👥 Usuários & permissões"),
+      p({className:"ip-sub",style:{marginTop:0}},"Foto, nível de acesso e ativação. Clique num usuário para editar."),
+      div({className:"ip-list",style:{marginBottom:14}}, lista.map(function(u){ var adm=(u.nivel||0)>=100||u.papel==="admin";
+        return div({key:u.id,className:"ip-card ip-row",style:{alignItems:"center",borderColor:selId===u.id?"var(--ip-accent)":undefined,opacity:u.ativo===false?0.55:1}},
+          ipAvatar(u,42),
+          div({style:{flex:1,minWidth:0,cursor:"pointer"},onClick:function(){selecionar(u);}}, div({style:{fontWeight:400}},u.nome||u.email), div({className:"ip-faint",style:{fontSize:12}},u.email)),
+          span({className:"ip-tag",style:{color:adm?"var(--ip-accent)":"var(--ip-muted)"}},adm?"Administrador":("N"+(u.nivel||30))),
+          div({style:{display:"flex",alignItems:"center",gap:6,marginLeft:4}}, h(Switch,{checked:u.ativo!==false,onChange:function(e){toggleAtivo(u,e.target.checked);}}))); })),
+      form({onSubmit:salvar},
+        div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},
+          h3({style:{fontWeight:300,fontSize:14,margin:0}}, selId?"Editar usuário":"Criar novo usuário"),
+          selId?button({type:"button",className:"ip-btn ghost",style:{padding:"6px 12px",fontSize:12.5},onClick:novo},"+ Novo"):null),
+        div({style:{display:"flex",alignItems:"center",gap:14,margin:"12px 0"}},
+          ipAvatar(form2,64),
+          div(null, label({className:"ip-btn ghost",style:{cursor:"pointer",display:"inline-flex",fontSize:13}}, upo?"Enviando…":"📷 Trocar foto", input({type:"file",accept:"image/*",onChange:foto,style:{display:"none"}})),
+            form2.foto?button({type:"button",className:"ip-btn ghost",style:{marginLeft:8,fontSize:12.5,padding:"8px 10px"},onClick:function(){setForm(Object.assign({},form2,{foto:""}));}},"Remover"):null)),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          campo("Nome", input({className:"ip-input",value:form2.nome,onChange:set("nome"),placeholder:"Nome"})),
+          campo("E-mail", input({className:"ip-input",type:"email",required:!selId,value:form2.email,onChange:set("email"),placeholder:"email@dominio.com",disabled:!!selId}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo(selId?"Nova senha (opcional)":"Senha (mín. 6)", h(PasswordInput,{className:"ip-input",required:!selId,value:form2.senha,onChange:set("senha"),placeholder:selId?"deixe vazio para manter":"senha inicial"})),
+          campo("Nível de acesso", select({className:"ip-input",value:String(form2.nivel),onChange:set("nivel")}, NIVEIS.map(function(o){return option({key:o[0],value:String(o[0])},o[1]);})))),
+        div({style:{display:"flex",alignItems:"center",gap:10,marginTop:14}}, h(Switch,{checked:!!form2.ativo,onChange:function(e){setForm(Object.assign({},form2,{ativo:e.target.checked}));}}), span({className:"ip-muted",style:{fontSize:13}},form2.ativo?"Ativo (pode acessar)":"Desativado (login bloqueado)")),
+        div({style:{fontSize:11.5,color:"var(--ip-faint)",marginTop:8,lineHeight:1.5}},"N100 Administrador: acesso total. N30 Personalizado: acesso limitado de usuário."),
         msg && div({className:"ip-msg "+msg.t},msg.m),
         div({style:{marginTop:14,display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}},
           selId?button({type:"button",className:"ip-btn ghost",style:{color:"var(--ip-danger)",borderColor:"rgba(217,101,91,.4)"},onClick:excluir,disabled:busy},"Excluir"):span(null),
@@ -2342,11 +2435,11 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     var canInstall=useCanInstall();
     useEffect(function(){
       sb.auth.getSession().then(function(r){ setSessao(r.data.session); });
-      var sub=sb.auth.onAuthStateChange(function(_e,sess){ setSessao(sess); });
+      var sub=sb.auth.onAuthStateChange(function(_e,sess){ setSessao(sess); try{ if(_e==="SIGNED_IN"&&sess&&!sessionStorage.getItem("ip_logged")){ sessionStorage.setItem("ip_logged","1"); logAcesso("login"); } if(_e==="SIGNED_OUT"){ sessionStorage.removeItem("ip_logged"); } }catch(e){} });
       return function(){ sub.data.subscription.unsubscribe(); };
     },[]);
     useEffect(function(){ if(!sessao) return; var t,TO=20*60*1000;
-      function reset(){ clearTimeout(t); t=setTimeout(function(){ try{sb.auth.signOut();}catch(_e){} }, TO); }
+      function reset(){ clearTimeout(t); t=setTimeout(function(){ try{logAcesso("inatividade");sb.auth.signOut();}catch(_e){} }, TO); }
       var evs=["mousemove","keydown","mousedown","scroll","touchstart"];
       evs.forEach(function(ev){ window.addEventListener(ev,reset,{passive:true}); }); reset();
       return function(){ clearTimeout(t); evs.forEach(function(ev){ window.removeEventListener(ev,reset); }); };
@@ -2368,7 +2461,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           sb.from("oportunidades").select("*").order("criado_em",{ascending:false}),
           sb.from("acessos").select("*"),
           sb.from("versoes").select("*")
-        ]).then(function(o){ setPerfil(o[0].data); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); setAcessos(o[12].data||[]); setVersoes(o[13].data||[]); });
+        ]).then(function(o){ var _pf=o[0].data; if(_pf&&_pf.ativo===false){ try{alert("Seu acesso foi desativado. Contate o administrador.");}catch(e){} sb.auth.signOut(); return; } setPerfil(_pf); setRegistros(o[1].data||[]); setSistemas(o[2].data||[]); setClientes(o[3].data||[]); setLancamentos(o[4].data||[]); setAnexos(o[5].data||[]); setBriefing((o[6].data&&o[6].data[0])||null); setNotas(o[7].data||[]); setIsoDocs(o[8].data||[]); setIsoRegs(o[9].data||[]); setIsoAtivos(o[10].data||[]); setOportunidades(o[11].data||[]); setAcessos(o[12].data||[]); setVersoes(o[13].data||[]); });
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
@@ -2396,7 +2489,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({className:"ip-sidefoot"},
             h(ThemeToggle),
             div({style:{padding:"4px 8px"}}, div({style:{fontSize:13}},perfil?perfil.nome:"—"), div({className:"ip-faint",style:{fontSize:11}},perfil?(perfil.role_label||perfil.papel):"")),
-            button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){sb.auth.signOut();}},"Sair"),
+            button({className:"ip-btn ghost",style:{width:"100%",marginTop:8},onClick:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }},"Sair"),
             div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))),
         h("main",{className:"ip-main"},
           button({className:"ip-btn ghost ip-mtoggle",style:{marginBottom:14},onClick:function(){setMenu(!menu);}},"☰ Menu"),
