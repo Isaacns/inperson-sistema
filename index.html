@@ -1880,6 +1880,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"acessos",ic:"🔐",nome:"Acessos",admin:true},
     {id:"versoes",ic:"🕑",nome:"Versões"},
     {id:"ecossistema",ic:"🌐",nome:"Ecossistema"},
+    {id:"bemestar",ic:"🌿",nome:"Bem-estar"},
     {id:"iso",ic:"🛡️",nome:"Qualidade ISO",admin:true,url:"https://iso.inpersonaltec.com.br/"},
     {id:"config",ic:"⚙️",nome:"Configurações"}
   ];
@@ -1989,6 +1990,65 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({style:{display:"flex",gap:10}},
             button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
             button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar"))))));
+  }
+
+  /* ===================== SAÚDE & BEM-ESTAR (padrão Inovar) ===================== */
+  var BEM_PKEY="ip_bemestar_prefs_v1";
+  var BEM_TIPOS={
+    agua:{nome:"Hidratação",emoji:"💧",cor:"#5B9BC4",intervalo:60,msgs:["Hora do gole! Dê uma golada na sua água para manter o foco.","Seu cérebro precisa de combustível. Que tal um copo de água agora?","Hidratação em dia, mente leve! Beba um pouco de água. 💧"]},
+    movimento:{nome:"Movimento & Postura",emoji:"🪑",cor:"#5FBF8F",intervalo:120,msgs:["Hora de esticar as pernas! Levante-se e dê uma curta caminhada.","Vamos alinhar a postura? Gire os ombros para trás e relaxe o pescoço.","Pausa de 1 minuto: entrelace os dedos e empurre as mãos para o teto."]},
+    visual:{nome:"Descanso Visual (20-20-20)",emoji:"👁️",cor:"#9B8CFF",intervalo:40,msgs:["Descanse os olhos! Olhe para algo distante por 20 segundos.","Pisque algumas vezes e mude o foco da tela por um instante."]},
+    mental:{nome:"Bem-estar Mental",emoji:"🧠",cor:"#D9A441",intervalo:90,msgs:["Inspire fundo… segure… e expire devagar. Sinta o alívio.","Sorria! Sorrir libera endorfinas e reduz o estresse. 😊","Pausa mental: pense em três coisas pelas quais você é grato hoje."]}
+  };
+  var BEM_ORD=["agua","movimento","visual","mental"];
+  var BEM_STATE={};
+  function bemDef(){var t={};BEM_ORD.forEach(function(k){t[k]={on:true,intervalo:BEM_TIPOS[k].intervalo};});return {master:true,tipos:t};}
+  function bemLoad(){try{var s=JSON.parse(localStorage.getItem(BEM_PKEY)||"null");if(s&&s.tipos){BEM_ORD.forEach(function(k){if(!s.tipos[k])s.tipos[k]={on:true,intervalo:BEM_TIPOS[k].intervalo};});return s;}}catch(e){}return bemDef();}
+  function bemSave(p){try{localStorage.setItem(BEM_PKEY,JSON.stringify(p));}catch(e){}}
+  function bemInjectCSS(){ if(document.getElementById("ip-bem-css")) return;
+    var c="#ipBemWrap{position:fixed;left:20px;bottom:20px;z-index:75;display:flex;flex-direction:column;gap:10px;max-width:330px}"+
+    "@media(max-width:560px){#ipBemWrap{left:10px;right:10px;bottom:84px;max-width:none}}"+
+    ".ipBemT{background:rgba(6,13,26,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(116,176,216,.25);border-left:4px solid #74B0D8;border-radius:14px;padding:13px 15px;color:#FAFAFA;box-shadow:0 18px 40px rgba(0,0,0,.5);animation:ipBemIn .3s ease}"+
+    "@keyframes ipBemIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}.ipBemT.out{animation:ipBemOut .3s ease forwards}@keyframes ipBemOut{to{opacity:0;transform:translateX(-20px)}}"+
+    ".ipBemT .h{display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px;margin-bottom:4px}.ipBemT .m{font-size:13px;line-height:1.45;color:#c9d4e0}"+
+    ".ipBemT .b{display:flex;gap:8px;margin-top:10px}.ipBemT .b button{flex:1;font-size:12px;border-radius:8px;padding:7px 9px;cursor:pointer;border:1px solid rgba(116,176,216,.3);background:rgba(255,255,255,.05);color:#FAFAFA}.ipBemT .b button.ok{background:#74B0D8;border-color:#74B0D8;color:#04101f;font-weight:500}";
+    var s=document.createElement("style");s.id="ip-bem-css";s.textContent=c;document.head.appendChild(s);
+  }
+  function bemWrap(){var w=document.getElementById("ipBemWrap");if(!w){w=document.createElement("div");w.id="ipBemWrap";document.body.appendChild(w);}return w;}
+  function bemToast(tipo){ bemInjectCSS(); var t=BEM_TIPOS[tipo]; if(!t) return; var msg=t.msgs[Math.floor(Math.random()*t.msgs.length)];
+    var el=document.createElement("div"); el.className="ipBemT"; el.style.borderLeftColor=t.cor;
+    el.innerHTML='<div class="h"><span>'+t.emoji+'</span> '+t.nome+'</div><div class="m">'+msg+'</div><div class="b"><button class="sn">⏰ Adiar 5 min</button><button class="ok">Feito 👍</button></div>';
+    bemWrap().appendChild(el);
+    var rem=function(){el.classList.add("out");setTimeout(function(){if(el.parentNode)el.remove();},320);};
+    el.querySelector(".ok").onclick=rem;
+    el.querySelector(".sn").onclick=function(){BEM_STATE[tipo]=Date.now()+5*60000;rem();};
+    setTimeout(function(){if(el.parentNode)rem();},22000);
+  }
+  function bemReprograma(){ var p=bemLoad(),now=Date.now(); BEM_ORD.forEach(function(k){ if(p.master&&p.tipos[k]&&p.tipos[k].on){ if(!BEM_STATE[k]) BEM_STATE[k]=now+(p.tipos[k].intervalo||BEM_TIPOS[k].intervalo)*60000; } else { BEM_STATE[k]=null; } }); }
+  function bemTick(){ var p=bemLoad(); if(!p.master) return; var now=Date.now(); BEM_ORD.forEach(function(k){ if(!(p.tipos[k]&&p.tipos[k].on)){BEM_STATE[k]=null;return;} if(!BEM_STATE[k]){BEM_STATE[k]=now+(p.tipos[k].intervalo||BEM_TIPOS[k].intervalo)*60000;return;} if(now>=BEM_STATE[k]){bemToast(k);BEM_STATE[k]=now+(p.tipos[k].intervalo||BEM_TIPOS[k].intervalo)*60000;} }); }
+  function bemBoot(){ if(window._ipBemTimer) return; bemReprograma(); window._ipBemTimer=setInterval(bemTick,60000); }
+  function Bemestar(props){
+    var f=useState(bemLoad()),prefs=f[0],setPrefs=f[1];
+    var INTS=[15,20,30,40,45,60,90,120,180];
+    function apply(np){ bemSave(np); setPrefs(Object.assign({},np)); bemReprograma(); }
+    function master(v){ var p=bemLoad(); p.master=v; if(!v) BEM_STATE={}; apply(p); }
+    function toggle(k,v){ var p=bemLoad(); p.tipos[k].on=v; BEM_STATE[k]=null; apply(p); }
+    function setInt(k,m){ var p=bemLoad(); p.tipos[k].intervalo=Number(m); BEM_STATE[k]=null; apply(p); }
+    function fmtInt(m){ return m<60?("a cada "+m+" min"):("a cada "+(m/60)+"h"+(m%60?(" "+(m%60)+"min"):"")); }
+    return div({className:"ip-view"},
+      topo("SAÚDE & BEM-ESTAR","Bem-estar & Pausas","Lembretes amigáveis pra você cuidar de si durante o trabalho — discretos no canto, sem interromper.",
+        label({style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--ip-muted)"}}, input({type:"checkbox",checked:!!prefs.master,onChange:function(e){master(e.target.checked);}}), prefs.master?"Ativado":"Desativado")),
+      div({className:"ip-card",style:{padding:18}},
+        strong({style:{fontWeight:400,fontSize:14}},"Tipos de lembrete & frequência"),
+        BEM_ORD.map(function(k){ var t=BEM_TIPOS[k]; var pk=prefs.tipos[k]||{on:true,intervalo:t.intervalo};
+          return div({key:k,style:{display:"flex",alignItems:"center",gap:12,padding:"12px 2px",borderBottom:"1px solid var(--glass-brd)"}},
+            span({style:{width:40,height:40,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:t.cor+"22",flex:"none"}},t.emoji),
+            div({style:{flex:1,minWidth:0}}, div({style:{fontWeight:400}},t.nome), div({className:"ip-faint",style:{fontSize:12,marginTop:2}},t.msgs[0])),
+            select({className:"ip-input",value:String(pk.intervalo),onChange:function(e){setInt(k,e.target.value);},style:{maxWidth:150}}, INTS.map(function(m){return option({key:m,value:String(m)},fmtInt(m));})),
+            label({style:{display:"flex",alignItems:"center"}}, input({type:"checkbox",checked:!!pk.on,onChange:function(e){toggle(k,e.target.checked);}}))); }),
+        div({style:{marginTop:14,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}},
+          button({className:"ip-btn ghost",onClick:function(){ var ks=BEM_ORD.filter(function(k){return (prefs.tipos[k]||{}).on;}); bemToast(ks[Math.floor(Math.random()*ks.length)]||"agua"); }},"🔔 Testar um lembrete agora"),
+          span({className:"ip-faint",style:{fontSize:12}},"Suas preferências ficam salvas neste aparelho."))));
   }
 
   /* ===================== ECOSSISTEMA (ORGANISMO VIVO) ===================== */
@@ -2225,12 +2285,13 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       });
     },[]);
     useEffect(function(){ if(sessao) carregar(); },[sessao,carregar]);
+    useEffect(function(){ if(sessao) bemBoot(); },[sessao]);
 
     if(sessao===undefined) return div({className:"ip-auth"}, h(BgFx), div({className:"ip-rel ip-muted"},"Carregando…"));
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,iso:Iso,config:Configuracoes};
+    var VIEWS={dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
