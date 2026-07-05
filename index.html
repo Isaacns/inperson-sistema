@@ -2682,7 +2682,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
               ipAvatar(perfil,38),
               button({className:"ip-iconbtn",title:"Alterar senha",onClick:function(){setView("config");}},"🔑"),
               button({className:"ip-iconbtn",title:"Bloquear",onClick:function(){setLocked(true);}},"🔒"),
-              button({className:"ip-iconbtn",title:"Sair",onClick:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }},"⎋"))),
+              button({className:"ip-iconbtn",title:"Sair",onClick:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }},"🚪"))),
           body)),
       upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}),
       locked && h(LockScreen,{perfil:perfil,onUnlock:function(){setLocked(false);}}),
