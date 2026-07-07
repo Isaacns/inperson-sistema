@@ -1496,6 +1496,53 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         log.length?log.slice(0,120).map(function(x,i){ var e=EVT[x.evento]||{l:x.evento,c:"var(--ip-muted)"}; return tr([{t:dtf(x.criado_em),f:1.4},{t:x.nome||"—",f:1.6},{t:x.email||"—",f:2.4,color:"var(--ip-muted)"},{t:h("span",{className:"ip-tag",style:{color:e.c}},e.l),f:1.1,a:"right"}],i); }):div({className:"ip-faint",style:{padding:"14px 16px",fontSize:13}},load?"Carregando…":"Sem registros.")));
   }
 
+  /* ===================== IA · CONSUMO (governor de tokens) ===================== */
+  function IAConsumo(){
+    var l=useState([]),rows=l[0],setRows=l[1]; var ld=useState(true),load=ld[0],setLoad=ld[1];
+    var o=useState(null),orc=o[0],setOrc=o[1]; var oi=useState(""),orcIn=oi[0],setOrcIn=oi[1]; var sv=useState(false),svd=sv[0],setSvd=sv[1];
+    useEffect(function(){
+      var ini=new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
+      sb.from("ia_uso").select("*").gte("criado_em",ini.toISOString()).order("criado_em",{ascending:false}).limit(3000).then(function(r){ setRows(r.data||[]); setLoad(false); });
+      sb.from("config").select("valor").eq("chave","ia_orcamento").maybeSingle().then(function(r){ if(r.data&&r.data.valor){ setOrc(r.data.valor); setOrcIn(String(r.data.valor.usd||"")); } });
+    },[]);
+    var USD=5.3;
+    var chamadas=rows.length;
+    var tin=rows.reduce(function(a,r){return a+Number(r.tokens_in||0);},0);
+    var tout=rows.reduce(function(a,r){return a+Number(r.tokens_out||0);},0);
+    var custo=rows.reduce(function(a,r){return a+Number(r.custo_usd||0);},0);
+    var byM={}; rows.forEach(function(r){ var k=r.modelo||"?"; if(!byM[k]) byM[k]={n:0,ti:0,to:0,c:0}; var g=byM[k]; g.n++; g.ti+=Number(r.tokens_in||0); g.to+=Number(r.tokens_out||0); g.c+=Number(r.custo_usd||0); });
+    var modelos=Object.keys(byM).map(function(k){return Object.assign({modelo:k},byM[k]);}).sort(function(a,b){return b.c-a.c;});
+    var nomeM=function(m){ if(/haiku/.test(m)) return "Haiku · econômico"; if(/sonnet/.test(m)) return "Sonnet · equilibrado"; if(/opus/.test(m)) return "Opus · máximo"; return m; };
+    var orcUsd=orc&&orc.usd?Number(orc.usd):0;
+    var pct=orcUsd?Math.min(100,Math.round(custo/orcUsd*100)):0;
+    function salvarOrc(){ var v=Number(orcIn)||0; setSvd(true); sb.from("config").upsert({chave:"ia_orcamento",valor:{usd:v}},{onConflict:"chave"}).then(function(){ setOrc({usd:v}); setSvd(false); }); }
+    var fmtUsd=function(v){ return "US$ "+(Number(v)||0).toFixed(2); };
+    var kpi=function(v,ll,s,c){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:c?{color:c,WebkitTextFillColor:c}:null},v), div({className:"l"},ll), s?div({className:"ip-faint",style:{fontSize:11,marginTop:3}},s):null); };
+    var th=function(cols){ return div({style:{display:"flex",padding:"9px 14px",borderBottom:"1px solid var(--glass-brd)",fontSize:10.5,letterSpacing:".5px",color:"var(--ip-faint)",textTransform:"uppercase"}}, cols.map(function(c,i){return div({key:i,style:{flex:c.f,textAlign:c.a||"left"}},c.t);})); };
+    var tr=function(cells,i){ return div({key:i,style:{display:"flex",padding:"11px 14px",borderTop:"1px solid rgba(150,190,225,.06)",fontSize:13,alignItems:"center"}}, cells.map(function(c,j){return div({key:j,style:{flex:c.f,textAlign:c.a||"left",color:c.color||"var(--ip-text)"}},c.t);})); };
+    return div({className:"ip-view"},
+      topo("GOVERNANÇA DE IA","IA · Consumo","Tokens, custo estimado e orçamento do mês. O sistema já escolhe o modelo certo por tarefa (Haiku no simples, Sonnet no complexo) e usa cache de prompt para economizar sem perder qualidade."),
+      div({className:"ip-kpis ip-stagger"},
+        kpi(String(chamadas),"Chamadas (mês)"),
+        kpi((tin+tout).toLocaleString("pt-BR"),"Tokens (mês)"),
+        kpi(fmtUsd(custo),"Custo estimado","≈ R$ "+(custo*USD).toFixed(2)),
+        kpi(modelos.length?nomeM(modelos[0].modelo).split(" ")[0]:"—","Modelo + usado")),
+      div({className:"ip-card",style:{padding:18,marginTop:14}},
+        strong({style:{fontWeight:500}},"Orçamento mensal de IA"),
+        div({style:{display:"flex",gap:10,alignItems:"center",marginTop:10,flexWrap:"wrap"}},
+          span({className:"ip-faint",style:{fontSize:13}},"Limite (US$):"),
+          input({className:"ip-input",value:orcIn,onChange:function(e){setOrcIn(e.target.value);},placeholder:"ex.: 20",style:{maxWidth:120}}),
+          button({className:"ip-btn ghost",onClick:salvarOrc,disabled:svd},svd?"Salvando…":"Salvar")),
+        orcUsd?div({style:{marginTop:12}},
+          div({style:{height:10,borderRadius:99,background:"rgba(150,190,225,.10)",overflow:"hidden"}}, div({style:{height:"100%",width:pct+"%",background:pct>=80?"var(--ip-danger)":pct>=60?"var(--ip-warn)":"var(--ip-ok)",transition:".3s"}})),
+          div({className:"ip-faint",style:{fontSize:12,marginTop:6}}, fmtUsd(custo)+" de "+fmtUsd(orcUsd)+" ("+pct+"%)"+(pct>=80?" — atenção, perto do limite":""))):div({className:"ip-faint",style:{fontSize:12,marginTop:8}},"Defina um limite para acompanhar o consumo do mês.")),
+      div({className:"ip-card",style:{padding:0,marginTop:14,overflow:"hidden"}},
+        div({style:{padding:"14px 16px 6px"}}, strong({style:{fontWeight:500}},"Consumo por modelo")),
+        th([{t:"Modelo",f:2.2},{t:"Chamadas",f:1,a:"right"},{t:"Tokens",f:1.4,a:"right"},{t:"Custo est.",f:1.2,a:"right"}]),
+        modelos.length?modelos.map(function(m,i){ return tr([{t:nomeM(m.modelo),f:2.2},{t:String(m.n),f:1,a:"right"},{t:(m.ti+m.to).toLocaleString("pt-BR"),f:1.4,a:"right"},{t:fmtUsd(m.c),f:1.2,a:"right",color:"var(--ip-ok)"}],i); }):div({className:"ip-faint",style:{padding:"14px 16px",fontSize:13}},load?"Carregando…":"Sem uso de IA neste mês ainda. Use o Assistente para começar a medir.")),
+      div({className:"ip-faint",style:{fontSize:11.5,marginTop:12,lineHeight:1.5}},"Tokens são exatos (vêm da API). Custos são estimativas com tarifas configuráveis (US$/1M — Haiku 1/5 · Sonnet 3/15 · Opus 15/75) e câmbio aproximado (R$ 5,30). Economia ativa: roteamento de modelo por tarefa + cache de prompt + endpoint restrito a usuários logados."));
+  }
+
   /* ===================== UPGRADE ===================== */
   function UpgradeModal(props){
     function lista(items){ return h("ul",null, items.map(function(t,i){return h("li",{key:i},t);})); }
@@ -2185,6 +2232,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"usuarios",ic:"👥",nome:"Usuários & Acessos",admin:true,grupo:"Administração"},
     {id:"logacessos",ic:"🛡️",nome:"Registro de Acessos",admin:true,grupo:"Administração"},
     {id:"acessos",ic:"🔐",nome:"Cofre de Senhas",admin:true,grupo:"Administração"},
+    {id:"iaconsumo",ic:"🧠",nome:"IA · Consumo",admin:true,grupo:"Administração"},
     {id:"versoes",ic:"🕑",nome:"Versões",grupo:"Administração"},
     {id:"config",ic:"⚙️",nome:"Configurações",grupo:"Administração"}
   ];
@@ -2662,7 +2710,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,usuarios:UsuariosView,logacessos:RegistroAcessosView,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
+    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,usuarios:UsuariosView,logacessos:RegistroAcessosView,iaconsumo:IAConsumo,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
