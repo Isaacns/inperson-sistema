@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex"/>
+<title>Atendimento IA</title>
+<style>
+  :root{--bg:#04101f;--bg2:#081627;--brd:#173049;--accent:#74B0D8;--txt:#EAF2FA;--muted:#8FA3BE}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:"Segoe UI",Inter,system-ui,-apple-system,sans-serif}
+  .wrap{max-width:520px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;background:linear-gradient(180deg,#05121f,#04101f)}
+  .top{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--brd);background:rgba(255,255,255,.02)}
+  .av{width:42px;height:42px;border-radius:50%;background:rgba(116,176,216,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+  .top .nm{font-weight:600;font-size:15px}
+  .top .ds{font-size:12px;color:var(--muted);margin-top:2px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#5FBF8F;margin-left:auto;flex:none;box-shadow:0 0 0 4px rgba(95,191,143,.15)}
+  .chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+  .chat::-webkit-scrollbar{width:0}
+  .b{max-width:82%;padding:11px 14px;border-radius:15px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+  .me{align-self:flex-end;background:linear-gradient(135deg,#74B0D8,#5B9BC4);color:#04121f;border-bottom-right-radius:5px}
+  .ia{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--brd);border-bottom-left-radius:5px}
+  .foot{padding:12px 14px;border-top:1px solid var(--brd);display:flex;gap:9px;background:rgba(255,255,255,.02)}
+  .foot input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--brd);border-radius:12px;color:var(--txt);padding:12px 14px;font-size:14px;outline:none}
+  .foot input:focus{border-color:var(--accent)}
+  .foot button{background:linear-gradient(135deg,#74B0D8,#5B9BC4);border:0;border-radius:12px;color:#04121f;font-weight:600;padding:0 16px;cursor:pointer;font-size:15px}
+  .foot button:disabled{opacity:.5;cursor:default}
+  .cred{text-align:center;font-size:10.5px;color:var(--muted);padding:7px;letter-spacing:.3px}
+  .cred b{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="av" id="av">🤖</div>
+    <div style="min-width:0">
+      <div class="nm" id="nm">Atendimento</div>
+      <div class="ds" id="ds">Assistente virtual</div>
+    </div>
+    <div class="dot" id="dot" title="online"></div>
+  </div>
+  <div class="chat" id="chat"></div>
+  <form class="foot" id="form" autocomplete="off">
+    <input id="inp" placeholder="Escreva sua mensagem…" maxlength="1500" autocomplete="off"/>
+    <button id="send" type="submit">➤</button>
+  </form>
+  <div class="cred">Atendimento por IA · powered by <b>INPERSON</b></div>
+</div>
+<script>
+(function(){
+  var FN="https://emyjzjadmxgbtmxnzazu.supabase.co/functions/v1/agente-chat";
+  var ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVteWp6amFkbXhnYnRteG56YXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNTc4MzAsImV4cCI6MjA5NzczMzgzMH0.czJkQRNmGeWCt2fGiIxxssG0b9a7HEx2sDVLycaHVkI";
+  var id=new URLSearchParams(location.search).get("agente")||"";
+  var chat=document.getElementById("chat"), inp=document.getElementById("inp"), form=document.getElementById("form"), send=document.getElementById("send");
+  var hist=[], busy=false;
+  function api(body){ return fetch(FN,{method:"POST",headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+ANON},body:JSON.stringify(Object.assign({agente_id:id},body))}).then(function(r){return r.json();}); }
+  function bubble(txt,who){ var d=document.createElement("div"); d.className="b "+(who==="me"?"me":"ia"); d.textContent=txt; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d; }
+  if(!id){ bubble("Link inválido: agente não informado.","ia"); inp.disabled=true; send.disabled=true; return; }
+  api({info:true}).then(function(r){
+    if(r&&r.nome){ document.getElementById("nm").textContent=r.nome; document.getElementById("ds").textContent=r.descricao||"Assistente virtual"; document.getElementById("av").textContent=r.emoji||"🤖"; document.title=r.nome; bubble("Olá! Sou o "+r.nome+". Como posso ajudar?","ia"); }
+    else { bubble(r&&r.error?r.error:"Atendimento indisponível no momento.","ia"); inp.disabled=true; send.disabled=true; document.getElementById("dot").style.background="#D9655B"; }
+  }).catch(function(){ bubble("Não foi possível iniciar o atendimento.","ia"); });
+  form.addEventListener("submit",function(e){ e.preventDefault(); var t=inp.value.trim(); if(!t||busy) return;
+    bubble(t,"me"); hist.push({role:"user",content:t}); inp.value=""; busy=true; send.disabled=true;
+    var wait=bubble("…","ia");
+    api({pergunta:t,historico:hist}).then(function(r){ chat.removeChild(wait); var resp=(r&&r.resposta)?r.resposta:(r&&r.error?r.error:"Desculpe, não consegui responder."); bubble(resp,"ia"); hist.push({role:"assistant",content:resp}); if(hist.length>16) hist=hist.slice(-16); busy=false; send.disabled=false; inp.focus(); })
+      .catch(function(){ chat.removeChild(wait); bubble("Falha na conexão. Tente novamente.","ia"); busy=false; send.disabled=false; });
+  });
+})();
+</script>
+</body>
+</html>
