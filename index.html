@@ -1535,17 +1535,18 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({style:{display:"flex",gap:6,alignItems:"center",marginTop:10,flexWrap:"wrap"}},
             h(Switch,{checked:!!a.ativo,onChange:function(){toggle(a);}}),
             button({className:"ip-btn ghost",style:{padding:"6px 11px",fontSize:12.5},onClick:function(){usar(a);}},"💬 Usar"),
+            a.publico?button({className:"ip-btn ghost",style:{padding:"6px 10px",fontSize:12.5},onClick:function(){ var u="https://sistema.inpersonaltec.com.br/assets/chat.html?agente="+a.id; try{navigator.clipboard&&navigator.clipboard.writeText(u);}catch(e){} window.prompt("Link público do agente (copie / embuta em <iframe>):",u); }},"🔗 Link"):null,
             button({className:"ip-btn ghost",style:{padding:"6px 10px",fontSize:12.5},onClick:function(){setEdit(a);}},"Editar"),
             button({className:"ip-btn ghost",style:{padding:"6px 9px",fontSize:12.5,color:"var(--ip-danger)"},title:"Excluir",onClick:function(){excluir(a);}},"🗑"))); })),
       edit!==null && h(AgenteEditor,{agente:edit,clientes:clientes,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);carregar();}}));
   }
   function AgenteEditor(props){
     var a0=props.agente||{}; var editing=!!a0.id; var clientes=props.clientes||[];
-    var s=useState({nome:a0.nome||"",emoji:a0.emoji||"🤖",descricao:a0.descricao||"",modelo:a0.modelo||"claude-sonnet-4-6",system_prompt:a0.system_prompt||"",ativo:a0.ativo!==false,cliente_id:a0.cliente_id||"",cliente_nome:a0.cliente_nome||"",mensalidade:a0.mensalidade||"",cota_usd:a0.cota_usd||""}),f=s[0],setF=s[1];
+    var s=useState({nome:a0.nome||"",emoji:a0.emoji||"🤖",descricao:a0.descricao||"",modelo:a0.modelo||"claude-sonnet-4-6",system_prompt:a0.system_prompt||"",ativo:a0.ativo!==false,cliente_id:a0.cliente_id||"",cliente_nome:a0.cliente_nome||"",mensalidade:a0.mensalidade||"",cota_usd:a0.cota_usd||"",publico:a0.publico===true}),f=s[0],setF=s[1];
     var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
     function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
     function salvar(ev){ ev.preventDefault(); if(!f.system_prompt.trim()){ setErr("Descreva as instruções (personalidade/função) do agente."); return; } setBusy(true); setErr(null);
-      var payload={nome:f.nome,emoji:f.emoji,descricao:f.descricao,modelo:f.modelo,system_prompt:f.system_prompt,ativo:f.ativo,cliente_id:f.cliente_id||null,cliente_nome:f.cliente_nome||null,mensalidade:Number(f.mensalidade)||0,cota_usd:Number(f.cota_usd)||0};
+      var payload={nome:f.nome,emoji:f.emoji,descricao:f.descricao,modelo:f.modelo,system_prompt:f.system_prompt,ativo:f.ativo,cliente_id:f.cliente_id||null,cliente_nome:f.cliente_nome||null,mensalidade:Number(f.mensalidade)||0,cota_usd:Number(f.cota_usd)||0,publico:!!f.publico};
       var op=editing?sb.from("agentes").update(payload).eq("id",a0.id):sb.auth.getUser().then(function(res){ return sb.from("agentes").insert(Object.assign({},payload,{owner:res.data.user.id})); });
       Promise.resolve(op).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
     var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
@@ -1566,6 +1567,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             input({className:"ip-input",type:"number",value:f.mensalidade,onChange:set("mensalidade"),placeholder:"Mensal. R$"}),
             input({className:"ip-input",type:"number",step:"0.5",value:f.cota_usd,onChange:set("cota_usd"),placeholder:"Cota US$/mês"})),
           div({className:"ip-faint",style:{fontSize:11,marginTop:6}},"Mensalidade = quanto o cliente paga (vira MRR ao faturar). Cota = teto de custo de IA/mês (0 = sem limite; ao atingir, o agente pausa até o próximo mês).")),
+        div({style:{display:"flex",alignItems:"center",gap:10,marginTop:14}}, h(Switch,{checked:!!f.publico,onChange:function(e){setF(Object.assign({},f,{publico:e.target.checked}));}}), span({className:"ip-muted",style:{fontSize:13}},f.publico?"Portal público ativo — gera link compartilhável (só conversa, sem ações)":"Portal público desligado")),
         div({style:{display:"flex",alignItems:"center",gap:10,marginTop:14}}, h(Switch,{checked:!!f.ativo,onChange:function(e){setF(Object.assign({},f,{ativo:e.target.checked}));}}), span({className:"ip-muted",style:{fontSize:13}},f.ativo?"Ativo (aparece no chat)":"Pausado")),
         div({style:{fontSize:11.5,color:"var(--ip-faint)",marginTop:8,lineHeight:1.5}},"O agente já pode propor ações (registro, oportunidade, lançamento, nota, cliente) que você confirma no chat. Todo consumo é medido em IA · Consumo."),
         err && div({className:"ip-msg err"},err),
