@@ -1055,6 +1055,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   function Assistente(props){
     var s=useState([{role:"ia",txt:"Olá, Isaac. Sou o seu Assistente INPERSON — agora agêntico: eu sugiro ações e, com o seu OK, executo (criar registro, oportunidade, lançamento, nota, cliente). O que vamos resolver?"}]),msgs=s[0],setMsgs=s[1];
     var i=useState(""),inp=i[0],setInp=i[1]; var b=useState(false),busy=b[0],setBusy=b[1];
+    var ag=useState([]),agentes=ag[0],setAgentes=ag[1]; var sa=useState(""),agenteSel=sa[0],setAgenteSel=sa[1];
+    useEffect(function(){ sb.from("agentes").select("*").eq("ativo",true).order("nome").then(function(r){ setAgentes(r.data||[]); }); },[]);
     var _h=new Date().toISOString().slice(0,10); var brief=(props.briefing&&props.briefing.data===_h)?props.briefing:null;
     var reload=props.reload;
     function contexto(){
@@ -1089,14 +1091,14 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     function confirmar(mi,ai,a){ setAcaoStatus(mi,ai,"executando"); executarAcao(a).then(function(r){ if(r&&r.error) throw r.error; setAcaoStatus(mi,ai,"feito"); reload&&reload(); }).catch(function(x){ setAcaoStatus(mi,ai,"erro",{erro:(x.message||String(x))}); }); }
     function perguntar(q){ q=(q||"").trim(); if(!q||busy) return;
       var nv=msgs.concat([{role:"eu",txt:q}]); setMsgs(nv); setInp(""); setBusy(true);
-      sb.functions.invoke("assistente",{body:{pergunta:q,contexto:contexto()}}).then(function(r){
+      (agenteSel ? sb.functions.invoke("agente-run",{body:{agente_id:agenteSel,pergunta:q,contexto:contexto()}}) : sb.functions.invoke("assistente",{body:{pergunta:q,contexto:contexto()}})).then(function(r){
         var raw=(r.data&&r.data.resposta)?r.data.resposta:((r.error?("Erro: "+r.error.message):"(sem resposta)"));
         var acoes=[]; var shown=raw; var mm=raw.match(/<ACOES>([\s\S]*?)<\/ACOES>/i);
         if(mm){ shown=raw.replace(mm[0],"").trim(); try{ var parsed=JSON.parse(mm[1].trim()); if(Array.isArray(parsed)) acoes=parsed.map(function(a){return Object.assign({},a,{status:"pendente"});}); }catch(e){} }
         setMsgs(nv.concat([{role:"ia",txt:shown||"(pronto)",acoes:acoes}])); setBusy(false);
       }).catch(function(x){ setMsgs(nv.concat([{role:"ia",txt:"Erro ao falar com a IA: "+(x.message||x)}])); setBusy(false); }); }
     function enviar(ev){ ev.preventDefault(); perguntar(inp); }
-    useEffect(function(){ try{ if(window.__ipAsk){ var _q=window.__ipAsk; window.__ipAsk=null; perguntar(_q); } }catch(e){} },[]);
+    useEffect(function(){ try{ if(window.__ipAgente){ setAgenteSel(window.__ipAgente); window.__ipAgente=null; } if(window.__ipAsk){ var _q=window.__ipAsk; window.__ipAsk=null; perguntar(_q); } }catch(e){} },[]);
     function bolha(m,idx){
       return div({key:idx,style:{display:"flex",flexDirection:"column",gap:8,alignItems:m.role==="eu"?"flex-end":"flex-start"}},
         div({className:"ip-bubble "+(m.role==="eu"?"eu":"ia")}, m.txt),
@@ -1115,6 +1117,12 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     }
     return div({className:"ip-view"},
       topo("IA · COPILOTO AGÊNTICO","Assistente INPERSON","Peça e eu executo — com a sua confirmação. Ex.: crie um registro pra renovar o domínio dia 20."),
+      div({className:"ip-toolbar",style:{marginBottom:12,alignItems:"center"}},
+        span({className:"ip-faint",style:{fontSize:12,flex:"none"}},"Falar com:"),
+        select({className:"ip-input",value:agenteSel,onChange:function(e){setAgenteSel(e.target.value);},style:{maxWidth:280}},
+          option({value:""},"🤖 Assistente geral"),
+          agentes.map(function(a){return option({key:a.id,value:a.id},(a.emoji||"🤖")+" "+a.nome);})),
+        agenteSel?span({className:"ip-faint",style:{fontSize:11.5}},(agentes.filter(function(a){return a.id===agenteSel;})[0]||{}).descricao||""):null),
       brief&&div({className:"ip-card",style:{padding:"16px 18px",marginBottom:16,border:"1px solid rgba(116,176,216,.35)",background:"linear-gradient(135deg,rgba(116,176,216,.12),rgba(255,255,255,.02))"}},
         div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:10}},
           span({className:"ip-aura-chip"}, span({className:"s"},"✦")," BRIEFING DE HOJE"),
@@ -1494,6 +1502,63 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({style:{padding:"14px 16px 6px"}}, strong({style:{fontWeight:500}},"Histórico de acessos")),
         th([{t:"Data/Hora",f:1.4},{t:"Colaborador",f:1.6},{t:"E-mail",f:2.4},{t:"Evento",f:1.1,a:"right"}]),
         log.length?log.slice(0,120).map(function(x,i){ var e=EVT[x.evento]||{l:x.evento,c:"var(--ip-muted)"}; return tr([{t:dtf(x.criado_em),f:1.4},{t:x.nome||"—",f:1.6},{t:x.email||"—",f:2.4,color:"var(--ip-muted)"},{t:h("span",{className:"ip-tag",style:{color:e.c}},e.l),f:1.1,a:"right"}],i); }):div({className:"ip-faint",style:{padding:"14px 16px",fontSize:13}},load?"Carregando…":"Sem registros.")));
+  }
+
+  /* ===================== AGENTES DE IA (builder / fábrica) ===================== */
+  function AgentesView(props){
+    var go=props.go;
+    var l=useState([]),lista=l[0],setLista=l[1]; var ld=useState(true),load=ld[0],setLoad=ld[1];
+    var ed=useState(null),edit=ed[0],setEdit=ed[1];
+    function carregar(){ sb.from("agentes").select("*").order("criado_em",{ascending:true}).then(function(r){ setLista(r.data||[]); setLoad(false); }); }
+    useEffect(function(){ carregar(); },[]);
+    function toggle(a){ sb.from("agentes").update({ativo:!a.ativo}).eq("id",a.id).then(function(){carregar();}); }
+    function excluir(a){ if(!window.confirm("Excluir o agente \""+a.nome+"\"?")) return; sb.from("agentes").delete().eq("id",a.id).then(function(){carregar();}); }
+    function usar(a){ try{ window.__ipAgente=a.id; }catch(e){} go&&go("assistente"); }
+    var nomeM=function(m){ if(/haiku/.test(m||"")) return "Haiku"; if(/sonnet/.test(m||"")) return "Sonnet"; if(/opus/.test(m||"")) return "Opus"; return m; };
+    return div({className:"ip-view"},
+      topo("FÁBRICA DE AGENTES","Agentes de IA","Crie assistentes especializados — cada um com função, modelo e personalidade próprios. Use direto no chat.",
+        button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Novo agente")),
+      div({className:"ip-grid-cards ip-stagger"},
+        lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},load?"Carregando…":"Nenhum agente ainda. Clique em \"+ Novo agente\".")),
+        lista.map(function(a){ return div({key:a.id,className:"ip-card ip-syscard",style:{minHeight:172,opacity:a.ativo?1:0.6}},
+          div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+            div({className:"ico",style:{fontSize:22}},a.emoji||"🤖"),
+            span({className:"ip-tag",style:{color:"var(--ip-accent)"}},nomeM(a.modelo))),
+          div({className:"nome"},a.nome),
+          div({className:"desc"},a.descricao||""),
+          div({style:{display:"flex",gap:6,alignItems:"center",marginTop:10,flexWrap:"wrap"}},
+            h(Switch,{checked:!!a.ativo,onChange:function(){toggle(a);}}),
+            button({className:"ip-btn ghost",style:{padding:"6px 11px",fontSize:12.5},onClick:function(){usar(a);}},"💬 Usar"),
+            button({className:"ip-btn ghost",style:{padding:"6px 10px",fontSize:12.5},onClick:function(){setEdit(a);}},"Editar"),
+            button({className:"ip-btn ghost",style:{padding:"6px 9px",fontSize:12.5,color:"var(--ip-danger)"},title:"Excluir",onClick:function(){excluir(a);}},"🗑"))); })),
+      edit!==null && h(AgenteEditor,{agente:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);carregar();}}));
+  }
+  function AgenteEditor(props){
+    var a0=props.agente||{}; var editing=!!a0.id;
+    var s=useState({nome:a0.nome||"",emoji:a0.emoji||"🤖",descricao:a0.descricao||"",modelo:a0.modelo||"claude-sonnet-4-6",system_prompt:a0.system_prompt||"",ativo:a0.ativo!==false}),f=s[0],setF=s[1];
+    var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
+    function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
+    function salvar(ev){ ev.preventDefault(); if(!f.system_prompt.trim()){ setErr("Descreva as instruções (personalidade/função) do agente."); return; } setBusy(true); setErr(null);
+      var payload={nome:f.nome,emoji:f.emoji,descricao:f.descricao,modelo:f.modelo,system_prompt:f.system_prompt,ativo:f.ativo};
+      var op=editing?sb.from("agentes").update(payload).eq("id",a0.id):sb.auth.getUser().then(function(res){ return sb.from("agentes").insert(Object.assign({},payload,{owner:res.data.user.id})); });
+      Promise.resolve(op).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
+    var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
+    var MODS=[["claude-haiku-4-5-20251001","Haiku · rápido e econômico"],["claude-sonnet-4-6","Sonnet · equilibrado"],["claude-opus-4-8","Opus · máximo raciocínio"]];
+    return div({className:"ip-modal-bg",onClick:props.onClose},
+      form({className:"ip-card ip-modal",onClick:function(e){e.stopPropagation();},onSubmit:salvar},
+        h2({style:{margin:"0 0 12px",fontWeight:300}}, editing?"Editar agente":"Novo agente"),
+        div({style:{display:"grid",gridTemplateColumns:"80px 1fr",gap:12}},
+          campo("Ícone", input({className:"ip-input",value:f.emoji,onChange:set("emoji"),maxLength:2,style:{textAlign:"center",fontSize:18}})),
+          campo("Nome", input({className:"ip-input",required:true,value:f.nome,onChange:set("nome"),placeholder:"Ex.: Analista Financeiro"}))),
+        div({style:{marginTop:12}}, campo("Descrição curta", input({className:"ip-input",value:f.descricao,onChange:set("descricao"),placeholder:"O que este agente faz"}))),
+        div({style:{marginTop:12}}, campo("Modelo", select({className:"ip-input",value:f.modelo,onChange:set("modelo")}, MODS.map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
+        div({style:{marginTop:12}}, campo("Instruções (personalidade e função)", textarea({className:"ip-input",rows:6,value:f.system_prompt,onChange:set("system_prompt"),placeholder:"Você é um... Responda em PT-BR... Faça... Nunca invente...",style:{resize:"vertical"}}))),
+        div({style:{display:"flex",alignItems:"center",gap:10,marginTop:14}}, h(Switch,{checked:!!f.ativo,onChange:function(e){setF(Object.assign({},f,{ativo:e.target.checked}));}}), span({className:"ip-muted",style:{fontSize:13}},f.ativo?"Ativo (aparece no chat)":"Pausado")),
+        div({style:{fontSize:11.5,color:"var(--ip-faint)",marginTop:8,lineHeight:1.5}},"O agente já pode propor ações (registro, oportunidade, lançamento, nota, cliente) que você confirma no chat. Todo consumo é medido em IA · Consumo."),
+        err && div({className:"ip-msg err"},err),
+        div({style:{display:"flex",gap:10,marginTop:18,justifyContent:"flex-end"}},
+          button({type:"button",className:"ip-btn ghost",onClick:props.onClose},"Cancelar"),
+          button({className:"ip-btn",disabled:busy},busy?"Salvando…":(editing?"Salvar":"Criar agente")))));
   }
 
   /* ===================== AUTOMAÇÕES (processos agendados nativos) ===================== */
@@ -2292,6 +2357,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     {id:"logacessos",ic:"🛡️",nome:"Registro de Acessos",admin:true,grupo:"Administração"},
     {id:"acessos",ic:"🔐",nome:"Cofre de Senhas",admin:true,grupo:"Administração"},
     {id:"iaconsumo",ic:"🧠",nome:"IA · Consumo",admin:true,grupo:"Administração"},
+    {id:"agentes",ic:"⚡",nome:"Agentes de IA",admin:true,grupo:"Administração"},
     {id:"automacoes",ic:"🔁",nome:"Automações",admin:true,grupo:"Administração"},
     {id:"versoes",ic:"🕑",nome:"Versões",grupo:"Administração"},
     {id:"config",ic:"⚙️",nome:"Configurações",grupo:"Administração"}
@@ -2770,7 +2836,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
     if(!sessao) return h(Auth);
     var isAdmin = perfil && perfil.papel==="admin";
     var P={registros:registros,sistemas:sistemas,clientes:clientes,lancamentos:lancamentos,anexos:anexos,briefing:briefing,notas:notas,isoDocs:isoDocs,isoRegs:isoRegs,isoAtivos:isoAtivos,oportunidades:oportunidades,acessos:acessos,versoes:versoes,perfil:perfil,isAdmin:isAdmin,go:setView,reload:carregar};
-    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,usuarios:UsuariosView,logacessos:RegistroAcessosView,iaconsumo:IAConsumo,automacoes:Automacoes,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
+    var VIEWS={copiloto:Copiloto,dashboard:Dashboard,assistente:Assistente,agenda:Agenda,notas:Notas,projetos:Projetos,clientes:Clientes,financeiro:Financeiro,docs:Documentos,relatorios:Relatorios,care:Care,prospeccao:Prospeccao,usuarios:UsuariosView,logacessos:RegistroAcessosView,iaconsumo:IAConsumo,agentes:AgentesView,automacoes:Automacoes,acessos:Acessos,versoes:Versoes,ecossistema:Ecossistema,bemestar:Bemestar,iso:Iso,config:Configuracoes};
     var modulosNav=MODULOS.filter(function(m){ return !m.admin || isAdmin; });
     if(!isAdmin && view==="iso") view="dashboard";
     var body=h(VIEWS[view]||Dashboard, P);
