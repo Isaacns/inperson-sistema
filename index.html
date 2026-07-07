@@ -1506,10 +1506,12 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 
   /* ===================== AGENTES DE IA (builder / fábrica) ===================== */
   function AgentesView(props){
-    var go=props.go;
+    var go=props.go; var clientes=props.clientes||[];
     var l=useState([]),lista=l[0],setLista=l[1]; var ld=useState(true),load=ld[0],setLoad=ld[1];
-    var ed=useState(null),edit=ed[0],setEdit=ed[1];
-    function carregar(){ sb.from("agentes").select("*").order("criado_em",{ascending:true}).then(function(r){ setLista(r.data||[]); setLoad(false); }); }
+    var ed=useState(null),edit=ed[0],setEdit=ed[1]; var us=useState({}),uso=us[0],setUso=us[1];
+    function carregar(){ sb.from("agentes").select("*").order("criado_em",{ascending:true}).then(function(r){ setLista(r.data||[]); setLoad(false); });
+      var ms=new Date(); ms.setDate(1); ms.setHours(0,0,0,0);
+      sb.from("ia_uso").select("agente_id,custo_usd").gte("criado_em",ms.toISOString()).then(function(r){ var m={}; (r.data||[]).forEach(function(x){ if(x.agente_id){ m[x.agente_id]=(m[x.agente_id]||0)+Number(x.custo_usd||0); } }); setUso(m); }); }
     useEffect(function(){ carregar(); },[]);
     function toggle(a){ sb.from("agentes").update({ativo:!a.ativo}).eq("id",a.id).then(function(){carregar();}); }
     function excluir(a){ if(!window.confirm("Excluir o agente \""+a.nome+"\"?")) return; sb.from("agentes").delete().eq("id",a.id).then(function(){carregar();}); }
@@ -1526,20 +1528,24 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
             span({className:"ip-tag",style:{color:"var(--ip-accent)"}},nomeM(a.modelo))),
           div({className:"nome"},a.nome),
           div({className:"desc"},a.descricao||""),
+          (a.cliente_nome||Number(a.mensalidade)>0)?div({style:{marginTop:8,fontSize:11.5}},
+            a.cliente_nome?span({className:"ip-tag",style:{color:"var(--ip-accent)"}},"🏢 "+a.cliente_nome):null,
+            Number(a.mensalidade)>0?span({className:"ip-faint",style:{marginLeft:6}},"R$ "+Number(a.mensalidade).toFixed(0)+"/mês"):null,
+            Number(a.cota_usd)>0?div({style:{marginTop:6}}, div({style:{height:6,borderRadius:99,background:"rgba(150,190,225,.12)",overflow:"hidden"}}, div({style:{height:"100%",width:Math.min(100,Math.round((uso[a.id]||0)/Number(a.cota_usd)*100))+"%",background:(uso[a.id]||0)>=Number(a.cota_usd)?"var(--ip-danger)":"var(--ip-ok)"}})), div({className:"ip-faint",style:{fontSize:10.5,marginTop:3}},"IA usada: US$ "+(uso[a.id]||0).toFixed(2)+" / "+Number(a.cota_usd).toFixed(2))):null):null,
           div({style:{display:"flex",gap:6,alignItems:"center",marginTop:10,flexWrap:"wrap"}},
             h(Switch,{checked:!!a.ativo,onChange:function(){toggle(a);}}),
             button({className:"ip-btn ghost",style:{padding:"6px 11px",fontSize:12.5},onClick:function(){usar(a);}},"💬 Usar"),
             button({className:"ip-btn ghost",style:{padding:"6px 10px",fontSize:12.5},onClick:function(){setEdit(a);}},"Editar"),
             button({className:"ip-btn ghost",style:{padding:"6px 9px",fontSize:12.5,color:"var(--ip-danger)"},title:"Excluir",onClick:function(){excluir(a);}},"🗑"))); })),
-      edit!==null && h(AgenteEditor,{agente:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);carregar();}}));
+      edit!==null && h(AgenteEditor,{agente:edit,clientes:clientes,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);carregar();}}));
   }
   function AgenteEditor(props){
-    var a0=props.agente||{}; var editing=!!a0.id;
-    var s=useState({nome:a0.nome||"",emoji:a0.emoji||"🤖",descricao:a0.descricao||"",modelo:a0.modelo||"claude-sonnet-4-6",system_prompt:a0.system_prompt||"",ativo:a0.ativo!==false}),f=s[0],setF=s[1];
+    var a0=props.agente||{}; var editing=!!a0.id; var clientes=props.clientes||[];
+    var s=useState({nome:a0.nome||"",emoji:a0.emoji||"🤖",descricao:a0.descricao||"",modelo:a0.modelo||"claude-sonnet-4-6",system_prompt:a0.system_prompt||"",ativo:a0.ativo!==false,cliente_id:a0.cliente_id||"",cliente_nome:a0.cliente_nome||"",mensalidade:a0.mensalidade||"",cota_usd:a0.cota_usd||""}),f=s[0],setF=s[1];
     var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
     function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
     function salvar(ev){ ev.preventDefault(); if(!f.system_prompt.trim()){ setErr("Descreva as instruções (personalidade/função) do agente."); return; } setBusy(true); setErr(null);
-      var payload={nome:f.nome,emoji:f.emoji,descricao:f.descricao,modelo:f.modelo,system_prompt:f.system_prompt,ativo:f.ativo};
+      var payload={nome:f.nome,emoji:f.emoji,descricao:f.descricao,modelo:f.modelo,system_prompt:f.system_prompt,ativo:f.ativo,cliente_id:f.cliente_id||null,cliente_nome:f.cliente_nome||null,mensalidade:Number(f.mensalidade)||0,cota_usd:Number(f.cota_usd)||0};
       var op=editing?sb.from("agentes").update(payload).eq("id",a0.id):sb.auth.getUser().then(function(res){ return sb.from("agentes").insert(Object.assign({},payload,{owner:res.data.user.id})); });
       Promise.resolve(op).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
     var campo=function(lbl,node){ return div(null,label({className:"ip-label"},lbl),node); };
@@ -1553,6 +1559,13 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({style:{marginTop:12}}, campo("Descrição curta", input({className:"ip-input",value:f.descricao,onChange:set("descricao"),placeholder:"O que este agente faz"}))),
         div({style:{marginTop:12}}, campo("Modelo", select({className:"ip-input",value:f.modelo,onChange:set("modelo")}, MODS.map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
         div({style:{marginTop:12}}, campo("Instruções (personalidade e função)", textarea({className:"ip-input",rows:6,value:f.system_prompt,onChange:set("system_prompt"),placeholder:"Você é um... Responda em PT-BR... Faça... Nunca invente...",style:{resize:"vertical"}}))),
+        div({style:{marginTop:14,paddingTop:12,borderTop:"1px solid var(--glass-brd)"}},
+          div({className:"ip-label"},"Produto para cliente (opcional — vazio = agente interno)"),
+          div({style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}},
+            select({className:"ip-input",value:f.cliente_id,onChange:function(e){ var id=e.target.value; var c=clientes.filter(function(x){return x.id===id;})[0]; setF(Object.assign({},f,{cliente_id:id,cliente_nome:c?c.nome:""})); }}, [option({key:"_",value:""},"— Interno —")].concat(clientes.map(function(c){return option({key:c.id,value:c.id},c.nome);}))),
+            input({className:"ip-input",type:"number",value:f.mensalidade,onChange:set("mensalidade"),placeholder:"Mensal. R$"}),
+            input({className:"ip-input",type:"number",step:"0.5",value:f.cota_usd,onChange:set("cota_usd"),placeholder:"Cota US$/mês"})),
+          div({className:"ip-faint",style:{fontSize:11,marginTop:6}},"Mensalidade = quanto o cliente paga (vira MRR ao faturar). Cota = teto de custo de IA/mês (0 = sem limite; ao atingir, o agente pausa até o próximo mês).")),
         div({style:{display:"flex",alignItems:"center",gap:10,marginTop:14}}, h(Switch,{checked:!!f.ativo,onChange:function(e){setF(Object.assign({},f,{ativo:e.target.checked}));}}), span({className:"ip-muted",style:{fontSize:13}},f.ativo?"Ativo (aparece no chat)":"Pausado")),
         div({style:{fontSize:11.5,color:"var(--ip-faint)",marginTop:8,lineHeight:1.5}},"O agente já pode propor ações (registro, oportunidade, lançamento, nota, cliente) que você confirma no chat. Todo consumo é medido em IA · Consumo."),
         err && div({className:"ip-msg err"},err),
@@ -1624,11 +1637,14 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
   function IAConsumo(){
     var l=useState([]),rows=l[0],setRows=l[1]; var ld=useState(true),load=ld[0],setLoad=ld[1];
     var o=useState(null),orc=o[0],setOrc=o[1]; var oi=useState(""),orcIn=oi[0],setOrcIn=oi[1]; var sv=useState(false),svd=sv[0],setSvd=sv[1];
+    var ag2=useState([]),ags=ag2[0],setAgs=ag2[1];
     useEffect(function(){
       var ini=new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
       sb.from("ia_uso").select("*").gte("criado_em",ini.toISOString()).order("criado_em",{ascending:false}).limit(3000).then(function(r){ setRows(r.data||[]); setLoad(false); });
       sb.from("config").select("valor").eq("chave","ia_orcamento").maybeSingle().then(function(r){ if(r.data&&r.data.valor){ setOrc(r.data.valor); setOrcIn(String(r.data.valor.usd||"")); } });
+      sb.from("agentes").select("*").not("cliente_id","is",null).then(function(r){ setAgs(r.data||[]); });
     },[]);
+    function faturar(a){ sb.auth.getUser().then(function(res){ return sb.from("lancamentos").insert({tipo:"receita",descricao:"Agente IA · "+a.nome+" — "+(a.cliente_nome||""),categoria:"IA",valor:Number(a.mensalidade)||0,recorrente:true,cliente:a.cliente_nome||"",data_ref:new Date().toISOString().slice(0,10),owner:res.data.user.id}); }).then(function(){ try{alert("Mensalidade lançada como MRR no Financeiro para "+(a.cliente_nome||"cliente")+".");}catch(e){} }); }
     var USD=5.3;
     var chamadas=rows.length;
     var tin=rows.reduce(function(a,r){return a+Number(r.tokens_in||0);},0);
@@ -1664,6 +1680,17 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         div({style:{padding:"14px 16px 6px"}}, strong({style:{fontWeight:500}},"Consumo por modelo")),
         th([{t:"Modelo",f:2.2},{t:"Chamadas",f:1,a:"right"},{t:"Tokens",f:1.4,a:"right"},{t:"Custo est.",f:1.2,a:"right"}]),
         modelos.length?modelos.map(function(m,i){ return tr([{t:nomeM(m.modelo),f:2.2},{t:String(m.n),f:1,a:"right"},{t:(m.ti+m.to).toLocaleString("pt-BR"),f:1.4,a:"right"},{t:fmtUsd(m.c),f:1.2,a:"right",color:"var(--ip-ok)"}],i); }):div({className:"ip-faint",style:{padding:"14px 16px",fontSize:13}},load?"Carregando…":"Sem uso de IA neste mês ainda. Use o Assistente para começar a medir.")),
+      ags.length?(function(){ var spA={}; rows.forEach(function(r){ if(r.agente_id){ spA[r.agente_id]=(spA[r.agente_id]||0)+Number(r.custo_usd||0); } });
+        return div({className:"ip-card",style:{padding:0,marginTop:14,overflow:"hidden"}},
+          div({style:{padding:"14px 16px 6px"}}, strong({style:{fontWeight:500}},"Clientes · produtos de IA"), div({className:"ip-faint",style:{fontSize:12,marginTop:2}},"Consumo de IA vs mensalidade por agente de cliente. \"Faturar\" lança a mensalidade como MRR no Financeiro (aparece no card do cliente).")),
+          th([{t:"Agente / Cliente",f:2.6},{t:"IA usada",f:1,a:"right"},{t:"Mensal.",f:1,a:"right"},{t:"Margem est.",f:1,a:"right"},{t:"",f:1.1,a:"right"}]),
+          ags.map(function(a,i){ var g=spA[a.id]||0; var mensBRL=Number(a.mensalidade)||0; var margem=mensBRL-(g*USD); var estourou=Number(a.cota_usd)>0&&g>=Number(a.cota_usd);
+            return div({key:a.id,style:{display:"flex",padding:"11px 14px",borderTop:"1px solid rgba(150,190,225,.06)",fontSize:13,alignItems:"center"}},
+              div({style:{flex:2.6,minWidth:0}}, div(null,(a.emoji||"🤖")+" "+a.nome), div({className:"ip-faint",style:{fontSize:11.5}},"🏢 "+(a.cliente_nome||"—")+(Number(a.cota_usd)>0?(" · cota US$ "+Number(a.cota_usd).toFixed(2)+(estourou?" (atingida)":"")):""))),
+              div({style:{flex:1,textAlign:"right",color:estourou?"var(--ip-danger)":"var(--ip-text)"}},"US$ "+g.toFixed(2)),
+              div({style:{flex:1,textAlign:"right"}},"R$ "+mensBRL.toFixed(0)),
+              div({style:{flex:1,textAlign:"right",color:margem>=0?"var(--ip-ok)":"var(--ip-danger)"}},"R$ "+margem.toFixed(0)),
+              div({style:{flex:1.1,textAlign:"right"}}, mensBRL>0?button({className:"ip-btn ghost",style:{padding:"5px 10px",fontSize:12},onClick:function(){faturar(a);}},"Faturar"):span({className:"ip-faint",style:{fontSize:11}},"—"))); })); })():null,
       div({className:"ip-faint",style:{fontSize:11.5,marginTop:12,lineHeight:1.5}},"Tokens são exatos (vêm da API). Custos são estimativas com tarifas configuráveis (US$/1M — Haiku 1/5 · Sonnet 3/15 · Opus 15/75) e câmbio aproximado (R$ 5,30). Economia ativa: roteamento de modelo por tarefa + cache de prompt + endpoint restrito a usuários logados."));
   }
 
