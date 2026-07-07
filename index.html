@@ -777,7 +777,8 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 
   /* ===================== CLIENTES ===================== */
   function Clientes(props){
-    var clientes=props.clientes, isAdmin=props.isAdmin, reload=props.reload;
+    var clientes=props.clientes, isAdmin=props.isAdmin, reload=props.reload, lancamentos=props.lancamentos||[], go=props.go;
+    function finCli(c){ var nome=(c.nome||"").toLowerCase(); if(!nome) return {mrr:0,receita:0,n:0}; var ls=lancamentos.filter(function(l){ return (l.cliente||"").toLowerCase()===nome; }); var mrr=ls.filter(function(l){return l.tipo==="receita"&&l.recorrente;}).reduce(function(a,l){return a+Number(l.valor||0);},0); var receita=ls.filter(function(l){return l.tipo==="receita";}).reduce(function(a,l){return a+Number(l.valor||0);},0); return {mrr:mrr,receita:receita,n:ls.length}; }
     var q1=useState(""),busca=q1[0],setBusca=q1[1];
     var q2=useState("todos"),fst=q2[0],setFst=q2[1];
     var q3=useState(null),edit=q3[0],setEdit=q3[1];
@@ -802,6 +803,9 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({className:"nome"},c.nome),
           div({className:"desc"}, c.segmento && div({style:{color:"var(--ip-accent)",fontSize:11.5,marginBottom:4,letterSpacing:".4px"}},c.segmento+(c.cidade?" · "+c.cidade:"")), c.obs||""),
           c.contato && div({className:"ip-faint",style:{fontSize:11.5,marginTop:8}},"✆ "+c.contato),
+          (function(){ var fin=finCli(c); if(!fin.n) return null; return div({style:{marginTop:8,paddingTop:8,borderTop:"1px solid var(--glass-brd)"}},
+            fin.mrr>0?div(null, span({className:"ip-tag",title:"Ver no Financeiro",style:{color:"var(--ip-ok)",cursor:go?"pointer":"default"},onClick:go?function(ev){ev.stopPropagation();go("financeiro");}:null},"↻ MRR "+money(fin.mrr)+"/mês")):null,
+            div({className:"ip-faint",style:{fontSize:11,marginTop:fin.mrr>0?5:0}},"receita "+money(fin.receita)+" · "+fin.n+" lançamento"+(fin.n>1?"s":""))); })(),
           isAdmin && div({className:"ip-faint",style:{fontSize:11,marginTop:6}},"editar →")); })),
       edit!==null && h(NovoCliente,{cliente:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
   }
