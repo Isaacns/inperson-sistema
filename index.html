@@ -181,13 +181,30 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;animation-iteration-count:1!important}}
 @media (max-width:880px){
   .ip-shell{grid-template-columns:1fr}
-  .ip-side{position:fixed;left:-300px;transition:.2s;z-index:40}
+  .ip-side{position:fixed;left:-300px;top:0;width:280px;transition:left .22s ease;z-index:60;box-shadow:0 0 44px rgba(0,0,0,.55)}
   .ip-side.open{left:0}
   .ip-kpis{grid-template-columns:repeat(2,1fr)}
   .ip-upplans{grid-template-columns:1fr}
   .ip-mtoggle{display:inline-flex!important}
+  .ip-main{padding:16px 15px}
+  .ip-topbar{margin-bottom:16px}
 }
 .ip-mtoggle{display:none}
+.ip-backdrop{position:fixed;inset:0;background:rgba(1,5,16,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);z-index:55}
+@media (min-width:881px){ .ip-backdrop{display:none} }
+@media (max-width:560px){
+  .ip-main{padding:14px 12px}
+  .ip-kpis{gap:10px}
+  .ip-kpi .v{font-size:21px}
+  .ip-usermenu{gap:7px}
+  .ip-usermenu>div:first-child{display:none}
+  .ip-modal{padding:20px;border-radius:16px}
+  .ip-modal-bg{padding:10px}
+  .ip-toolbar{gap:8px}
+  .ip-seg{flex-wrap:wrap}
+  .ip-iconbtn{width:34px;height:34px}
+}
+@media (max-width:400px){ .ip-kpis{grid-template-columns:1fr 1fr} }
 
 /* ===== v0.4 — logo oficial + bolhas + feixe + sidebar ===== */
 .ip-logo-hero{display:block;width:300px;max-width:78%;margin:0 auto 6px;filter:drop-shadow(0 0 14px rgba(116,176,216,.45));animation:ip-glow 5s ease-in-out infinite, ip-breathe-soft 6s ease-in-out infinite;transform-origin:center}
@@ -2883,6 +2900,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
           div({className:"ip-sidefoot"},
             h(ThemeToggle),
             div({className:"ip-faint",style:{fontSize:10,textAlign:"center",marginTop:10,letterSpacing:".5px"}},(CFG.APP_NOME||"Sistema INPERSON")+" · "+(CFG.APP_VERSAO||"")))),
+        menu && div({className:"ip-backdrop",onClick:function(){setMenu(false);}}),
         h("main",{className:"ip-main"},
           div({style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
             button({className:"ip-btn ghost ip-mtoggle",style:{margin:0},onClick:function(){setMenu(!menu);}},"☰ Menu"),
