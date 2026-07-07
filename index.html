@@ -2375,6 +2375,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
       sb.functions.invoke("saude",{body:{sistemas:sistemas.map(function(s){return {id:s.id,url:s.url};})}}).then(function(r){
         var m={}; var res=(r.data&&r.data.resultados)||[]; res.forEach(function(x){ m[x.id]=x; });
         setSaude(m); setChecado((r.data&&r.data.checado_em)||new Date().toISOString()); setLoad(false);
+        sb.functions.invoke("ecossistema-alertas").then(function(){ if(props.reload) props.reload(); },function(){});
       }).catch(function(){ setLoad(false); }); }
     useEffect(function(){ verificar(); },[sistemas.length]);
     function estado(s){ var r=saude[s.id]; if(!r) return "unknown"; if(!r.ok) return "down"; if(Number(r.ms||0)>3500) return "slow"; return "ok"; }
@@ -2450,6 +2451,7 @@ window.IP_BRAND={coverClara:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
         strong({style:{fontWeight:500,fontSize:14}},"Leitura do organismo"),
         leitura(nAr+" de "+sistemas.length+" sistemas no ar"+(latMed?(" · latência média "+latMed+"ms"):"")+"."),
         noDom.length?leitura(noDom.map(function(s){return s.nome;}).join(", ")+(noDom.length>1?" estão":" está")+" sem domínio próprio — apontar o domínio fortalece marca e ranqueamento."):null,
+        leitura("Sistema fora do ar vira tarefa crítica na Agenda automaticamente — a cada 3h e a cada verificação; some sozinha quando o sistema volta."),
         leitura("O coração Supabase concentra os dados de todos os sistemas: MFA e backup são prioridade máxima."),
         leitura("Previsões por uso/acessos entram ao conectarmos a analítica — próximo passo do organismo.")));
   }
