@@ -377,6 +377,31 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 .eco-nd{transform-box:fill-box;transform-origin:center;animation:eco-brz 3.6s ease-in-out infinite;cursor:pointer}
 .eco-nd:hover circle{filter:brightness(1.16)}
 
+/* ===== Ecossistema · galáxia viva ===== */
+.ip-gx{position:relative;border-radius:16px;overflow:hidden;background:#02060d;border:1px solid rgba(150,190,225,.12);isolation:isolate}
+.ip-gx .neb{position:absolute;border-radius:50%;filter:blur(64px);mix-blend-mode:screen;pointer-events:none}
+.ip-gx .n1{width:46%;height:78%;left:-8%;top:4%;background:radial-gradient(circle,rgba(46,150,190,.55),rgba(46,150,190,0) 65%);animation:gx1 26s ease-in-out infinite alternate}
+.ip-gx .n2{width:52%;height:80%;right:-10%;top:-14%;background:radial-gradient(circle,rgba(40,84,200,.50),rgba(40,84,200,0) 65%);animation:gx2 32s ease-in-out infinite alternate}
+.ip-gx .n3{width:44%;height:66%;left:36%;bottom:-16%;background:radial-gradient(circle,rgba(126,72,190,.38),rgba(126,72,190,0) 66%);animation:gx3 38s ease-in-out infinite alternate}
+.ip-gx .n4{width:32%;height:48%;left:14%;bottom:0;background:radial-gradient(circle,rgba(62,207,142,.20),rgba(62,207,142,0) 68%);animation:gx1 30s ease-in-out infinite alternate-reverse}
+@keyframes gx1{to{transform:translate(60px,-34px) scale(1.14)}}
+@keyframes gx2{to{transform:translate(-52px,44px) scale(1.10)}}
+@keyframes gx3{to{transform:translate(38px,-40px) scale(1.16)}}
+.ip-gx .band{position:absolute;inset:-20%;background:linear-gradient(105deg,transparent 38%,rgba(150,190,225,.055) 50%,transparent 62%);filter:blur(14px);pointer-events:none;animation:gxb 44s ease-in-out infinite alternate}
+@keyframes gxb{to{transform:translateY(26px) rotate(2deg)}}
+.ip-gx svg{position:relative;z-index:2;display:block;width:100%}
+@keyframes gxtw{0%,100%{opacity:.15}50%{opacity:.95}}
+@keyframes gxbr{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes gxhl{0%{transform:scale(.82);opacity:.5}100%{transform:scale(1.85);opacity:0}}
+@keyframes gxbk{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes gxcm{0%{transform:translate(-120px,-40px);opacity:0}8%{opacity:.9}40%{opacity:0}100%{transform:translate(820px,300px);opacity:0}}
+.gx-st{animation:gxtw 3.6s ease-in-out infinite}
+.gx-nd{transform-box:fill-box;transform-origin:center;animation:gxbr 5.2s ease-in-out infinite;cursor:pointer}
+.gx-nd:hover{filter:brightness(1.18)}
+.gx-hl{transform-box:fill-box;transform-origin:center;animation:gxhl 2.8s ease-out infinite}
+.gx-bk{animation:gxbk 1.9s ease-in-out infinite}
+.gx-cm{animation:gxcm 14s linear infinite}
+
 /* ===== Scroll invisível (mantém a rolagem, esconde a barra) ===== */
 *{scrollbar-width:none;-ms-overflow-style:none}
 *::-webkit-scrollbar{width:0;height:0;display:none}
@@ -2107,6 +2132,12 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
     var ld=useState(false),load=ld[0],setLoad=ld[1];
     var ck=useState(null),checado=ck[0],setChecado=ck[1];
     var sl=useState(null),sel=sl[0],setSel=sl[1];
+    var stA=useState(function(){ var a=[],i; for(i=0;i<130;i++){ var big=Math.random()<0.14;
+      a.push({x:+(Math.random()*760).toFixed(1),y:+(Math.random()*470).toFixed(1),
+        r:+((big?Math.random()*1.2+1:Math.random()*0.75+0.28)).toFixed(2),
+        o:+(0.25+Math.random()*0.5).toFixed(2),d:+(-Math.random()*3.6).toFixed(2),
+        u:+(2.6+Math.random()*3.4).toFixed(2),c:Math.random()<0.12?"#9FC6E8":"#DDE8F2"}); } return a; }),stars=stA[0];
+
     function verificar(){ if(!sistemas.length) return; setLoad(true);
       sb.functions.invoke("saude",{body:{sistemas:sistemas.map(function(s){return {id:s.id,url:s.url};})}}).then(function(r){
         var m={}; var res=(r.data&&r.data.resultados)||[]; res.forEach(function(x){ m[x.id]=x; });
@@ -2114,32 +2145,41 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
         sb.functions.invoke("ecossistema-alertas").then(function(){ if(props.reload) props.reload(); },function(){});
       }).catch(function(){ setLoad(false); }); }
     useEffect(function(){ verificar(); },[sistemas.length]);
+
     function estado(s){ var r=saude[s.id]; if(!r) return "unknown"; if(!r.ok) return "down"; if(Number(r.ms||0)>3500) return "slow"; return "ok"; }
+    function corSaude(k){ return k==="down"?"#E05252":k==="slow"?"#F5B44A":k==="ok"?"#34D399":"#8FA4B8"; }
     function tipoDe(s){ var u=(s.url||"").toLowerCase(), n=(s.nome||"").toLowerCase();
-      if(n.indexOf("inperson")>-1||u.indexOf("sistema.inpersonaltec")>-1) return "core";
+      if(n.indexOf("sistema inperson")>-1) return "core";
       if(n.indexOf("vizio studio")>-1||(u.indexOf("viziostudio.com.br")>-1&&u.indexOf(".viziostudio.com.br")<0)) return "studio";
       if(u.indexOf(".viziostudio.com.br")>-1) return "vizio";
       return "dir"; }
     var core=[],studio=[],viz=[],dir=[];
     sistemas.forEach(function(s){ var t=tipoDe(s); (t==="core"?core:t==="studio"?studio:t==="vizio"?viz:dir).push(s); });
-    var accent="var(--ip-accent)";
-    function colFor(node){ if(node.role==="heart") return accent; var st=node.s?estado(node.s):"unknown"; if(st==="down") return "var(--ip-danger)"; if(st==="slow") return "var(--ip-warn)"; if(node.role==="core"||node.role==="studio") return accent; if(st==="ok") return "var(--ip-ok)"; return "var(--ip-muted)"; }
-    var heartP={x:72,y:262};
-    var coreP=core[0]?{x:208,y:262}:heartP;
-    var studioP=studio[0]?{x:368,y:150}:coreP;
-    var LAY=[];
-    LAY.push({key:"__heart",label:"Supabase",x:heartP.x,y:heartP.y,r:20,role:"heart"});
-    if(core[0]) LAY.push({s:core[0],label:"INPERSON",x:coreP.x,y:coreP.y,r:32,role:"core"});
-    if(studio[0]) LAY.push({s:studio[0],label:"VIZIO",x:studioP.x,y:studioP.y,r:24,role:"studio"});
-    function vizY(i,n){ return n<=1?150:64+i*(408/(n-1)); }
-    viz.forEach(function(s,i){ LAY.push({s:s,label:s.nome,x:562+(i%2)*44,y:vizY(i,viz.length),r:15,role:"vizio"}); });
-    dir.forEach(function(s,i){ LAY.push({s:s,label:s.nome,x:360,y:312+i*66,r:16,role:"dir"}); });
-    var veins=[];
-    function vein(a,b,bend,color,thick){ var mx=(a.x+b.x)/2, my=(a.y+b.y)/2+(bend||0); veins.push({d:"M"+a.x+","+a.y+" Q"+mx+","+my+" "+b.x+","+b.y,c:color||"var(--ip-faint)",w:thick||1.4}); }
-    if(core[0]) vein(heartP,coreP,0,accent,2.6);
-    if(studio[0]) vein(coreP,studioP,-18);
-    dir.forEach(function(s,i){ vein(coreP,{x:360,y:312+i*66},10); });
-    viz.forEach(function(s,i){ var y=vizY(i,viz.length); vein(studioP,{x:562+(i%2)*44,y:y},(y-150)*0.12); });
+    viz.sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"");});
+    dir.sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"");});
+
+    function polar(cx,cy,R,deg){ var a=deg*Math.PI/180; return {x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)}; }
+    var CX=250,CY=252,SX=472,SY=196;
+    var NODES=[{k:"heart",x:86,y:252,r:21,c:"#3ECF8E",nome:"Supabase",sub:"CORAÇÃO",mono:"◆",hc:"#34D399"}];
+    if(core[0]) NODES.push({k:"core",s:core[0],x:CX,y:CY,r:43,c:core[0].cor||"#74B0D8",nome:"INPERSON",sub:"NÚCLEO · MATRIZ",logo:core[0].logo_url});
+    if(studio[0]) NODES.push({k:"studio",s:studio[0],x:SX,y:SY,r:33,c:studio[0].cor||"#3C94FC",nome:"VIZIO Studio",sub:"STUDIO",logo:studio[0].logo_url});
+    var VA=[-108,-48,8,64,124,170], DA=[56,84,112,140,168,196];
+    viz.forEach(function(s,i){ var q=polar(SX,SY,150,VA[i%VA.length]);
+      NODES.push({k:"v"+i,s:s,x:q.x,y:q.y,r:24,c:s.cor||"#3C94FC",nome:(s.nome||"").replace("Gerenciador de ",""),logo:s.logo_url,mono:(s.nome||"?").slice(0,2).toUpperCase()}); });
+    dir.forEach(function(s,i){ var q=polar(CX,CY,155,DA[i%DA.length]);
+      NODES.push({k:"d"+i,s:s,x:q.x,y:q.y,r:21,c:s.cor||"#74B0D8",nome:(s.nome||"").replace(" Praia do Forte","").replace(" Odontologia Moderna"," · ISO"),logo:s.logo_url,mono:(s.nome||"?").replace(/[^A-Za-zÀ-ú ]/g,"").split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase()}); });
+    NODES.forEach(function(n){ n.hc = n.k==="heart" ? "#34D399" : corSaude(estado(n.s)); n.warn = n.hc!=="#34D399"; });
+
+    function idx(k){ for(var i=0;i<NODES.length;i++) if(NODES[i].k===k) return i; return -1; }
+    var LINKS=[];
+    if(idx("core")>-1) LINKS.push({a:idx("heart"),b:idx("core"),c:"#3ECF8E",w:2.4,d:2.6});
+    if(idx("core")>-1&&idx("studio")>-1) LINKS.push({a:idx("core"),b:idx("studio"),c:"#74B0D8",w:1.7,d:3.2});
+    viz.forEach(function(s,i){ var j=idx("v"+i); if(idx("studio")>-1&&j>-1) LINKS.push({a:idx("studio"),b:j,c:NODES[j].warn?NODES[j].hc:(s.cor||"#3C94FC"),w:1.3,d:3.2+i*0.35}); });
+    dir.forEach(function(s,i){ var j=idx("d"+i); if(idx("core")>-1&&j>-1) LINKS.push({a:idx("core"),b:j,c:NODES[j].warn?NODES[j].hc:(s.cor||"#74B0D8"),w:1.2,d:3.0+i*0.3}); });
+    LINKS.forEach(function(l){ var A=NODES[l.a],B=NODES[l.b];
+      var mx=(A.x+B.x)/2, my=(A.y+B.y)/2 - Math.abs(B.x-A.x)*0.10 - 8;
+      l.path="M"+A.x.toFixed(1)+","+A.y.toFixed(1)+" Q"+mx.toFixed(1)+","+my.toFixed(1)+" "+B.x.toFixed(1)+","+B.y.toFixed(1); });
+
     var nAr=sistemas.filter(function(s){var e=estado(s);return e==="ok"||e==="slow";}).length;
     var nDown=sistemas.filter(function(s){return estado(s)==="down";}).length;
     var lats=sistemas.map(function(s){return saude[s.id]&&saude[s.id].ms;}).filter(function(v){return v;});
@@ -2147,49 +2187,70 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
     var noDom=sistemas.filter(function(s){return (s.url||"").indexOf("github.io")>-1;});
     var kpi=function(v,l,cor){ return div({className:"ip-card ip-kpi"}, div({className:"v",style:cor?{color:cor,WebkitTextFillColor:cor}:null},v), div({className:"l"},l)); };
     var selObj=sel?sistemas.filter(function(s){return s.id===sel;})[0]:null; var selR=selObj?saude[selObj.id]:null;
-    var ROLE_LBL={core:"Núcleo · matriz",studio:"Studio · deriva da INPERSON",vizio:"Produto · deriva do VIZIO",dir:"Direto · deriva da INPERSON",heart:"Coração · dados de todos os sistemas"};
-    function nodeEl(node,i){ var col=colFor(node); var st=node.s?estado(node.s):"heart"; var isSel=node.s&&sel===node.s.id; var lbl=(node.label||"").length>13?node.label.slice(0,12)+"…":node.label;
-      var ms=node.s&&saude[node.s.id]&&saude[node.s.id].ms;
-      return h("g",{key:node.key||("n"+i),className:"eco-nd",style:{animationDelay:(i*0.18)+"s"},onClick:node.s?function(){setSel(node.s.id===sel?null:node.s.id);}:null},
-        h("title",null,(node.label||"")+" — "+ROLE_LBL[node.role]+(node.s?(" · "+(ECO_LABEL[st]||st)+(ms?(" · "+ms+"ms"):"")):"")),
-        (st==="down")?h("circle",{className:"eco-halo down",cx:node.x,cy:node.y,r:node.r+4,fill:col,style:{transformBox:"fill-box",transformOrigin:"center"}}):null,
-        h("circle",{cx:node.x,cy:node.y,r:node.r,fill:"var(--ip-accent-dim)",stroke:col,strokeWidth:isSel?3:2}),
-        node.role==="heart"?h("text",{x:node.x,y:node.y+5,textAnchor:"middle",fontSize:15},"❤")
-          :node.role==="core"?h("text",{x:node.x,y:node.y+5,textAnchor:"middle",fontSize:16,fontWeight:500,fill:col},"iP")
-          :h("text",{x:node.x,y:node.y+5,textAnchor:"middle",fontSize:node.r>18?16:14},(node.s&&node.s.icone)?node.s.icone:"▪"),
-        h("text",{x:node.x,y:node.y+node.r+14,textAnchor:"middle",fontSize:10.5,fill:"var(--ip-text)"},lbl)); }
+    var ROLE={core:"Núcleo · matriz",studio:"Studio · deriva da INPERSON",vizio:"Produto · deriva do VIZIO",dir:"Direto · deriva da INPERSON"};
     function leitura(txt){ return div({style:{display:"flex",gap:9,alignItems:"flex-start",fontSize:12.5,color:"var(--ip-muted)",lineHeight:1.5,marginTop:8}}, span({style:{color:"var(--ip-accent)",marginTop:1}},"✦"), span(null,txt)); }
+
+    function nodeEl(n,i){
+      var s=n.r*1.32;
+      return h("g",{key:n.k,className:"gx-nd",style:{animationDelay:(-i*0.55)+"s",animationDuration:(4.6+i*0.22)+"s"},onClick:n.s?function(){setSel(n.s.id===sel?null:n.s.id);}:null},
+        h("title",null,n.nome+(n.s?(" — "+(ECO_LABEL[estado(n.s)]||"")+(saude[n.s.id]&&saude[n.s.id].ms?(" · "+saude[n.s.id].ms+"ms"):"")):" — coração do ecossistema")),
+        h("circle",{className:"gx-hl",cx:n.x,cy:n.y,r:n.r+3,fill:"none",stroke:n.warn?n.hc:n.c,strokeWidth:1.2,style:{animationDelay:(-i*0.42)+"s"}}),
+        h("circle",{cx:n.x,cy:n.y,r:n.r+13,fill:n.c,fillOpacity:.055}),
+        h("circle",{cx:n.x,cy:n.y,r:n.r+3,fill:"none",stroke:n.c,strokeOpacity:.55,strokeWidth:1.4}),
+        h("circle",{cx:n.x,cy:n.y,r:n.r,fill:n.logo&&/\.jpg$/.test(n.logo)?"#F2F5F8":"#08131f",fillOpacity:n.logo&&/\.jpg$/.test(n.logo)?1:.94,stroke:"rgba(150,190,225,.14)",strokeWidth:sel&&n.s&&sel===n.s.id?2.2:1}),
+        n.logo? h("image",{href:n.logo,x:n.x-s/2,y:n.y-s/2,width:s,height:s,preserveAspectRatio:"xMidYMid meet"})
+              : h("text",{x:n.x,y:n.y+n.r*0.26,textAnchor:"middle",fontSize:n.r*0.62,fill:n.c,fontWeight:"500"},n.mono),
+        h("circle",{cx:n.x+n.r*0.72,cy:n.y-n.r*0.72,r:4.6,fill:n.hc,fillOpacity:.16}),
+        h("circle",{className:"gx-bk",cx:n.x+n.r*0.72,cy:n.y-n.r*0.72,r:2.5,fill:n.hc,style:{animationDelay:(-i*0.3)+"s"}}),
+        h("text",{x:n.x,y:n.y+n.r+18,textAnchor:"middle",fontSize:11.5,fill:"#DCE7F1"},n.nome),
+        n.sub?h("text",{x:n.x,y:n.y+n.r+30,textAnchor:"middle",fontSize:9,fill:"#63788C",letterSpacing:"1"},n.sub):null);
+    }
+
     return div({className:"ip-view"},
-      topo("ORGANISMO VIVO","Ecossistema","Mapa vivo da hierarquia INPERSON · VIZIO — anatomia, saúde e alertas em tempo real.",
+      topo("ORGANISMO VIVO","Ecossistema","Galáxia viva do ecossistema INPERSON · VIZIO — cada ícone respira, a energia é o fluxo de dados.",
         button({className:"ip-btn ghost",onClick:verificar,disabled:load},load?"Verificando…":"↻ Verificar agora")),
       nDown>0 && div({className:"ip-card",style:{padding:"12px 16px",marginBottom:14,borderLeft:"3px solid var(--ip-danger)"}},
         span({style:{color:"var(--ip-danger)",fontWeight:500}},"⚠ "+nDown+" fora do ar: "),
         span(null, sistemas.filter(function(s){return estado(s)==="down";}).map(function(s){return s.nome;}).join(", "))),
       div({className:"ip-kpis ip-stagger"},
         kpi(String(nAr)+"/"+sistemas.length,"No ar","var(--ip-ok)"),
-        kpi(String(nDown+noDom.length),"Alertas", (nDown+noDom.length)?"var(--ip-warn)":null),
+        kpi(String(nDown+noDom.length),"Alertas",(nDown+noDom.length)?"var(--ip-warn)":null),
         kpi(latMed?latMed+" ms":"—","Latência média"),
         kpi(checado?new Date(checado).toLocaleTimeString("pt-BR").slice(0,5):"—","Última checagem")),
-      div({className:"ip-card",style:{padding:12,marginTop:4,overflow:"hidden"}},
-        h("svg",{viewBox:"0 0 680 520",style:{width:"100%",height:"auto",display:"block"}},
-          veins.map(function(v,i){ return h("path",{key:"v"+i,className:"eco-vein",d:v.d,fill:"none",stroke:v.c,strokeWidth:v.w,strokeOpacity:0.5}); }),
-          LAY.map(nodeEl))),
+
+      div({className:"ip-gx",style:{marginTop:4}},
+        div({className:"neb n1"}), div({className:"neb n2"}), div({className:"neb n3"}), div({className:"neb n4"}), div({className:"band"}),
+        h("svg",{viewBox:"0 0 760 470"},
+          h("defs",null,
+            h("radialGradient",{id:"gxIP"}, h("stop",{offset:"0%",stopColor:"#74B0D8",stopOpacity:".34"}), h("stop",{offset:"100%",stopColor:"#74B0D8",stopOpacity:"0"})),
+            h("radialGradient",{id:"gxVZ"}, h("stop",{offset:"0%",stopColor:"#3C94FC",stopOpacity:".28"}), h("stop",{offset:"100%",stopColor:"#3C94FC",stopOpacity:"0"})),
+            h("linearGradient",{id:"gxCM",x1:"0",x2:"1"}, h("stop",{offset:"0%",stopColor:"#EAF2F9",stopOpacity:"0"}), h("stop",{offset:"100%",stopColor:"#EAF2F9",stopOpacity:".85"}))),
+          h("g",null, stars.map(function(st,i){ return h("circle",{key:"s"+i,className:"gx-st",cx:st.x,cy:st.y,r:st.r,fill:st.c,fillOpacity:st.o,style:{animationDelay:st.d+"s",animationDuration:st.u+"s"}}); })),
+          h("line",{className:"gx-cm",x1:0,y1:0,x2:58,y2:20,stroke:"url(#gxCM)",strokeWidth:1.3,strokeLinecap:"round"}),
+          idx("core")>-1 && h("circle",{cx:CX,cy:CY,r:112,fill:"url(#gxIP)"}),
+          idx("studio")>-1 && h("circle",{cx:SX,cy:SY,r:92,fill:"url(#gxVZ)"}),
+          h("g",{fill:"none",strokeLinecap:"round"}, LINKS.map(function(l,i){ return h("path",{key:"p"+i,d:l.path,stroke:l.c,strokeWidth:l.w,strokeOpacity:.20}); })),
+          h("g",null, LINKS.map(function(l,i){ return [0,1].map(function(k){
+            return h("circle",{key:"d"+i+"_"+k,r:(l.w*0.95).toFixed(1),fill:l.c,fillOpacity:.95},
+              h("animateMotion",{dur:l.d+"s",repeatCount:"indefinite",begin:(k*l.d/2)+"s",path:l.path})); }); })),
+          h("g",null, NODES.map(nodeEl)))),
+
       selObj && div({className:"ip-card",style:{padding:16,marginTop:12}},
         div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}},
-          div(null, strong({style:{fontWeight:500,fontSize:15}},(selObj.icone||"")+" "+selObj.nome),
-            div({className:"ip-faint",style:{fontSize:11,marginTop:3}},ROLE_LBL[tipoDe(selObj)]),
+          div(null, strong({style:{fontWeight:500,fontSize:15}},selObj.nome),
+            div({className:"ip-faint",style:{fontSize:11,marginTop:3}},ROLE[tipoDe(selObj)]),
             div({className:"ip-faint",style:{fontSize:12,marginTop:3,wordBreak:"break-all"}},selObj.url||"—")),
           div({style:{display:"flex",gap:8,alignItems:"center"}},
             span({className:"ip-tag",style:{color:ECO_COR[estado(selObj)]||"var(--ip-muted)"}},(ECO_LABEL[estado(selObj)]||"—")+(selR&&selR.status?(" · HTTP "+selR.status):"")+(selR&&selR.ms?(" · "+selR.ms+"ms"):"")),
             selObj.url&&button({className:"ip-btn ghost",style:{padding:"6px 12px",fontSize:12.5},onClick:function(){window.open(selObj.url,"_blank","noopener");}},"abrir ↗"))),
         selObj.descricao&&div({className:"ip-muted",style:{fontSize:12.5,marginTop:10,lineHeight:1.5}},selObj.descricao)),
+
       div({className:"ip-card",style:{padding:16,marginTop:12}},
         strong({style:{fontWeight:500,fontSize:14}},"Leitura do organismo"),
         leitura(nAr+" de "+sistemas.length+" sistemas no ar"+(latMed?(" · latência média "+latMed+"ms"):"")+"."),
         noDom.length?leitura(noDom.map(function(s){return s.nome;}).join(", ")+(noDom.length>1?" estão":" está")+" sem domínio próprio — apontar o domínio fortalece marca e ranqueamento."):null,
         leitura("Sistema fora do ar vira tarefa crítica na Agenda automaticamente — a cada 3h e a cada verificação; some sozinha quando o sistema volta."),
-        leitura("O coração Supabase concentra os dados de todos os sistemas: MFA e backup são prioridade máxima."),
-        leitura("Previsões por uso/acessos entram ao conectarmos a analítica — próximo passo do organismo.")));
+        leitura("O coração Supabase concentra os dados de todos os sistemas: MFA e backup são prioridade máxima.")));
   }
   /* ===================== CONTROLE DE VERSÃO ===================== */
   var VERSAO_TIPO={feature:{l:"Novidade",c:"var(--ip-accent)"},fix:{l:"Correção",c:"var(--ip-warn)"},infra:{l:"Infra",c:"var(--ip-ok)"},security:{l:"Segurança",c:"var(--ip-danger)"}};
