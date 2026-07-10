@@ -2317,13 +2317,23 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
     var termo=busca.trim().toLowerCase();
     var lista=acessos.slice().filter(function(a){ if(!termo) return true; return [a.sistema,a.url,a.usuario,a.ambiente,a.notas].join(" ").toLowerCase().indexOf(termo)>-1; }).sort(function(a,b){return (a.sistema||"").localeCompare(b.sistema||"");});
     function copiar(t){ try{ if(navigator.clipboard) navigator.clipboard.writeText(t); }catch(e){} }
+    // Senhas ficam cifradas no Supabase Vault. Só a função acesso_senha(id) (admin-only) devolve o valor.
+    function buscarSenha(a){ return sb.rpc("acesso_senha",{p_id:a.id}).then(function(r){ return (r&&!r.error&&r.data!=null)?r.data:null; }).catch(function(){ return null; }); }
+    function toggleSenha(a){
+      if(typeof rev[a.id]==="string"){ setRev(function(o){ var n=Object.assign({},o); delete n[a.id]; return n; }); return; }
+      buscarSenha(a).then(function(v){ if(v==null) return; setRev(function(o){ var n=Object.assign({},o); n[a.id]=v; return n; }); });
+    }
+    function copiarSenha(a){
+      if(typeof rev[a.id]==="string"){ copiar(rev[a.id]); return; }
+      buscarSenha(a).then(function(v){ if(v!=null) copiar(v); });
+    }
     return div({className:"ip-view"},
       topo("COFRE DE ACESSO","Gerenciador de Acesso","Logins e senhas de todos os sistemas, num só lugar. Restrito a admin.",
         button({className:"ip-btn",onClick:function(){setEdit({});}},"+ Novo acesso")),
       div({className:"ip-toolbar"}, input({className:"ip-input",value:busca,onChange:function(e){setBusca(e.target.value);},placeholder:"🔎 Buscar sistema, usuário…",style:{maxWidth:320}})),
       div({className:"ip-list ip-stagger"},
         lista.length===0 && div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nenhum acesso cadastrado. Clique em \"+ Novo acesso\".")),
-        lista.map(function(a){ var shown=!!rev[a.id];
+        lista.map(function(a){ var segredo=rev[a.id]; var shown=(typeof segredo==="string"); var temSegredo=!!a.senha_secret_id;
           return div({key:a.id,className:"ip-card",style:{padding:16}},
             div({style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}},
               div({style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}, strong({style:{fontWeight:500,fontSize:14.5}},a.sistema||"(sem nome)"), a.ambiente&&span({className:"ip-tag",style:{color:"var(--ip-accent)"}},a.ambiente),
@@ -2334,9 +2344,9 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
               div(null, div({className:"ip-faint",style:{fontSize:10.5,letterSpacing:".5px"}},"USUÁRIO"),
                 div({style:{fontSize:13.5,display:"flex",gap:6,alignItems:"center",marginTop:2}}, span({style:{fontFamily:"monospace",wordBreak:"break-all"}},a.usuario||"—"), a.usuario&&span({title:"copiar",style:{cursor:"pointer",opacity:.6},onClick:function(){copiar(a.usuario);}},"⧉"))),
               div(null, div({className:"ip-faint",style:{fontSize:10.5,letterSpacing:".5px"}},"SENHA"),
-                div({style:{fontSize:13.5,display:"flex",gap:6,alignItems:"center",marginTop:2}}, span({style:{fontFamily:"monospace",wordBreak:"break-all"}}, shown?(a.senha||"—"):"••••••••"),
-                  a.senha&&span({title:shown?"ocultar":"exibir",style:{cursor:"pointer",opacity:.75},onClick:function(){ setRev(function(o){var n=Object.assign({},o); n[a.id]=!o[a.id]; return n;}); }}, shown?"🙈":"👁️"),
-                  a.senha&&span({title:"copiar",style:{cursor:"pointer",opacity:.6},onClick:function(){copiar(a.senha);}},"⧉")))),
+                div({style:{fontSize:13.5,display:"flex",gap:6,alignItems:"center",marginTop:2}}, span({style:{fontFamily:"monospace",wordBreak:"break-all"}}, shown?(segredo||"—"):(temSegredo?"••••••••":"—")),
+                  temSegredo&&span({title:shown?"ocultar":"revelar (cifrada no Vault)",style:{cursor:"pointer",opacity:.75},onClick:function(){ toggleSenha(a); }}, shown?"🙈":"👁️"),
+                  temSegredo&&span({title:"copiar",style:{cursor:"pointer",opacity:.6},onClick:function(){copiarSenha(a);}},"⧉")))),
             a.notas&&div({className:"ip-muted",style:{fontSize:12,marginTop:10,whiteSpace:"pre-wrap"}},a.notas)); })),
       edit!==null && h(NovoAcesso,{acesso:edit,onClose:function(){setEdit(null);},onSaved:function(){setEdit(null);reload();}}));
   }
@@ -2362,7 +2372,7 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
           campo("Ambiente", input({className:"ip-input",value:f.ambiente,onChange:set("ambiente"),placeholder:"produção, painel admin…"}))),
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
           campo("Usuário / login", input({className:"ip-input",value:f.usuario,onChange:set("usuario"),placeholder:"e-mail / usuário",autoComplete:"off"})),
-          campo("Senha", h(PasswordInput,{className:"ip-input",value:f.senha,onChange:set("senha"),placeholder:"senha",autoComplete:"new-password"}))),
+          campo("Senha", h(PasswordInput,{className:"ip-input",value:f.senha,onChange:set("senha"),placeholder:editing?"deixe vazio para manter a atual":"senha (será cifrada no Vault)",autoComplete:"new-password"}))),
         div({style:{marginTop:12}}, campo("Notas", textarea({className:"ip-input",rows:3,value:f.notas,onChange:set("notas"),placeholder:"2FA, chave de recuperação, observações…"}))),
         err && div({className:"ip-msg err"},err),
         div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
