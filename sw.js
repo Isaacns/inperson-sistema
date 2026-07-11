@@ -1,5 +1,5 @@
 /* INPERSON service worker — versionado por build. NÃO editar VER à mão: o build.js injeta. */
-var VER="mrgge3jw";
+var VER="mrgn3lbn";
 var C="inperson-"+VER;
 
 self.addEventListener("install", function(e){ self.skipWaiting(); });
