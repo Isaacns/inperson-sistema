@@ -2507,7 +2507,11 @@ window.IP_LOGOS=window.IP_LOGOS||{}; window.IP_LOGOS.icone="data:image/png;base6
     if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas não carregaram.");
     try{ document.documentElement.dataset.theme=localStorage.getItem("ip_theme")||"escuro"; }catch(e){ document.documentElement.dataset.theme="escuro"; }
     ReactDOM.createRoot(document.getElementById("root")).render(h(App));
-    if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+    if("serviceWorker" in navigator){
+      var _hadCtrl=!!navigator.serviceWorker.controller, _refreshing=false;
+      navigator.serviceWorker.addEventListener("controllerchange",function(){ if(_refreshing)return; _refreshing=true; if(_hadCtrl) location.reload(); });
+      navigator.serviceWorker.register("sw.js").then(function(reg){ try{ reg.update(); }catch(x){} }).catch(function(){});
+    }
   }catch(err){ fatal(err.stack||err.message||err); }
 })();
 
