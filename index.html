@@ -35,7 +35,9 @@ html,body,#root{height:100%}
 body{
   margin:0; font-family:var(--ip-font); font-weight:400; color:var(--ip-text);
   background:var(--ip-bg); -webkit-font-smoothing:antialiased; letter-spacing:.2px;
-  overflow-x:hidden;
+  /* `clip` e não `hidden`: hidden cria contexto de rolagem e quebra o
+     position:sticky da sidebar (.ip-side) no desktop. */
+  overflow-x:clip;
 }
 a{color:var(--ip-accent);text-decoration:none}
 button{font-family:inherit}
@@ -221,6 +223,49 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
   .ip-iconbtn{width:34px;height:34px}
 }
 @media (max-width:400px){ .ip-kpis{grid-template-columns:1fr 1fr} }
+
+/* ==========================================================================
+   PADRÃO MOBILE INPERSON/VIZIO — barra inferior no alcance do polegar.
+   São 23 módulos: a barra leva os 4 principais + "Mais", que abre o menu
+   lateral já existente (ele lista tudo agrupado). Diferente do ISO e do
+   FlowShift, aqui a navegação mobile não estava quebrada — havia o drawer.
+   Por isso reaproveitamos o drawer em vez de criar uma segunda folha.
+   ========================================================================== */
+.ip-bnav{display:none}
+@media (max-width:880px){
+  .ip-bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(5,10,22,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    border-top:1px solid var(--glass-brd);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .ip-bnav .bi{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;min-height:52px;background:none;border:none;color:var(--ip-muted);
+    font-family:inherit;font-size:10px;font-weight:500;cursor:pointer;position:relative;padding:4px 2px}
+  .ip-bnav .bi .ic{font-size:18px;line-height:1}
+  .ip-bnav .bi.on{color:var(--ip-accent)}
+  .ip-bnav .bi.on::before{content:"";position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+    width:24px;height:3px;border-radius:0 0 3px 3px;
+    background:linear-gradient(90deg,var(--ip-accent),var(--ip-accent-2))}
+  /* a barra substitui o botão "☰ Menu" do topo — "Mais" abre o mesmo drawer */
+  .ip-mtoggle{display:none!important}
+  /* espaço para a barra + safe area (notch e barra inferior do iPhone) */
+  .ip-main{padding-bottom:calc(92px + env(safe-area-inset-bottom));
+    padding-left:calc(15px + env(safe-area-inset-left));
+    padding-right:calc(15px + env(safe-area-inset-right))}
+  /* o FAB da IA não pode ficar embaixo da barra */
+  .ip-aifab{bottom:calc(76px + env(safe-area-inset-bottom))!important}
+  .ip-aipanel{bottom:calc(140px + env(safe-area-inset-bottom))!important}
+}
+
+/* Alvos de toque >= 44px — trava dupla: dedo em qualquer largura + híbridos */
+@media (pointer:coarse),(max-width:880px){
+  .ip-btn{min-height:44px}
+  .ip-iconbtn{min-width:44px;min-height:44px}
+}
+/* 16px: abaixo disso o iOS dá zoom automático ao focar o campo */
+@media (pointer:coarse),(max-width:880px){
+  .ip-input,select,textarea{font-size:16px}
+}
+@media print{ .ip-bnav{display:none!important} }
 
 /* ===== v0.4 — logo oficial + bolhas + feixe + sidebar ===== */
 .ip-logo-hero{display:block;width:300px;max-width:78%;margin:0 auto 6px;filter:drop-shadow(0 0 14px rgba(116,176,216,.45));animation:ip-glow 5s ease-in-out infinite, ip-breathe-soft 6s ease-in-out infinite;transform-origin:center}
@@ -1960,6 +2005,10 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
     {id:"versoes",ic:"🕑",nome:"Versões",grupo:"Administração"},
     {id:"config",ic:"⚙️",nome:"Configurações",grupo:"Administração"}
   ];
+  /* Barra inferior do celular (padrão INPERSON/VIZIO — ver VIZIO Money, ISO, FlowShift).
+     São 23 módulos: a barra leva os 4 mais usados e "Mais" abre o menu lateral,
+     que já lista tudo agrupado. Não duplicamos a navegação. */
+  var IP_BNAV_PRIN=["copiloto","dashboard","agenda","clientes"];
   function Switch(props){ return h("label",{className:"ip-sw"+(props.className?(" "+props.className):"")}, input({type:"checkbox",checked:!!props.checked,onChange:props.onChange,disabled:props.disabled}), span({className:"tr"})); }
   function ThemeToggle(){
     var t=useState((typeof document!=="undefined" && document.documentElement.dataset.theme)||"escuro"),theme=t[0],setTheme=t[1];
@@ -2559,6 +2608,11 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
             button({className:"ip-btn ghost ip-mtoggle",style:{margin:0},onClick:function(){setMenu(!menu);}},"☰ Menu"),
             h("div",{style:{marginLeft:"auto"}}, h(IpUserMenu,{perfil:perfil,reload:carregar,onLock:function(){setLocked(true);},onSair:function(){ try{logAcesso("saida");}catch(e){} sb.auth.signOut(); }}))),
           body)),
+      h("nav",{className:"ip-bnav ip-noprint"},
+        IP_BNAV_PRIN.map(function(id){ var m=modulosNav.filter(function(x){return x.id===id;})[0]; if(!m) return null;
+          return button({key:m.id,className:"bi"+(view===m.id?" on":""),onClick:function(){ setView(m.id); setMenu(false); }},
+            span({className:"ic"},m.ic), span(null,m.nome.split(" ")[0])); }),
+        button({className:"bi"+(menu?" on":""),onClick:function(){ setMenu(!menu); }}, span({className:"ic"},"☰"), span(null,"Mais"))),
       upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}),
       locked && h(LockScreen,{perfil:perfil,onUnlock:function(){setLocked(false);}}),
       h(AiFab,{open:aiOpen,setOpen:setAiOpen,P:P}));
