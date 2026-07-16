@@ -201,6 +201,17 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
   .ip-shell{grid-template-columns:1fr}
   .ip-side{position:fixed;left:-300px;top:0;width:280px;transition:left .22s ease;z-index:60;box-shadow:0 0 44px rgba(0,0,0,.55)}
   .ip-side.open{left:0}
+  /* Aberto como overlay, o drawer fica SOBRE o backdrop escuro. Como o fundo
+     padrão é translúcido (.72/.66) + backdrop-filter, o escuro atravessava e
+     o menu inteiro aparecia lavado/apagado. Como overlay ele precisa ser
+     opaco — no desktop segue translúcido sobre o fundo do app. */
+  .ip-side{background:linear-gradient(180deg,#0b1424,#050a16);
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    padding-top:calc(22px + env(safe-area-inset-top));
+    /* a barra inferior vive FORA do .ip-shell (que tem z-index:1), então ela
+       sempre pinta por cima do drawer — não adianta z-index. O drawer reserva
+       a altura dela, senão os últimos itens do menu ficam inalcançáveis. */
+    padding-bottom:calc(88px + env(safe-area-inset-bottom))}
   .ip-kpis{grid-template-columns:repeat(2,1fr)}
   .ip-upplans{grid-template-columns:1fr}
   .ip-mtoggle{display:inline-flex!important}
@@ -2615,7 +2626,7 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
         button({className:"bi"+(menu?" on":""),onClick:function(){ setMenu(!menu); }}, span({className:"ic"},"☰"), span(null,"Mais"))),
       upgrade && h(UpgradeModal,{onClose:function(){setUpgrade(false);}}),
       locked && h(LockScreen,{perfil:perfil,onUnlock:function(){setLocked(false);}}),
-      h(AiFab,{open:aiOpen,setOpen:setAiOpen,P:P}));
+      !menu && h(AiFab,{open:aiOpen,setOpen:setAiOpen,P:P}));
   }
 
   function fatal(msg){ var r=document.getElementById("root"); if(r) r.innerHTML='<div class="ip-fatal"><h2 style="font-weight:300">Falha ao carregar</h2><pre>'+String(msg).replace(/</g,"&lt;")+'</pre></div>'; }
