@@ -278,6 +278,22 @@ select.ip-input optgroup{color:#10243a;background:#ffffff}
 }
 @media print{ .ip-bnav{display:none!important} }
 
+/* Aviso de versão nova (só aparece quando há algo sendo preenchido; caso
+   contrário o app se atualiza sozinho, sem perguntar) */
+.ip-update{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));
+  z-index:70;transform:translateY(140%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  padding:14px 16px;min-height:48px;border-radius:14px;cursor:pointer;font-family:inherit;
+  font-size:13.5px;font-weight:500;color:#03101c;border:none;text-align:left;
+  background:linear-gradient(135deg,var(--ip-accent),var(--ip-accent-2));
+  box-shadow:0 12px 34px rgba(0,0,0,.55)}
+.ip-update.on{transform:translateY(0)}
+.ip-update b{font-weight:700}
+.ip-update span{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:3px;line-height:1.35}
+.ip-update:disabled{opacity:.75;cursor:default}
+@media(max-width:880px){ .ip-update{bottom:calc(76px + env(safe-area-inset-bottom))} }
+@media(min-width:881px){ .ip-update{left:auto;right:20px;max-width:400px} }
+@media print{ .ip-update{display:none!important} }
+
 /* ===== v0.4 — logo oficial + bolhas + feixe + sidebar ===== */
 .ip-logo-hero{display:block;width:300px;max-width:78%;margin:0 auto 6px;filter:drop-shadow(0 0 14px rgba(116,176,216,.45));animation:ip-glow 5s ease-in-out infinite, ip-breathe-soft 6s ease-in-out infinite;transform-origin:center}
 .ip-brand-img{width:200px;max-width:100%;height:auto;filter:drop-shadow(0 0 6px rgba(116,176,216,.25));animation:ip-breathe-soft 7s ease-in-out infinite;transform-origin:left center}
@@ -2640,10 +2656,52 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
     if(!window.React||!window.ReactDOM||!window.supabase) throw new Error("Bibliotecas não carregaram.");
     try{ document.documentElement.dataset.theme=localStorage.getItem("ip_theme")||"escuro"; }catch(e){ document.documentElement.dataset.theme="escuro"; }
     ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+    /* Atualização AUTOMÁTICA (padrão INPERSON/VIZIO). Antes só havia
+       reg.update() no boot: num atalho de tela inicial o app RETOMA do
+       background e esse código nunca rodava de novo — a versão nova nunca
+       chegava. Agora procura ao abrir, ao voltar ao foco e ao reconectar, e
+       aplica sozinha. Só espera o toque se houver formulário/modal aberto. */
     if("serviceWorker" in navigator){
+      var _reg=null, _avisou=false;
+      function ehSeguroRecarregar(){
+        if(document.querySelector(".ip-modal-bg,.ip-backdrop,.ip-side.open")) return false;
+        var a=document.activeElement;
+        if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+        return true;
+      }
+      function aplicarAgora(){
+        try{ sessionStorage.setItem("ip_atualizou","1"); }catch(x){}
+        try{ if(_reg&&_reg.waiting) _reg.waiting.postMessage({type:"PULAR_ESPERA"}); }catch(x){}
+        setTimeout(function(){ location.reload(); },1500);
+      }
+      function avisarNovaVersao(){
+        if(_avisou) return; _avisou=true;
+        var b=document.createElement("button");
+        b.className="ip-update";
+        b.innerHTML='✨ Nova versão pronta — <b>toque para aplicar</b>'
+          +'<span>Não apliquei agora para não perder o que você está preenchendo</span>';
+        b.onclick=function(){ b.textContent="Atualizando…"; b.disabled=true; aplicarAgora(); };
+        document.body.appendChild(b);
+        requestAnimationFrame(function(){ b.classList.add("on"); });
+      }
+      function novaVersaoPronta(){ if(ehSeguroRecarregar()) aplicarAgora(); else avisarNovaVersao(); }
       var _hadCtrl=!!navigator.serviceWorker.controller, _refreshing=false;
       navigator.serviceWorker.addEventListener("controllerchange",function(){ if(_refreshing)return; _refreshing=true; if(_hadCtrl) location.reload(); });
-      navigator.serviceWorker.register("sw.js").then(function(reg){ try{ reg.update(); }catch(x){} }).catch(function(){});
+      navigator.serviceWorker.register("sw.js").then(function(reg){
+        _reg=reg;
+        if(reg.waiting && navigator.serviceWorker.controller) novaVersaoPronta();
+        reg.addEventListener("updatefound",function(){
+          var novo=reg.installing; if(!novo) return;
+          novo.addEventListener("statechange",function(){
+            if(novo.state==="installed" && navigator.serviceWorker.controller) novaVersaoPronta();
+          });
+        });
+        try{ reg.update(); }catch(x){}
+        document.addEventListener("visibilitychange",function(){
+          if(document.visibilityState==="visible" && _reg){ try{ _reg.update(); }catch(x){} }
+        });
+        window.addEventListener("online",function(){ if(_reg){ try{ _reg.update(); }catch(x){} } });
+      }).catch(function(){});
     }
   }catch(err){ fatal(err.stack||err.message||err); }
 })();
