@@ -1,5 +1,5 @@
 /* INPERSON service worker — versionado por build. NÃO editar VER à mão: o build.js injeta. */
-var VER="__BUILD_VER__";
+var VER="mrtbgcq6";
 var C="inperson-"+VER;
 
 self.addEventListener("install", function(e){ self.skipWaiting(); });
@@ -41,10 +41,19 @@ function netFirst(req){
   });
 }
 
+/* Canal canônico do push (§14.2): o app manda PULAR_ESPERA ao aceitar a atualização.
+   O install já faz skipWaiting, mas manter o canal cobre o SW que ficou em waiting. */
+self.addEventListener("message", function(e){
+  if(e.data && e.data.type==="PULAR_ESPERA") self.skipWaiting();
+});
+
 self.addEventListener("fetch", function(e){
   if(e.request.method!=="GET") return;
   var url;
   try{ url=new URL(e.request.url); }catch(x){ return; }
   if(url.origin!==self.location.origin) return; /* deixa Supabase e CDNs passarem */
+  /* A checagem de versão usa ?_v=<timestamp> único. Sem esta guarda, o netFirst criaria
+     uma entrada nova no cache a cada 10 min, para sempre. */
+  if(url.searchParams.has("_v")) return;
   e.respondWith(netFirst(e.request));
 });
