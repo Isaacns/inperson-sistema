@@ -14,7 +14,7 @@
 /* VERSÃO DO APP — bumpar a CADA deploy. É por este número que o push (§14) compara.
    §14.2: NUNCA const — scripts clássicos dividem escopo e uma 2ª declaração derruba o arquivo.
    Fonte única: o rodapé "Sobre" lê daqui (config.js.APP_VERSAO aponta para cá). */
-window.APP_VERSION = '1.4.1';
+window.APP_VERSION = '1.4.2';
 
 /* Guarda de HTTPS com exceção de loopback (§3.4) — sem a exceção, testar local é impossível. */
 (function(){
@@ -768,12 +768,20 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
     var qa=useState(""),qadd=qa[0],setQadd=qa[1];
     var qp=useState("media"),qprio=qp[0],setQprio=qp[1];
     var qb=useState(false),qbusy=qb[0],setQbusy=qb[1];
+    var wkA=useState(0),wkOff=wkA[0],setWkOff=wkA[1];
+    var hzA=useState(null),hoverZone=hzA[0],setHoverZone=hzA[1];
     var termo=busca.trim().toLowerCase();
     var PRIO_ORD={critica:0,alta:1,media:2,baixa:3};
     var PRIO_COR={critica:"var(--ip-danger)",alta:"var(--ip-warn)",media:"var(--ip-accent)",baixa:"var(--ip-muted)"};
     var PRIO_LBL=[["critica","Crítica"],["alta","Alta"],["media","Média"],["baixa","Baixa"]];
     var RECOR_LBL={semanal:"toda semana",quinzenal:"a cada 15d",mensal:"todo mês",anual:"todo ano"};
     function porData(a,b){ var c=(a.vence_em||"9999").localeCompare(b.vence_em||"9999"); return c!==0?c:(a.hora||"99").localeCompare(b.hora||"99"); }
+    var BLOCOS=[["manha","Manhã","☀️"],["tarde","Tarde","🌤"],["noite","Noite","🌙"]];
+    var BLOCO_INI={manha:"09:00",tarde:"14:00",noite:"19:00"};
+    var DOW_LBL=["Seg","Ter","Qua","Qui","Sex","Sáb"];
+    function isoDe(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+    function blocoDe(h){ if(!h) return "semhora"; var n=parseInt(String(h).slice(0,2),10); if(isNaN(n)) return "semhora"; if(n<12) return "manha"; if(n<18) return "tarde"; return "noite"; }
+    function inicioSemana(off){ var d=new Date(); d.setHours(0,0,0,0); var dow=d.getDay(); var diff=(dow===0?-6:1-dow); d.setDate(d.getDate()+diff+off*7); return d; }
     function ativo(r){ return r.status!=="concluido"&&r.status!=="arquivado"; }
     function match(r){ return !termo||[r.titulo,r.descricao,r.projeto,r.categoria].join(" ").toLowerCase().indexOf(termo)>-1; }
     var ativos=registros.filter(ativo);
@@ -827,7 +835,57 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
       return div({className:"ip-list",style:{touchAction:dragId?"none":"auto"},onPointerMove:drag?onMoveR:null,onPointerUp:drag?onUpR:null,onPointerLeave:drag?onUpR:null}, arr.map(function(r){return row(r,drag);})); }
     function ordById(){ var mapa={}; registros.forEach(function(r){mapa[r.id]=r;}); var ids=orderIds.length?orderIds:registros.slice().sort(function(a,b){return (Number(a.ordem||0))-(Number(b.ordem||0));}).map(function(r){return r.id;}); return ids.map(function(id){return mapa[id];}).filter(Boolean); }
     function meuDia(){ return ordById().filter(function(r){ return ativo(r)&&match(r); }); }
-    function semanaArr(){ return registros.filter(function(r){ if(!ativo(r)||!match(r)) return false; var d=diasAte(r.vence_em); return d!==null&&d<=7; }).sort(porData); }
+    /* ---- Semana em blocos (arrastar = remarcar dia+período) ---- */
+    function reagendar(id,zone){ var pp=zone.split("|"); var iso=pp[0],bloco=pp[1]; var r=null,i;
+      for(i=0;i<registros.length;i++){ if(registros[i].id===id){ r=registros[i]; break; } }
+      if(!r) return;
+      var novaHora = (bloco==="semhora") ? null : ((r.hora && blocoDe(r.hora)===bloco) ? String(r.hora).slice(0,5) : BLOCO_INI[bloco]);
+      var horaAtual = r.hora ? String(r.hora).slice(0,5) : null;
+      if(r.vence_em===iso && horaAtual===novaHora) return; /* soltou no mesmo lugar — inerte */
+      sb.from("registros").update({vence_em:iso, hora:novaHora}).eq("id",id).then(reload); }
+    function onMoveW(e){ if(!dragId) return; var el=document.elementFromPoint(e.clientX,e.clientY); var z=el&&el.closest?el.closest("[data-zone]"):null; var k=z?z.getAttribute("data-zone"):null; if(k!==hoverZone) setHoverZone(k); }
+    function onUpW(){ if(!dragId) return; var z=hoverZone,id=dragId; setDragId(null); setHoverZone(null); if(z) reagendar(id,z); }
+    function cardSemana(r){ var arr=dragId===r.id;
+      return div({key:r.id,className:"ip-card",style:{padding:"6px 8px",borderRadius:9,display:"flex",alignItems:"center",gap:6,marginBottom:6,opacity:arr?0.4:1,pointerEvents:arr?"none":"auto",borderLeft:"3px solid "+PRIO_COR[r.prioridade||"media"]}},
+        span({className:"ip-drag-h",onPointerDown:function(e){e.preventDefault();setDragId(r.id);},style:{cursor:"grab",touchAction:"none",userSelect:"none",color:"var(--ip-faint)",fontSize:14,flex:"none"}},"⠿"),
+        div({style:{flex:1,minWidth:0,cursor:"pointer"},onClick:function(){setEdit(r);}},
+          (r.hora||r.recorrencia)&&div({style:{display:"flex",alignItems:"center",gap:5,marginBottom:1}},
+            r.hora&&span({style:{fontSize:11,fontWeight:600,color:"var(--ip-accent)",fontVariantNumeric:"tabular-nums"}},String(r.hora).slice(0,5)),
+            r.recorrencia&&span({title:"recorrente",style:{fontSize:11}},"🔁")),
+          div({style:{fontSize:12.5,lineHeight:1.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},r.titulo))); }
+    function zonaBloco(iso,bloco,label,items,destaque){ var on=hoverZone===(iso+"|"+bloco);
+      return div({key:bloco},
+        div({style:{fontSize:10.5,letterSpacing:.3,textTransform:"uppercase",color:destaque?"var(--ip-accent)":"var(--ip-faint)",margin:"2px 2px 3px",display:"flex",alignItems:"center",gap:4}}, label, destaque?span({style:{fontSize:9}},"• agora"):null),
+        div({"data-zone":iso+"|"+bloco,style:{minHeight:34,borderRadius:8,padding:"4px 4px 1px",marginBottom:5,border:"1px dashed "+(on?"var(--ip-accent)":"var(--glass-brd)"),background:on?"rgba(116,176,216,.16)":"transparent",transition:"background .12s,border-color .12s"}},
+          items.length? items.map(cardSemana) : div({className:"ip-faint",style:{fontSize:11,textAlign:"center",padding:"5px 0",opacity:.45}},"—"))); }
+    function semanaBlocos(){
+      var ini=inicioSemana(wkOff),dias=[],i;
+      for(i=0;i<6;i++){ var d=new Date(ini); d.setDate(ini.getDate()+i); dias.push(d); }
+      var hojeISO=isoDe(new Date()); var hnow=new Date().getHours(); var agoraBloco=hnow<12?"manha":(hnow<18?"tarde":"noite");
+      var mapa={}; dias.forEach(function(dd){ mapa[isoDe(dd)]={manha:[],tarde:[],noite:[],semhora:[]}; });
+      registros.forEach(function(r){ if(!ativo(r)||!match(r)||!r.vence_em) return; var m=mapa[r.vence_em]; if(m) m[blocoDe(r.hora)].push(r); });
+      Object.keys(mapa).forEach(function(k){ ["manha","tarde","noite","semhora"].forEach(function(b){ mapa[k][b].sort(porData); }); });
+      var totalSem=0; Object.keys(mapa).forEach(function(k){ totalSem+=mapa[k].manha.length+mapa[k].tarde.length+mapa[k].noite.length+mapa[k].semhora.length; });
+      var fmt=ini.getDate()+"/"+(ini.getMonth()+1)+" – "+dias[5].getDate()+"/"+(dias[5].getMonth()+1);
+      return div(null,
+        div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8,flexWrap:"wrap"}},
+          div({style:{display:"flex",alignItems:"center",gap:6}},
+            button({className:"ip-btn ghost",style:{padding:"6px 11px"},onClick:function(){setWkOff(wkOff-1);}},"‹"),
+            button({className:"ip-btn ghost",style:{padding:"6px 11px"},onClick:function(){setWkOff(0);}},"Hoje"),
+            button({className:"ip-btn ghost",style:{padding:"6px 11px"},onClick:function(){setWkOff(wkOff+1);}},"›"),
+            strong({style:{fontWeight:300,fontSize:15,marginLeft:4}},fmt)),
+          span({className:"ip-faint",style:{fontSize:12,display:"flex",alignItems:"center",gap:5}}, span({className:"ip-drag-h"},"⠿"),"arraste para remarcar · ",String(totalSem)," na semana")),
+        div({style:{overflowX:"auto",WebkitOverflowScrolling:"touch"},onPointerMove:dragId?onMoveW:null,onPointerUp:dragId?onUpW:null,onPointerLeave:dragId?onUpW:null},
+          div({style:{display:"grid",gridTemplateColumns:"repeat(6,minmax(148px,1fr))",gap:8,minWidth:928}},
+            dias.map(function(d,di){ var iso=isoDe(d); var hoje=iso===hojeISO; var m=mapa[iso];
+              var nd=m.manha.length+m.tarde.length+m.noite.length+m.semhora.length;
+              return div({key:iso,style:{background:hoje?"rgba(116,176,216,.06)":"rgba(255,255,255,.015)",border:"1px solid "+(hoje?"var(--ip-accent)":"var(--glass-brd)"),borderRadius:12,padding:8}},
+                div({style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:7,padding:"0 2px"}},
+                  div(null, span({style:{fontWeight:500,fontSize:13,color:hoje?"var(--ip-accent)":"var(--ip-text)"}},DOW_LBL[di]), span({className:"ip-faint",style:{fontSize:11,marginLeft:5}},d.getDate()+"/"+(d.getMonth()+1))),
+                  nd?span({className:"ip-faint",style:{fontSize:11}},String(nd)):null),
+                m.semhora.length? zonaBloco(iso,"semhora","○ sem hora",m.semhora,false) : null,
+                BLOCOS.map(function(b){ return zonaBloco(iso,b[0],b[2]+" "+b[1],m[b[0]],hoje&&agoraBloco===b[0]); })); }))));
+    }
     function prioridadesBlocks(){ var by={}; registros.filter(function(r){return ativo(r)&&match(r);}).forEach(function(r){ var k=r.prioridade||"media"; (by[k]=by[k]||[]).push(r); });
       var bl=PRIO_LBL.filter(function(o){return by[o[0]];}).map(function(o){ return div({key:o[0],style:{marginBottom:14}},
         div({style:{display:"flex",alignItems:"center",gap:8,margin:"4px 2px 8px"}}, span({style:{width:9,height:9,borderRadius:99,background:PRIO_COR[o[0]],display:"inline-block"}}), span({style:{fontWeight:500,fontSize:13,color:PRIO_COR[o[0]]}},o[1]), span({className:"ip-faint",style:{fontSize:12}},by[o[0]].length)),
@@ -864,7 +922,7 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
     var corpo = vista==="calendario" ? div({className:"ip-card",style:{padding:18}}, calendario())
       : vista==="cofre" ? div({className:"ip-stagger"}, cofreBlocks())
       : vista==="prioridades" ? div({className:"ip-stagger"}, prioridadesBlocks())
-      : vista==="semana" ? div({className:"ip-stagger"}, listaR(semanaArr(),false))
+      : vista==="semana" ? div({className:"ip-card",style:{padding:16}}, semanaBlocos())
       : div({className:"ip-stagger"}, div({className:"ip-faint",style:{fontSize:12,margin:"0 2px 8px",display:"flex",alignItems:"center",gap:6}}, span({className:"ip-drag-h"},"⠿")," Meu dia — arraste para reordenar"), listaR(meuDia(),true));
     return div({className:"ip-view"},
       topo("SUA CENTRAL","Agenda","Tarefas, compromissos e prazos — o seu dia sob controle.",
