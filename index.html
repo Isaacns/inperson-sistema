@@ -14,7 +14,7 @@
 /* VERSÃO DO APP — bumpar a CADA deploy. É por este número que o push (§14) compara.
    §14.2: NUNCA const — scripts clássicos dividem escopo e uma 2ª declaração derruba o arquivo.
    Fonte única: o rodapé "Sobre" lê daqui (config.js.APP_VERSAO aponta para cá). */
-window.APP_VERSION = '1.4.0';
+window.APP_VERSION = '1.4.1';
 
 /* Guarda de HTTPS com exceção de loopback (§3.4) — sem a exceção, testar local é impossível. */
 (function(){
@@ -772,6 +772,8 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
     var PRIO_ORD={critica:0,alta:1,media:2,baixa:3};
     var PRIO_COR={critica:"var(--ip-danger)",alta:"var(--ip-warn)",media:"var(--ip-accent)",baixa:"var(--ip-muted)"};
     var PRIO_LBL=[["critica","Crítica"],["alta","Alta"],["media","Média"],["baixa","Baixa"]];
+    var RECOR_LBL={semanal:"toda semana",quinzenal:"a cada 15d",mensal:"todo mês",anual:"todo ano"};
+    function porData(a,b){ var c=(a.vence_em||"9999").localeCompare(b.vence_em||"9999"); return c!==0?c:(a.hora||"99").localeCompare(b.hora||"99"); }
     function ativo(r){ return r.status!=="concluido"&&r.status!=="arquivado"; }
     function match(r){ return !termo||[r.titulo,r.descricao,r.projeto,r.categoria].join(" ").toLowerCase().indexOf(termo)>-1; }
     var ativos=registros.filter(ativo);
@@ -779,7 +781,27 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
     var atrasN=ativos.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d<0;}).length;
     var semanaN=ativos.filter(function(r){var d=diasAte(r.vence_em);return d!==null&&d>=0&&d<=7;}).length;
     var semPrazoN=ativos.filter(function(r){return diasAte(r.vence_em)===null;}).length;
-    function concluir(r){ sb.from("registros").update({status:r.status==="concluido"?"aberto":"concluido"}).eq("id",r.id).then(reload); }
+    function proximaData(iso,rec){ var d=parseD(iso); if(!d) return null;
+      if(rec==="semanal") d.setDate(d.getDate()+7);
+      else if(rec==="quinzenal") d.setDate(d.getDate()+14);
+      else if(rec==="mensal") d.setMonth(d.getMonth()+1);
+      else if(rec==="anual") d.setFullYear(d.getFullYear()+1);
+      else return null;
+      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+    function concluir(r){
+      var fechando=r.status!=="concluido";
+      /* Rotina recorrente: ao CONCLUIR (não ao reabrir) uma que tem data + recorrência,
+         semeia a próxima ocorrência — assim o item "volta" no dia certo sem duplicar sozinho. */
+      var prox=(fechando && r.recorrencia && r.vence_em) ? proximaData(r.vence_em,r.recorrencia) : null;
+      sb.from("registros").update({status:fechando?"concluido":"aberto"}).eq("id",r.id).then(function(){
+        if(!prox) return reload();
+        sb.from("registros").insert({
+          titulo:r.titulo, descricao:r.descricao||null, categoria:r.categoria||"nota", projeto:r.projeto||null,
+          prioridade:r.prioridade||"media", tipo:"nota", status:"aberto", owner:r.owner,
+          vence_em:prox, hora:r.hora||null, recorrencia:r.recorrencia,
+          alerta_em:new Date(parseD(prox).getTime()-60*86400000).toISOString().slice(0,10), ordem:0
+        }).then(reload);
+      }); }
     function quickAdd(){ var t=qadd.trim(); if(!t||qbusy) return; setQbusy(true);
       sb.auth.getUser().then(function(res){ return sb.from("registros").insert({titulo:t,prioridade:qprio,categoria:"tarefa",tipo:"nota",status:"aberto",owner:res.data.user.id,ordem:0}); })
         .then(function(){ setQadd(""); setQbusy(false); reload&&reload(); }).catch(function(){ setQbusy(false); }); }
@@ -794,14 +816,18 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
         span({title:r.prioridade||"media",style:{width:9,height:9,borderRadius:99,background:PRIO_COR[r.prioridade||"media"],flex:"none"}}),
         span({onClick:function(){concluir(r);},title:done?"Reabrir":"Concluir",style:{width:18,height:18,border:"1.5px solid "+(done?"var(--ip-ok)":"var(--glass-brd)"),borderRadius:5,display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flex:"none",color:"var(--ip-ok)",fontSize:12}},done?"✓":""),
         div({style:{flex:1,minWidth:0,cursor:"pointer"},onClick:function(){setEdit(r);}},
-          div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}, strong({style:{fontWeight:400,textDecoration:done?"line-through":"none",opacity:done?0.55:1}},r.titulo), r.categoria&&span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria)),
+          div({style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+            r.hora&&span({style:{fontSize:12,fontWeight:500,color:"var(--ip-accent)",fontVariantNumeric:"tabular-nums",flex:"none"}},String(r.hora).slice(0,5)),
+            strong({style:{fontWeight:400,textDecoration:done?"line-through":"none",opacity:done?0.55:1}},r.titulo),
+            r.categoria&&span({className:"ip-tag",style:{color:CAT_COR[r.categoria]||"var(--ip-muted)"}},r.categoria),
+            r.recorrencia&&span({className:"ip-tag",title:"Rotina recorrente — ao concluir, volta na próxima data",style:{color:"var(--ip-muted)"}},"🔁 "+(RECOR_LBL[r.recorrencia]||r.recorrencia))),
           r.descricao&&div({className:"ip-muted",style:{fontSize:12,marginTop:3,lineHeight:1.45}},r.descricao)),
         span({style:{fontSize:12.5,color:ri.c,flex:"none",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}, ri.ic?span(null,ri.ic):null, ri.t)); }
     function listaR(arr,drag){ if(!arr.length) return div({className:"ip-card",style:{padding:20}},p({className:"ip-muted",style:{margin:0}},"Nada por aqui. 🎉"));
       return div({className:"ip-list",style:{touchAction:dragId?"none":"auto"},onPointerMove:drag?onMoveR:null,onPointerUp:drag?onUpR:null,onPointerLeave:drag?onUpR:null}, arr.map(function(r){return row(r,drag);})); }
     function ordById(){ var mapa={}; registros.forEach(function(r){mapa[r.id]=r;}); var ids=orderIds.length?orderIds:registros.slice().sort(function(a,b){return (Number(a.ordem||0))-(Number(b.ordem||0));}).map(function(r){return r.id;}); return ids.map(function(id){return mapa[id];}).filter(Boolean); }
     function meuDia(){ return ordById().filter(function(r){ return ativo(r)&&match(r); }); }
-    function semanaArr(){ return registros.filter(function(r){ if(!ativo(r)||!match(r)) return false; var d=diasAte(r.vence_em); return d!==null&&d<=7; }).sort(function(a,b){ return (a.vence_em||"").localeCompare(b.vence_em||""); }); }
+    function semanaArr(){ return registros.filter(function(r){ if(!ativo(r)||!match(r)) return false; var d=diasAte(r.vence_em); return d!==null&&d<=7; }).sort(porData); }
     function prioridadesBlocks(){ var by={}; registros.filter(function(r){return ativo(r)&&match(r);}).forEach(function(r){ var k=r.prioridade||"media"; (by[k]=by[k]||[]).push(r); });
       var bl=PRIO_LBL.filter(function(o){return by[o[0]];}).map(function(o){ return div({key:o[0],style:{marginBottom:14}},
         div({style:{display:"flex",alignItems:"center",gap:8,margin:"4px 2px 8px"}}, span({style:{width:9,height:9,borderRadius:99,background:PRIO_COR[o[0]],display:"inline-block"}}), span({style:{fontWeight:500,fontSize:13,color:PRIO_COR[o[0]]}},o[1]), span({className:"ip-faint",style:{fontSize:12}},by[o[0]].length)),
@@ -821,7 +847,7 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
       var cells=[]; var z; for(z=0;z<startDow;z++) cells.push(null); for(z=1;z<=days;z++) cells.push(z);
       var dow=["D","S","T","Q","Q","S","S"]; var todayISO=new Date().toISOString().slice(0,10);
       function cellColor(items){ var worst=999; items.forEach(function(r){ var d=diasAte(r.vence_em); if(d!==null&&d<worst) worst=d; }); if(worst<0) return "var(--ip-danger)"; if(worst<=30) return "var(--ip-warn)"; if(worst<=60) return "var(--ip-accent)"; return "var(--ip-ok)"; }
-      var selItems=diaSel?base.filter(function(r){return r.vence_em===diaSel;}):[];
+      var selItems=diaSel?base.filter(function(r){return r.vence_em===diaSel;}).sort(porData):[];
       return div(null,
         div({style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}},
           button({className:"ip-btn ghost",style:{padding:"6px 12px"},onClick:function(){ var m=mes-1,y=ano; if(m<0){m=11;y--;} setMes(m);setAno(y);setDiaSel(null); }},"‹"),
@@ -860,13 +886,15 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
   }
   function NovoRegistro(props){
     var r0=props.registro||{}; var editing=!!r0.id;
-    var s=useState({titulo:r0.titulo||"",categoria:r0.categoria||"prazo",projeto:r0.projeto||"",descricao:r0.descricao||"",vence_em:r0.vence_em||"",prioridade:r0.prioridade||"media"}),f=s[0],setF=s[1];
+    var s=useState({titulo:r0.titulo||"",categoria:r0.categoria||"prazo",projeto:r0.projeto||"",descricao:r0.descricao||"",vence_em:r0.vence_em||"",hora:(r0.hora||"").slice(0,5),recorrencia:r0.recorrencia||"",prioridade:r0.prioridade||"media"}),f=s[0],setF=s[1];
     var b=useState(false),busy=b[0],setBusy=b[1]; var e=useState(null),err=e[0],setErr=e[1];
     function set(k){ return function(ev){ var n={}; n[k]=ev.target.value; setF(Object.assign({},f,n)); }; }
     function salvar(ev){ ev.preventDefault(); setBusy(true); setErr(null);
       sb.auth.getUser().then(function(res){ var user=res.data.user;
         var payload=Object.assign({},f,{tipo:"nota", alerta_em: f.vence_em ? new Date(parseD(f.vence_em).getTime()-60*86400000).toISOString().slice(0,10) : null});
         payload.vence_em = f.vence_em ? f.vence_em : null;
+        payload.hora = f.hora ? f.hora : null;
+        payload.recorrencia = f.recorrencia ? f.recorrencia : null;
         if(editing){ return sb.from("registros").update(payload).eq("id",r0.id); }
         payload.owner=user.id; payload.status="aberto"; return sb.from("registros").insert(payload);
       }).then(function(r){ if(r&&r.error) throw r.error; props.onSaved(); }).catch(function(x){ setErr(x.message||String(x)); setBusy(false); }); }
@@ -884,6 +912,10 @@ window.IP_LOGOS={hero:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAn4AAAEsCAY
         div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
           campo("Projeto", input({className:"ip-input",value:f.projeto,onChange:set("projeto"),placeholder:"INPERSON / Cliente"})),
           campo("Vence em", input({className:"ip-input",type:"date",value:f.vence_em||"",onChange:set("vence_em")}))),
+        div({style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:12}},
+          campo("Hora", input({className:"ip-input",type:"time",value:f.hora||"",onChange:set("hora"),title:"Deixe em branco se não tem horário fixo"})),
+          campo("Repetir", select({className:"ip-input",value:f.recorrencia,onChange:set("recorrencia")}, [["","Não repete"],["semanal","Toda semana"],["quinzenal","A cada 15 dias"],["mensal","Todo mês"],["anual","Todo ano"]].map(function(o){return option({key:o[0],value:o[0]},o[1]);})))),
+        f.recorrencia && !f.vence_em && div({className:"ip-faint",style:{fontSize:11.5,marginTop:6}},"⚠ Para repetir, defina uma data em \"Vence em\" — é dela que a próxima ocorrência é calculada."),
         div({style:{marginTop:12}}, campo("Descrição", textarea({className:"ip-input",rows:3,value:f.descricao,onChange:set("descricao")}))),
         err && div({className:"ip-msg err"},err),
         div({style:{display:"flex",gap:10,marginTop:16,justifyContent:"space-between",alignItems:"center"}},
